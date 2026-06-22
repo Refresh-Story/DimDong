@@ -12,7 +12,10 @@
       "icon": "./assets/expo.icon",
       "supportsTablet": false,
       "bundleIdentifier": "com.refreshstory.dimdong",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "plugins": [
       "expo-router",
@@ -40,6 +43,12 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "owner": "hedu"
+    "owner": "hedu",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a2232c18-6032-452a-ba78-404800b94c33"
+      }
+    }
   }
 }

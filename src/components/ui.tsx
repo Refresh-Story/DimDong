@@ -4,7 +4,15 @@ import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-na
 
 import { Palette, Radius, Shadow, Spacing } from '@/theme';
 
-export function GemBadge({ count, size = 'md' }: { count: number; size?: 'md' | 'lg' }) {
+export function GemBadge({
+  count,
+  size = 'md',
+  tone = 'card',
+}: {
+  count: number;
+  size?: 'md' | 'lg';
+  tone?: 'card' | 'chip';
+}) {
   const big = size === 'lg';
   // Le badge "pulse" quand le nombre de gemmes change (gain ou dépense).
   const scale = useRef(new Animated.Value(1)).current;
@@ -22,20 +30,24 @@ export function GemBadge({ count, size = 'md' }: { count: number; size?: 'md' | 
 
   return (
     <Animated.View
-      style={[styles.gemBadge, big && { paddingVertical: 8, paddingHorizontal: 16 }, { transform: [{ scale }] }]}>
+      style={[
+        styles.gemBadge,
+        tone === 'chip' && styles.gemBadgeChip,
+        big && { paddingVertical: 8, paddingHorizontal: 16 },
+        { transform: [{ scale }] },
+      ]}>
       <View style={[styles.gem, big && { width: 22, height: 22 }]} />
       <Text style={[styles.gemText, big && { fontSize: 22 }]}>{count}</Text>
     </Animated.View>
   );
 }
 
-export function LevelBar({ level, progress }: { level: number; progress: number }) {
+// Médaillon de niveau : pastille jade avec le niveau bien lisible (header d'accueil).
+export function LevelMedallion({ level }: { level: number }) {
   return (
-    <View style={styles.levelWrap}>
-      <Text style={styles.levelText}>Niveau {level}</Text>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${Math.round(progress * 100)}%` }]} />
-      </View>
+    <View style={styles.medallion}>
+      <Text style={styles.medallionNum}>{level}</Text>
+      <Text style={styles.medallionLabel}>NIV</Text>
     </View>
   );
 }
@@ -97,16 +109,24 @@ const styles = StyleSheet.create({
     borderColor: Palette.gemDark,
   },
   gemText: { fontSize: 16, fontWeight: '700', color: Palette.ink },
-
-  levelWrap: { gap: 4 },
-  levelText: { fontSize: 15, fontWeight: '700', color: Palette.primaryDark },
-  track: {
-    height: 14,
+  // Variante "chip" : fond crème, sans ombre (s'intègre dans une surface déjà blanche).
+  gemBadgeChip: {
     backgroundColor: Palette.cardSoft,
-    borderRadius: Radius.pill,
-    overflow: 'hidden',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
-  fill: { height: '100%', backgroundColor: Palette.primary, borderRadius: Radius.pill },
+
+  medallion: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Palette.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  medallionNum: { fontSize: 18, fontWeight: '800', color: Palette.white, lineHeight: 20 },
+  medallionLabel: { fontSize: 8, fontWeight: '700', color: '#CFEBDF', letterSpacing: 0.5 },
 
   btn: {
     paddingVertical: Spacing.lg,

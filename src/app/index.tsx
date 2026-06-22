@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
-import { GemBadge, LevelBar } from '@/components/ui';
+import { GemBadge, LevelMedallion } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { Palette, Radius, Shadow, Spacing } from '@/theme';
 
@@ -47,13 +47,16 @@ export default function HomeScreen() {
     <View style={{ flex: 1 }}>
       <Scene decor={placedDecor} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        {/* barre du haut : nom + niveau + gemmes */}
+        {/* barre du haut : médaillon de niveau + nom/progression + gemmes */}
         <View style={styles.topRow}>
+          <LevelMedallion level={level} />
           <View style={styles.namePlate}>
-            <Text style={styles.name}>{player.name}</Text>
-            <LevelBar level={level} progress={progress} />
+            <Text style={styles.name} numberOfLines={1}>{player.name}</Text>
+            <View style={styles.track}>
+              <View style={[styles.fill, { width: `${Math.round(progress * 100)}%` }]} />
+            </View>
           </View>
-          <GemBadge count={player.gems} />
+          <GemBadge count={player.gems} tone="chip" />
         </View>
 
         {/* personnage */}
@@ -101,13 +104,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     backgroundColor: Palette.white,
-    borderRadius: Radius.pill,
-    paddingVertical: Spacing.sm,
+    borderRadius: Radius.xl,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     ...Shadow.card,
   },
-  namePlate: { flex: 1, gap: 2 },
+  namePlate: { flex: 1, gap: 6 },
   name: { fontSize: 18, fontWeight: '800', color: Palette.ink },
+  track: { height: 9, backgroundColor: Palette.cardSoft, borderRadius: Radius.pill, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: Palette.primary, borderRadius: Radius.pill },
 
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 

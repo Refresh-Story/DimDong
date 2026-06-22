@@ -19,6 +19,7 @@
     },
     "production": {
       "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "buildConfiguration": "Release",
         "autoIncrement": true
       }
@@ -28,7 +29,6 @@
     "production": {
       "ios": {
         "appleId": "herve.dury@outlook.com",
-        "ascAppId": "REMPLIR_APRES_CREATION_APP_STORE_CONNECT",
         "appleTeamId": "4HN7K98B7G"
       }
     }

@@ -1,0 +1,214 @@
+// État global de Dim-Dong.
+//
+// Données JOUEUR : 100 % LOCALES à l'iPhone (AsyncStorage), pas d'auth, pas de cloud.
+// Source de vérité = l'état en mémoire (playerRef) ; persistance débouncée en local.
+//
+// CATALOGUE (partagé) : lu en LECTURE SEULE depuis Firestore (@react-native-firebase),
+// puis mis en cache local pour l'offline. Au démarrage on affiche le cache (instantané),
+// puis on rafraîchit depuis Firestore si le réseau répond.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { collection, getDocs } from '@react-native-firebase/firestore';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import { db } from '@/firebase';
+import { FALLBACK_CATALOG, Item, ItemCategory } from '@/data/items';
+import { dayKey, levelFromXp, levelProgress } from '@/game/rules';
+import {
+  BrushResult,
+  BuyStatus,
+  DEFAULT_PLAYER,
+  PlayerState,
+  brush as brushOp,
+  buy as buyOp,
+  equip as equipOp,
+  grant as grantOp,
+  setName as setNameOp,
+  toggleDecor as toggleDecorOp,
+  unequip as unequipOp,
+} from '@/game/economy';
+
+export type { BrushResult, PlayerState } from '@/game/economy';
+
+const PLAYER_KEY = 'dimdong.player';
+const CATALOG_KEY = 'dimdong.catalog';
+
+type GameContextValue = {
+  ready: boolean;
+  player: PlayerState;
+  catalog: Item[];
+  level: number;
+  progress: number;
+  setName: (name: string) => Promise<void>;
+  brushCompleted: () => Promise<BrushResult>;
+  buyItem: (item: Item) => Promise<'ok' | 'owned' | 'insufficient'>;
+  grantItem: (item: Item) => Promise<void>;
+  equipItem: (item: Item) => Promise<void>;
+  unequipCategory: (category: ItemCategory) => Promise<void>;
+  toggleDecor: (item: Item) => Promise<void>;
+};
+
+const GameContext = createContext<GameContextValue | null>(null);
+
+function sanitize(data: any): PlayerState {
+  return {
+    ...DEFAULT_PLAYER,
+    ...data,
+    equipped: data?.equipped ?? {},
+    ownedItems: data?.ownedItems ?? [],
+    placedDecor: data?.placedDecor ?? [],
+  };
+}
+
+export function GameProvider({ children }: { children: React.ReactNode }) {
+  const [player, setPlayer] = useState<PlayerState>(DEFAULT_PLAYER);
+  const [catalog, setCatalog] = useState<Item[]>(FALLBACK_CATALOG);
+  const [ready, setReady] = useState(false);
+
+  // Source de vérité synchrone (évite les closures périmées en cas d'actions rapides).
+  const playerRef = useRef<PlayerState>(DEFAULT_PLAYER);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 1) Charger l'état joueur depuis le stockage local.
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(PLAYER_KEY);
+        if (raw) {
+          const p = sanitize(JSON.parse(raw));
+          playerRef.current = p;
+          setPlayer(p);
+        }
+      } catch (e) {
+        console.warn('Lecture du joueur local échouée', e);
+      } finally {
+        setReady(true);
+      }
+    })();
+  }, []);
+
+  // 2) Catalogue : cache local immédiat, puis rafraîchissement Firestore (lecture seule).
+  useEffect(() => {
+    (async () => {
+      try {
+        const cached = await AsyncStorage.getItem(CATALOG_KEY);
+        if (cached) setCatalog(JSON.parse(cached) as Item[]);
+      } catch {
+        // pas de cache : on garde FALLBACK_CATALOG
+      }
+      try {
+        const snap = await getDocs(collection(db, 'catalog'));
+        if (!snap.empty) {
+          const items = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Item[];
+          setCatalog(items);
+          AsyncStorage.setItem(CATALOG_KEY, JSON.stringify(items)).catch(() => {});
+        }
+      } catch {
+        // hors-ligne : on garde le cache (ou le fallback)
+      }
+    })();
+  }, []);
+
+  // Persistance locale débouncée (évite d'écrire à chaque micro-action).
+  const persist = useCallback((p: PlayerState) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      AsyncStorage.setItem(PLAYER_KEY, JSON.stringify(p)).catch((e) =>
+        console.warn('Sauvegarde locale échouée', e)
+      );
+    }, 300);
+  }, []);
+
+  // Mise à jour optimiste + persistance locale.
+  const commit = useCallback(
+    (next: PlayerState) => {
+      playerRef.current = next;
+      setPlayer(next);
+      persist(next);
+    },
+    [persist]
+  );
+
+  const setName = useCallback(
+    async (name: string) => {
+      commit(setNameOp(playerRef.current, name));
+    },
+    [commit]
+  );
+
+  const brushCompleted = useCallback(async (): Promise<BrushResult> => {
+    const { player, result } = brushOp(playerRef.current, dayKey(new Date()));
+    commit(player);
+    return result;
+  }, [commit]);
+
+  const buyItem = useCallback(
+    async (item: Item): Promise<BuyStatus> => {
+      const { player, status } = buyOp(playerRef.current, item);
+      if (status === 'ok') commit(player);
+      return status;
+    },
+    [commit]
+  );
+
+  const grantItem = useCallback(
+    async (item: Item) => {
+      commit(grantOp(playerRef.current, item));
+    },
+    [commit]
+  );
+
+  const equipItem = useCallback(
+    async (item: Item) => {
+      commit(equipOp(playerRef.current, item));
+    },
+    [commit]
+  );
+
+  const unequipCategory = useCallback(
+    async (category: ItemCategory) => {
+      commit(unequipOp(playerRef.current, category));
+    },
+    [commit]
+  );
+
+  const toggleDecor = useCallback(
+    async (item: Item) => {
+      commit(toggleDecorOp(playerRef.current, item));
+    },
+    [commit]
+  );
+
+  const value = useMemo<GameContextValue>(
+    () => ({
+      ready,
+      player,
+      catalog,
+      level: levelFromXp(player.xp),
+      progress: levelProgress(player.xp),
+      setName,
+      brushCompleted,
+      buyItem,
+      grantItem,
+      equipItem,
+      unequipCategory,
+      toggleDecor,
+    }),
+    [ready, player, catalog, setName, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
+  );
+
+  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+}
+
+export function useGame(): GameContextValue {
+  const ctx = useContext(GameContext);
+  if (!ctx) throw new Error('useGame doit être utilisé dans <GameProvider>');
+  return ctx;
+}

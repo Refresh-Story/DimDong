@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# Dim-Dong 🪥💎
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application iOS (Expo / React Native + Firebase) qui motive un enfant à se brosser les
+dents : un minuteur de **2 minutes** fait gagner des **gemmes**, dépensées dans une
+**Boutique** pour habiller le personnage **Dim**.
 
-## Get started
+## Lancer l'app
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+L'app utilise le workflow **prebuild** (build natif, plus d'Expo Go) :
 
 ```bash
-npm run reset-project
+npm install
+npx expo run:ios   # génère ios/, pod install, build et lance le simulateur
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+> Build TestFlight : `npm run submit:ios` (EAS build production + auto-submit).
+> La config Firebase iOS `GoogleService-Info.plist` (projet **dim-dong**) doit être à la racine.
 
-### Other setup steps
+## La boucle de jeu
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+1. Accueil : Dim dans son salon de dim-sum, niveau et gemmes.
+2. **Se brosser les dents** → minuteur 2 min (guidage par zones, vibrations).
+3. Fin du minuteur → **gemmes + XP** (plafonné à 2 brossages récompensés/jour).
+4. **Boutique** → acheter un accessoire.
+5. **Mes objets** → équiper/déséquiper, Dim change en direct.
 
-## Learn more
+## Structure
 
-To learn more about developing your project with Expo, look at the following resources:
+| Fichier | Rôle |
+|---|---|
+| `src/app/` | Écrans (expo-router) : `index` (accueil), `onboarding`, `timer`, `shop`, `inventory` |
+| `src/context/GameContext.tsx` | État global + actions (`brushCompleted`, `buyItem`, `equipItem`). Données joueur **locales** (AsyncStorage) ; catalogue lu depuis Firestore |
+| `src/components/DimAvatar.tsx` | Personnage en couches (corps + accessoires empilés) |
+| `src/components/Scene.tsx` | Décor (ciel, soleil, herbe, barrière) |
+| `src/data/items.ts` | Catalogue + catégories (placeholders dessinés `draw`) |
+| `src/game/rules.ts` | Durée, gains, niveaux, plafond journalier |
+| `src/firebase.ts` | Init `@react-native-firebase` (Firestore, lecture seule) |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Données & Firebase
 
-## Join the community
+- **Données joueur** (gems, achats, équipement, paramètres) : **100 % locales à l'iPhone**
+  via AsyncStorage (clé `dimdong.player`). **Aucune auth, aucun cloud utilisateur.**
+- **Catalogue partagé** (items achetables, prix, images) : Firestore du projet **dim-dong**,
+  en **lecture seule** (`@react-native-firebase/firestore`), mis en cache local
+  (`dimdong.catalog`) pour l'offline. Ajouter un item = un doc `catalog/<id>` + un PNG dans
+  Storage, **sans redéployer l'app**.
+- Images des items : Firebase **Storage** (PNG publics), chargés par `expo-image`.
+- Seed/upload : [`scripts/render-items.mjs`](scripts/render-items.mjs) (rasterise + upload Storage),
+  [`scripts/seed-catalog.mjs`](scripts/seed-catalog.mjs) (push Firestore). Voir aussi
+  [`docs/visuels-ia.md`](docs/visuels-ia.md).
 
-Join our community of developers creating universal apps.
+## Visuels
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Dim et ses accessoires sont **dessinés en SVG vectoriel** dans
+[`src/components/DimAvatar.tsx`](src/components/DimAvatar.tsx) : net à toutes les
+tailles, transparent, en couches (champ `draw` du catalogue). Pour ajouter un objet,
+ajouter une entrée dans `src/data/items.ts` et son cas SVG dans `DimAvatar`.
+
+Option future (rendu bitmap plus illustré) : `DimAvatar` gère aussi un champ `image`
+(overlay aligné) — voir [`docs/visuels-ia.md`](docs/visuels-ia.md).

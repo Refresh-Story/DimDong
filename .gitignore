@@ -41,3 +41,14 @@ example
 # generated native folders
 /ios
 /android
+
+# PNG rendus localement par scripts/render-items.mjs (régénérables)
+scripts/catalog-png/
+# clé de compte de service Firebase Admin (ne JAMAIS committer, quel que soit le nom)
+serviceAccountKey.json
+*serviceAccount*.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+secrets/
+# config Firebase iOS : non versionnée (ré-incluse pour EAS via .easignore)
+GoogleService-Info.plist

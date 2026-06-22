@@ -1,98 +1,140 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { DimAvatar } from '@/components/DimAvatar';
+import { RainbowAura } from '@/components/RainbowAura';
+import { Scene } from '@/components/Scene';
+import { GemBadge, LevelBar } from '@/components/ui';
+import { useGame } from '@/context/GameContext';
+import { Palette, Radius, Shadow, Spacing } from '@/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+export default function HomeScreen() {
+  const { ready, player, catalog, level, progress } = useGame();
+  const router = useRouter();
+
+  // Petit rebond permanent de Dim.
+  const bob = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: -10, duration: 900, useNativeDriver: true }),
+        Animated.timing(bob, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [bob]);
+
+  if (!ready) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <View style={styles.loading}>
+        <Scene />
+        <ActivityIndicator size="large" color={Palette.primaryDark} />
+      </View>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+  if (!player.onboarded) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  const placedDecor = catalog.filter((i) => player.placedDecor.includes(i.id));
+  const isRainbow = !!catalog.find((i) => i.id === player.equipped.color)?.rainbow;
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <View style={{ flex: 1 }}>
+      <Scene decor={placedDecor} />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* barre du haut : nom + niveau + gemmes */}
+        <View style={styles.topRow}>
+          <View style={styles.namePlate}>
+            <Text style={styles.name}>{player.name}</Text>
+            <LevelBar level={level} progress={progress} />
+          </View>
+          <GemBadge count={player.gems} />
+        </View>
+
+        {/* personnage */}
+        <View style={styles.stage}>
+          <Animated.View style={{ transform: [{ translateY: bob }] }}>
+            {isRainbow && <RainbowAura size={210} />}
+            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} />
+          </Animated.View>
+        </View>
+
+        {/* bouton brossage */}
+        <Pressable
+          style={({ pressed }) => [styles.brushBtn, pressed && { transform: [{ scale: 0.97 }] }]}
+          onPress={() => router.push('/timer')}>
+          <Text style={styles.brushIcon}>🪥</Text>
+          <Text style={styles.brushText}>Se brosser les dents</Text>
+        </Pressable>
+
+        {/* boutique / mes objets */}
+        <View style={styles.bottomRow}>
+          <NavCard label="Boutique" emoji="🛍️" onPress={() => router.push('/shop')} />
+          <NavCard label="Mes objets" emoji="🧺" onPress={() => router.push('/inventory')} />
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
-export default function HomeScreen() {
+function NavCard({ label, emoji, onPress }: { label: string; emoji: string; onPress: () => void }) {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.navCard, pressed && { transform: [{ scale: 0.97 }] }]}>
+      <Text style={styles.navEmoji}>{emoji}</Text>
+      <Text style={styles.navLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  safe: { flex: 1, paddingHorizontal: Spacing.lg },
+  topRow: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    gap: Spacing.md,
+    backgroundColor: Palette.white,
+    borderRadius: Radius.pill,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    ...Shadow.card,
   },
-  heroSection: {
+  namePlate: { flex: 1, gap: 2 },
+  name: { fontSize: 18, fontWeight: '800', color: Palette.ink },
+
+  stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  brushBtn: {
+    backgroundColor: Palette.primary,
+    borderRadius: Radius.xl,
+    paddingVertical: Spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    ...Shadow.card,
+  },
+  brushIcon: { fontSize: 24 },
+  brushText: { color: Palette.white, fontSize: 20, fontWeight: '800' },
+
+  bottomRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.sm },
+  navCard: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    backgroundColor: Palette.cardSoft,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    gap: 4,
+    ...Shadow.card,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  navEmoji: { fontSize: 28 },
+  navLabel: { fontSize: 15, fontWeight: '800', color: Palette.primaryDark },
 });

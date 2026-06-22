@@ -1,0 +1,60 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# iOS build artifacts (régénérés par EAS)
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# Tests & coverage
+coverage/
+__snapshots__/
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+firebase-debug.log*
+
+# Environment
+.env
+.env*.local
+
+# macOS
+.DS_Store
+*.pem
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# PNG rendus localement (régénérables) & clé de service Firebase
+scripts/catalog-png/
+serviceAccountKey.json
+
+# Firebase config : gitignorée mais REQUISE par EAS Build
+# (référencée par app.json -> ios.googleServicesFile)
+!GoogleService-Info.plist

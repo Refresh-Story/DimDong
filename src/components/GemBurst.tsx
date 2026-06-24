@@ -1,9 +1,12 @@
-// Petite gerbe de gemmes qui jaillit (récompense de fin de brossage).
+// Gerbe de gemmes + étoile d'impact "manga" qui jaillit (récompense de fin de brossage).
 // Utilise l'API Animated native (pas de reanimated).
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import Svg, { Polygon } from 'react-native-svg';
 
 import { Palette } from '@/theme';
+
+const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
 type Props = {
   count?: number;
@@ -11,7 +14,23 @@ type Props = {
   spread?: number; // distance max de projection
 };
 
+// Étoile d'impact manga : étoile dentelée (rayons alternés intérieur/extérieur).
+function impactPoints(spikes: number, outer: number, inner: number, c: number) {
+  const pts: string[] = [];
+  for (let i = 0; i < spikes * 2; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const a = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+    pts.push(`${(c + Math.cos(a) * r).toFixed(1)},${(c + Math.sin(a) * r).toFixed(1)}`);
+  }
+  return pts.join(' ');
+}
+
 export function GemBurst({ count = 14, size = 18, spread = 150 }: Props) {
+  // Étoile d'impact (un seul "flash" derrière les gemmes).
+  const impact = useRef(new Animated.Value(0)).current;
+  const starSize = spread * 2.1;
+  const points = useRef(impactPoints(14, 50, 21, 50)).current;
+
   // Une valeur de progression par gemme.
   const gems = useRef(
     Array.from({ length: count }).map((_, i) => {
@@ -28,6 +47,7 @@ export function GemBurst({ count = 14, size = 18, spread = 150 }: Props) {
   ).current;
 
   useEffect(() => {
+    Animated.timing(impact, { toValue: 1, duration: 700, useNativeDriver: true }).start();
     Animated.parallel(
       gems.map((g) =>
         Animated.timing(g.progress, {
@@ -38,10 +58,27 @@ export function GemBurst({ count = 14, size = 18, spread = 150 }: Props) {
         })
       )
     ).start();
-  }, [gems]);
+  }, [gems, impact]);
+
+  const impactOpacity = impact.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 0.85, 0] });
+  const impactScale = impact.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1.25] });
+  const impactRotate = impact.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '24deg'] });
 
   return (
     <View pointerEvents="none" style={styles.wrap}>
+      {/* flash d'impact "DON!" derrière les gemmes */}
+      <AnimatedSvg
+        width={starSize}
+        height={starSize}
+        viewBox="0 0 100 100"
+        style={{
+          position: 'absolute',
+          opacity: impactOpacity,
+          transform: [{ scale: impactScale }, { rotate: impactRotate }],
+        }}>
+        <Polygon points={points} fill={Palette.accent} stroke={Palette.ink} strokeWidth={3} strokeLinejoin="round" />
+      </AnimatedSvg>
+
       {gems.map((g, i) => {
         const translateX = g.progress.interpolate({ inputRange: [0, 1], outputRange: [0, g.dx] });
         const translateY = g.progress.interpolate({ inputRange: [0, 1], outputRange: [0, g.dy] });
@@ -75,9 +112,9 @@ const styles = StyleSheet.create({
   gem: {
     position: 'absolute',
     backgroundColor: Palette.gem,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: Palette.gemDark,
+    borderRadius: 3,
+    borderWidth: 2.5,
+    borderColor: Palette.ink,
   },
 });
 

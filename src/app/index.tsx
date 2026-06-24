@@ -8,7 +8,7 @@ import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
 import { GemBadge, LevelMedallion } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
-import { Palette, Radius, Shadow, Spacing } from '@/theme';
+import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
   const { ready, player, catalog, level, progress } = useGame();
@@ -105,20 +105,31 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     backgroundColor: Palette.white,
     borderRadius: Radius.xl,
+    borderWidth: 3,
+    borderColor: Palette.outline,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     ...Shadow.card,
   },
   namePlate: { flex: 1, gap: 6 },
-  name: { fontSize: 18, fontWeight: '800', color: Palette.ink },
-  track: { height: 9, backgroundColor: Palette.cardSoft, borderRadius: Radius.pill, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: Palette.primary, borderRadius: Radius.pill },
+  name: { fontSize: 18, fontFamily: Fonts.bodyBold, color: Palette.ink },
+  track: {
+    height: 11,
+    backgroundColor: Palette.cardSoft,
+    borderRadius: Radius.pill,
+    borderWidth: 2,
+    borderColor: Palette.outline,
+    overflow: 'hidden',
+  },
+  fill: { height: '100%', backgroundColor: Palette.accent2 },
 
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   brushBtn: {
     backgroundColor: Palette.primary,
     borderRadius: Radius.xl,
+    borderWidth: 3,
+    borderColor: Palette.outline,
     paddingVertical: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,18 +139,20 @@ const styles = StyleSheet.create({
     ...Shadow.card,
   },
   brushIcon: { fontSize: 24 },
-  brushText: { color: Palette.white, fontSize: 20, fontWeight: '800' },
+  brushText: { color: Palette.white, fontSize: 26, fontFamily: Fonts.display, letterSpacing: 1 },
 
   bottomRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.sm },
   navCard: {
     flex: 1,
     backgroundColor: Palette.cardSoft,
     borderRadius: Radius.lg,
+    borderWidth: 3,
+    borderColor: Palette.outline,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
     gap: 4,
     ...Shadow.card,
   },
   navEmoji: { fontSize: 28 },
-  navLabel: { fontSize: 15, fontWeight: '800', color: Palette.primaryDark },
+  navLabel: { fontSize: 18, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5 },
 });

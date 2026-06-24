@@ -1,21 +1,37 @@
-// Effet spécial pour la pâte légendaire "Rainbow" : lueur pulsante + étoiles
-// arc-en-ciel qui scintillent autour du personnage. API Animated native.
+// Effet spécial pour la pâte légendaire "Rainbow" : halo pulsant + vraies étincelles
+// manga (étoiles 4 branches contourées) qui scintillent autour du personnage.
+// API Animated native.
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+
+import { Palette } from '@/theme';
 
 const RAINBOW = ['#FF7FA8', '#FFB347', '#FFE066', '#7FD489', '#5FB8FF', '#C9A0FF'];
 
 // Position (en fraction de la boîte) + taille de chaque étoile.
 const SPARKS = [
-  { x: 0.12, y: 0.18, s: 0.13 },
-  { x: 0.85, y: 0.12, s: 0.1 },
-  { x: 0.92, y: 0.45, s: 0.14 },
-  { x: 0.06, y: 0.5, s: 0.11 },
-  { x: 0.22, y: 0.78, s: 0.12 },
-  { x: 0.8, y: 0.8, s: 0.1 },
-  { x: 0.5, y: 0.05, s: 0.12 },
-  { x: 0.68, y: 0.6, s: 0.09 },
+  { x: 0.12, y: 0.18, s: 0.16 },
+  { x: 0.85, y: 0.12, s: 0.12 },
+  { x: 0.92, y: 0.45, s: 0.17 },
+  { x: 0.06, y: 0.5, s: 0.13 },
+  { x: 0.22, y: 0.78, s: 0.15 },
+  { x: 0.8, y: 0.8, s: 0.12 },
+  { x: 0.5, y: 0.05, s: 0.15 },
+  { x: 0.68, y: 0.6, s: 0.11 },
 ];
+
+// Étincelle manga 4 branches (concave) — viewBox -50..50, contour encre.
+const SPARKLE_D =
+  'M0 -50 C6 -14 14 -6 50 0 C14 6 6 14 0 50 C-6 14 -14 6 -50 0 C-14 -6 -6 -14 0 -50 Z';
+
+function Sparkle({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="-58 -58 116 116">
+      <Path d={SPARKLE_D} fill={color} stroke={Palette.ink} strokeWidth={6} strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
 export function RainbowAura({ size }: { size: number }) {
   const W = size;
@@ -46,12 +62,12 @@ export function RainbowAura({ size }: { size: number }) {
     };
   }, [glow, sparks]);
 
-  const glowOpacity = glow.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.5] });
+  const glowOpacity = glow.interpolate({ inputRange: [0, 1], outputRange: [0.16, 0.42] });
   const glowScale = glow.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.12] });
 
   return (
     <View pointerEvents="none" style={[styles.wrap, { width: W, height: H }]}>
-      {/* lueur arc-en-ciel pulsante derrière le personnage */}
+      {/* halo pulsant derrière le personnage */}
       <Animated.View
         style={[
           styles.glow,
@@ -66,26 +82,24 @@ export function RainbowAura({ size }: { size: number }) {
           },
         ]}
       />
-      {/* étoiles scintillantes */}
+      {/* étincelles scintillantes (étoiles 4 branches manga) */}
       {SPARKS.map((sp, i) => {
         const v = sparks[i];
         const opacity = v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 1, 0] });
         const scale = v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.3, 1.1, 0.3] });
         const rotate = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '90deg'] });
         return (
-          <Animated.Text
+          <Animated.View
             key={i}
             style={{
               position: 'absolute',
               left: sp.x * W,
               top: sp.y * H,
-              fontSize: size * sp.s,
-              color: RAINBOW[i % RAINBOW.length],
               opacity,
               transform: [{ scale }, { rotate }],
             }}>
-            ✦
-          </Animated.Text>
+            <Sparkle size={size * sp.s} color={RAINBOW[i % RAINBOW.length]} />
+          </Animated.View>
         );
       })}
     </View>
@@ -94,7 +108,7 @@ export function RainbowAura({ size }: { size: number }) {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', top: 0, left: 0 },
-  glow: { position: 'absolute', backgroundColor: '#FFD6F0' },
+  glow: { position: 'absolute', backgroundColor: '#FFE3F4' },
 });
 
 export default RainbowAura;

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,11 +11,12 @@ import { Scene } from '@/components/Scene';
 import { GemBadge, PrimaryButton } from '@/components/ui';
 import { BrushResult, useGame } from '@/context/GameContext';
 import { BRUSH_DURATION_SEC, BRUSH_ZONES } from '@/game/rules';
-import { Palette, Radius, Shadow, Spacing } from '@/theme';
+import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 type Phase = 'ready' | 'countdown' | 'running' | 'done';
 
 const ZONE_SEC = BRUSH_DURATION_SEC / BRUSH_ZONES.length;
+const KEEP_AWAKE_TAG = 'dim-dong-brushing';
 
 function fmt(s: number) {
   const m = Math.floor(s / 60);
@@ -133,6 +135,18 @@ export default function TimerScreen() {
     if (countdownRef.current) clearInterval(countdownRef.current);
   }, []);
 
+  // Empêche la mise en veille de l'écran tant que le brossage est actif
+  // (compte à rebours + minuteur). On désactive dès qu'on en sort.
+  useEffect(() => {
+    const active = phase === 'countdown' || phase === 'running';
+    if (active) {
+      activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
+      return () => {
+        deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
+      };
+    }
+  }, [phase]);
+
   const elapsed = BRUSH_DURATION_SEC - left;
   const progress = elapsed / BRUSH_DURATION_SEC;
   const zoneIndex = Math.min(BRUSH_ZONES.length - 1, Math.floor(elapsed / ZONE_SEC));
@@ -235,18 +249,18 @@ export default function TimerScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
-  close: { position: 'absolute', top: Spacing.xxl, right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+  close: { position: 'absolute', top: Spacing.xxl, right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
   closeText: { fontSize: 18, fontWeight: '800', color: Palette.ink },
-  bigTime: { fontSize: 64, fontWeight: '900', color: Palette.primaryDark },
-  getReady: { fontSize: 24, fontWeight: '800', color: Palette.ink },
-  countdownNum: { fontSize: 120, fontWeight: '900', color: Palette.primaryDark, lineHeight: 132 },
-  track: { width: '100%', height: 16, backgroundColor: Palette.white, borderRadius: Radius.pill, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: Palette.primary },
-  zone: { fontSize: 18, fontWeight: '800', color: Palette.ink },
+  bigTime: { fontSize: 80, fontFamily: Fonts.display, color: Palette.primary, letterSpacing: 2 },
+  getReady: { fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
+  countdownNum: { fontSize: 150, fontFamily: Fonts.display, color: Palette.primary, lineHeight: 160 },
+  track: { width: '100%', height: 18, backgroundColor: Palette.white, borderRadius: Radius.pill, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: Palette.accent2 },
+  zone: { fontSize: 18, fontFamily: Fonts.bodyBold, color: Palette.ink },
   stage: { alignItems: 'center', justifyContent: 'center', marginVertical: Spacing.md },
-  hint: { fontSize: 15, color: Palette.inkSoft, textAlign: 'center' },
+  hint: { fontSize: 15, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center' },
   doneWrap: { alignItems: 'center', gap: Spacing.sm },
-  doneTitle: { fontSize: 34, fontWeight: '900', color: Palette.ink },
-  doneText: { fontSize: 18, color: Palette.ink, textAlign: 'center', fontWeight: '700' },
-  smallText: { fontSize: 14, color: Palette.inkSoft, textAlign: 'center' },
+  doneTitle: { fontSize: 44, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
+  doneText: { fontSize: 18, color: Palette.ink, textAlign: 'center', fontFamily: Fonts.bodyBold },
+  smallText: { fontSize: 14, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center' },
 });

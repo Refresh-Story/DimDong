@@ -7,7 +7,7 @@ import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { useGame } from '@/context/GameContext';
 import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory } from '@/data/items';
-import { Palette, Radius, Shadow, Spacing } from '@/theme';
+import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function InventoryScreen() {
   const router = useRouter();
@@ -96,12 +96,12 @@ export default function InventoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Palette.panel, paddingHorizontal: Spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.md },
-  back: { width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+  back: { width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
   backText: { fontSize: 28, fontWeight: '800', color: Palette.ink, marginTop: -4 },
-  title: { flex: 1, fontSize: 24, fontWeight: '900', color: Palette.ink, textAlign: 'center' },
+  title: { flex: 1, fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1, textAlign: 'center' },
   stage: { alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.md, height: 200 },
-  empty: { fontSize: 16, color: Palette.inkSoft, textAlign: 'center', padding: Spacing.xl, lineHeight: 24 },
-  section: { fontSize: 18, fontWeight: '800', color: Palette.primaryDark, marginBottom: Spacing.sm },
+  empty: { fontSize: 16, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center', padding: Spacing.xl, lineHeight: 24 },
+  section: { fontSize: 20, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5, marginBottom: Spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   card: {
     width: '47%',
@@ -110,12 +110,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     alignItems: 'center',
     gap: 2,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 3,
+    borderColor: Palette.outline,
     ...Shadow.card,
   },
-  cardOn: { borderColor: Palette.primary, backgroundColor: '#F2FBE4' },
+  cardOn: { backgroundColor: '#EAF1FF', shadowColor: Palette.accent2 },
   preview: { height: 88, justifyContent: 'center', alignItems: 'center' },
-  itemName: { fontSize: 15, fontWeight: '800', color: Palette.ink },
-  status: { fontSize: 12, fontWeight: '700', color: Palette.inkSoft },
+  itemName: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Palette.ink },
+  status: { fontSize: 12, fontFamily: Fonts.body, color: Palette.inkSoft },
 });

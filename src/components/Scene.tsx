@@ -1,21 +1,35 @@
-// Décor de Dim-Dong : ambiance "salon de dim-sum" asiatique.
-// Mur chaud + lanternes rouges qui se balancent + vapeur qui s'élève, et le
-// personnage posé dans un panier vapeur en bambou (la bande du bas). Les
-// décorations achetées se posent sur le rebord du panier.
+// Décor de Dim-Dong : ambiance "salon de dim-sum" revisitée façon MANGA.
+// Fond papier + trame (screentone) + traits de vitesse derrière le héros ; lanternes,
+// vapeur et panier vapeur en bambou redessinés avec des contours d'encre francs et des
+// ombres en aplat (cel) plutôt qu'en dégradés. Les décorations achetées se posent
+// toujours sur le rebord du panier (positions inchangées : item.x / item.w).
 //
-// Animations : API `Animated` de React Native (cohérent avec le reste de l'app,
-// useNativeDriver partout → tourne sur le thread d'UI, négligeable en fond).
-import { LinearGradient } from 'expo-linear-gradient';
+// Animations : API `Animated` de React Native, useNativeDriver partout.
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
 import { DecorView } from '@/components/Decor';
+import { SpeedLines } from '@/components/ui';
 import { Item } from '@/data/items';
 import { Palette } from '@/theme';
 
 const SCREEN_W = Dimensions.get('window').width;
 const STEAMER_RATIO = 0.4; // part basse occupée par le panier vapeur
+
+// Trame manga (screentone) : champ de petits points réguliers, faible contraste.
+function Halftone({ opacity = 0.5, dot = Palette.screentoneMid }: { opacity?: number; dot?: string }) {
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <Pattern id="halftone" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+          <Circle cx="3" cy="3" r="2" fill={dot} opacity={opacity} />
+        </Pattern>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill="url(#halftone)" />
+    </Svg>
+  );
+}
 
 export function Scene({
   children,
@@ -26,29 +40,20 @@ export function Scene({
 }) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* mur chaud */}
-      <LinearGradient colors={[Palette.wallTop, Palette.wallBottom]} style={StyleSheet.absoluteFill} />
+      {/* fond papier manga */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: Palette.paper }]} />
 
-      {/* lueurs d'ambiance : chaleur en haut + halo de la fenêtre-lune */}
-      <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Defs>
-          <RadialGradient id="ambiance" cx="50%" cy="6%" r="70%">
-            <Stop offset="0" stopColor="#FFF7E8" stopOpacity={0.7} />
-            <Stop offset="1" stopColor="#FFF7E8" stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor="#FFFDF6" stopOpacity={0.9} />
-            <Stop offset="0.7" stopColor="#FFF1D6" stopOpacity={0.35} />
-            <Stop offset="1" stopColor="#FFF1D6" stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Circle cx="50%" cy="6%" r={SCREEN_W} fill="url(#ambiance)" />
-        <Circle cx="50%" cy={145} r={130} fill="url(#moonGlow)" />
-      </Svg>
+      {/* trame de fond, légère, sur toute la surface */}
+      <Halftone opacity={0.4} dot={Palette.screentoneMid} />
 
-      {/* fenêtre lune (cercle décoratif avec cadre fin) */}
-      <View style={styles.moonGate} />
-      <View style={styles.moonGateInner} />
+      {/* traits de vitesse derrière le héros (cadrage central, dynamisme manga) */}
+      <View style={styles.speed} pointerEvents="none">
+        <SpeedLines size={SCREEN_W * 1.3} color={Palette.ink} count={34} innerRatio={0.34} opacity={0.12} />
+      </View>
+
+      {/* "case ronde" qui encadre le personnage (spotlight manga) */}
+      <View style={styles.spotlight} />
+      <View style={styles.spotlightRing} />
 
       {/* lanternes suspendues qui se balancent */}
       <Lantern left={42} drop={64} scale={1} period={2600} />
@@ -58,37 +63,22 @@ export function Scene({
       <SteamColumn left={SCREEN_W * 0.36} delay={0} />
       <SteamColumn left={SCREEN_W * 0.6} delay={1300} />
 
-      {/* panier vapeur en bambou */}
+      {/* panier vapeur en bambou (aplats + contour encre) */}
       <View style={styles.steamer}>
-        <LinearGradient
-          colors={[Palette.steamerLight, Palette.steamer, Palette.steamerDark]}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* tressage horizontal bicolore (texture bambou) */}
+        {/* corps du panier en aplat */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: Palette.steamer }]} />
+        {/* tressage horizontal (lignes d'encre fines) */}
         {Array.from({ length: 7 }).map((_, i) => (
-          <React.Fragment key={i}>
-            <View style={[styles.weave, { top: 34 + i * 18, backgroundColor: Palette.weave, opacity: 0.45 }]} />
-            <View style={[styles.weave, { top: 37 + i * 18, backgroundColor: Palette.steamerDark, opacity: 0.3 }]} />
-          </React.Fragment>
+          <View key={i} style={[styles.weave, { top: 40 + i * 18 }]} />
         ))}
-        {/* reflets verticaux (galbe des lattes) */}
-        {Array.from({ length: 6 }).map((_, i) => (
-          <View key={`hl-${i}`} style={[styles.weaveHighlight, { left: (i + 0.5) * (SCREEN_W / 6) }]} />
-        ))}
+        {/* ombre en aplat (cel) dans le bas du panier, en screentone foncé */}
+        <View style={styles.steamerShade} />
 
-        {/* ombre interne sous le rebord (là où la vapeur sort) */}
-        <LinearGradient
-          colors={['rgba(74,53,38,0.28)', 'rgba(74,53,38,0)']}
-          style={styles.innerShadow}
-          pointerEvents="none"
-        />
-
-        {/* rebord du panier (lattes verticales) + reflet du haut */}
+        {/* rebord du panier (lattes verticales contourées) */}
         <View style={styles.rim}>
-          {Array.from({ length: Math.ceil(SCREEN_W / 18) }).map((_, i) => (
+          {Array.from({ length: Math.ceil(SCREEN_W / 20) }).map((_, i) => (
             <View key={i} style={styles.slat} />
           ))}
-          <View style={styles.rimHighlight} />
         </View>
 
         {/* décorations posées sur le rebord */}
@@ -97,7 +87,7 @@ export function Scene({
           return (
             <View
               key={item.id}
-              style={{ position: 'absolute', top: 26, left: (item.x ?? 0.5) * SCREEN_W - w / 2 }}>
+              style={{ position: 'absolute', top: 30, left: (item.x ?? 0.5) * SCREEN_W - w / 2 }}>
               <DecorView item={item} size={w} />
             </View>
           );
@@ -132,23 +122,11 @@ function Lantern({ left, drop, scale, period }: { left: number; drop: number; sc
       <View style={styles.lanternString} />
       {/* pivot near string : translateY + rotate + translateY inverse */}
       <Animated.View style={{ marginTop: drop, transform: [{ translateY: 34 }, { rotate }, { translateY: -34 }] }}>
-        {/* halo lumineux derrière le corps */}
-        <Svg width={92} height={92} style={styles.lanternGlow} pointerEvents="none">
-          <Defs>
-            <RadialGradient id="lanternGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={Palette.lanternGold} stopOpacity={0.55} />
-              <Stop offset="0.55" stopColor={Palette.lantern} stopOpacity={0.22} />
-              <Stop offset="1" stopColor={Palette.lantern} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Circle cx={46} cy={46} r={46} fill="url(#lanternGlow)" />
-        </Svg>
         <View style={styles.lanternCap} />
         <View style={styles.lanternBody}>
           <View style={styles.lanternSheen} />
-          <View style={[styles.lanternRib, { left: '32%' }]} />
-          <View style={[styles.lanternRib, { left: '50%' }]} />
-          <View style={[styles.lanternRib, { left: '68%' }]} />
+          <View style={[styles.lanternRib, { left: '34%' }]} />
+          <View style={[styles.lanternRib, { left: '64%' }]} />
         </View>
         <View style={styles.lanternCap} />
         <View style={styles.lanternTassel} />
@@ -182,7 +160,7 @@ function Puff({ delay, x }: { delay: number; x: number }) {
   }, [t, delay]);
 
   // opacité 0 aux deux extrémités → le reset de la boucle (1 → 0) est invisible.
-  const opacity = t.interpolate({ inputRange: [0, 0.18, 0.7, 1], outputRange: [0, 0.3, 0.16, 0] });
+  const opacity = t.interpolate({ inputRange: [0, 0.18, 0.7, 1], outputRange: [0, 0.45, 0.25, 0] });
   const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, -78] });
   const scale = t.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1.5] });
 
@@ -190,28 +168,34 @@ function Puff({ delay, x }: { delay: number; x: number }) {
 }
 
 const styles = StyleSheet.create({
-  moonGate: {
+  speed: {
     position: 'absolute',
-    top: 70,
+    top: -SCREEN_W * 0.2,
     alignSelf: 'center',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: Palette.wallTop,
-    borderWidth: 6,
-    borderColor: '#F0D2AE',
-    opacity: 0.45,
+    left: SCREEN_W * 0.5 - SCREEN_W * 0.65,
   },
-  moonGateInner: {
+
+  // Spotlight rond derrière le héros (case ronde manga, contour encre).
+  spotlight: {
     position: 'absolute',
-    top: 82,
+    top: 64,
     alignSelf: 'center',
-    width: 126,
-    height: 126,
-    borderRadius: 63,
-    borderWidth: 2,
-    borderColor: '#FFFDF6',
-    opacity: 0.4,
+    width: 196,
+    height: 196,
+    borderRadius: 98,
+    backgroundColor: Palette.white,
+    opacity: 0.55,
+  },
+  spotlightRing: {
+    position: 'absolute',
+    top: 64,
+    alignSelf: 'center',
+    width: 196,
+    height: 196,
+    borderRadius: 98,
+    borderWidth: 3,
+    borderColor: Palette.outline,
+    opacity: 0.5,
   },
 
   steamer: {
@@ -221,106 +205,106 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: `${STEAMER_RATIO * 100}%`,
     overflow: 'hidden',
+    borderTopWidth: 3,
+    borderColor: Palette.outline,
   },
   weave: {
     position: 'absolute',
     left: 0,
     right: 0,
     height: 2,
+    backgroundColor: Palette.steamerDark,
+    opacity: 0.45,
   },
-  weaveHighlight: {
+  steamerShade: {
     position: 'absolute',
-    top: 26,
-    bottom: 0,
-    width: 10,
-    backgroundColor: '#FFFFFF',
-    opacity: 0.05,
-    borderRadius: 5,
-  },
-  innerShadow: {
-    position: 'absolute',
-    top: 26,
     left: 0,
     right: 0,
-    height: 30,
+    bottom: 0,
+    height: '38%',
+    backgroundColor: Palette.steamerDark,
+    opacity: 0.35,
   },
   rim: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 26,
+    height: 30,
     flexDirection: 'row',
     backgroundColor: Palette.steamerRim,
     alignItems: 'center',
-  },
-  rimHighlight: {
-    position: 'absolute',
-    top: 3,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#FFFFFF',
-    opacity: 0.18,
+    borderBottomWidth: 3,
+    borderColor: Palette.outline,
   },
   slat: {
     width: 14,
-    height: 26,
-    marginRight: 4,
+    height: 22,
+    marginHorizontal: 3,
     backgroundColor: Palette.steamerDark,
-    borderRadius: 3,
-    opacity: 0.6,
+    borderRadius: 2,
+    borderWidth: 2,
+    borderColor: Palette.outline,
+    opacity: 0.85,
   },
 
-  lanternString: { width: 2, height: 40, backgroundColor: Palette.lanternDark, opacity: 0.5 },
-  lanternGlow: { position: 'absolute', top: -16, left: -20, zIndex: -1 },
+  lanternString: { width: 3, height: 40, backgroundColor: Palette.ink, opacity: 0.7 },
   lanternCap: {
-    width: 26,
-    height: 8,
+    width: 28,
+    height: 9,
     backgroundColor: Palette.lanternGold,
     borderRadius: 3,
+    borderWidth: 2,
+    borderColor: Palette.outline,
     alignSelf: 'center',
   },
   lanternBody: {
-    width: 52,
-    height: 44,
+    width: 54,
+    height: 46,
     backgroundColor: Palette.lantern,
-    borderRadius: 26,
+    borderRadius: 27,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
     justifyContent: 'center',
     overflow: 'hidden',
+    marginVertical: -1,
   },
   lanternSheen: {
     position: 'absolute',
-    top: 6,
-    left: 8,
-    width: 16,
-    height: 26,
-    borderRadius: 10,
+    top: 7,
+    left: 9,
+    width: 14,
+    height: 22,
+    borderRadius: 8,
     backgroundColor: '#FFFFFF',
-    opacity: 0.18,
+    opacity: 0.35,
   },
   lanternRib: {
     position: 'absolute',
     top: 4,
-    width: 1.5,
-    height: 36,
+    width: 2,
+    height: 38,
     backgroundColor: Palette.lanternDark,
-    opacity: 0.5,
+    opacity: 0.6,
   },
   lanternTassel: {
-    width: 4,
+    width: 5,
     height: 16,
     backgroundColor: Palette.lanternGold,
     alignSelf: 'center',
+    borderWidth: 2,
+    borderColor: Palette.outline,
     borderBottomLeftRadius: 2,
     borderBottomRightRadius: 2,
   },
 
   steamPuff: {
     position: 'absolute',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: Palette.steam,
+    borderWidth: 2,
+    borderColor: Palette.outline,
   },
 });

@@ -16,6 +16,7 @@
     "expo-glass-effect": "~56.0.4",
     "expo-haptics": "~56.0.3",
     "expo-image": "~56.0.11",
+    "expo-keep-awake": "~56.0.3",
     "expo-linear-gradient": "~56.0.4",
     "expo-linking": "~56.0.14",
     "expo-router": "~56.2.11",
@@ -39,6 +40,8 @@
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.0.0",
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~56.0.4",
     "firebase-admin": "^13.10.0",
     "tsx": "^4.22.4",
     "typescript": "~6.0.3"
@@ -51,7 +54,7 @@
     "submit:ios": "eas build --platform ios --profile production --auto-submit",
     "lint": "expo lint",
     "test": "tsx scripts/test-economy.ts",
-    "render:items": "node scripts/render-items.mjs",
+    "render:items": "tsx scripts/render-items.mjs",
     "seed:catalog": "node scripts/seed-catalog.mjs"
   },
   "private": true

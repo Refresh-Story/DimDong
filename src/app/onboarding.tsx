@@ -17,7 +17,7 @@ import { DimAvatar } from '@/components/DimAvatar';
 import { Scene } from '@/components/Scene';
 import { PrimaryButton } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
-import { Palette, Radius, Shadow, Spacing } from '@/theme';
+import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function OnboardingScreen() {
   const { setName, catalog } = useGame();
@@ -78,9 +78,10 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.xl, paddingVertical: Spacing.xl },
-  title: { fontSize: 30, fontWeight: '900', color: Palette.ink, textAlign: 'center' },
+  title: { fontSize: 40, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1, textAlign: 'center' },
   subtitle: {
     fontSize: 16,
+    fontFamily: Fonts.body,
     color: Palette.inkSoft,
     textAlign: 'center',
     marginTop: Spacing.sm,
@@ -90,18 +91,20 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Palette.white,
     borderRadius: Radius.xl,
+    borderWidth: 3,
+    borderColor: Palette.outline,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadow.card,
   },
   input: {
-    borderWidth: 2,
-    borderColor: Palette.cardSoft,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
     borderRadius: Radius.lg,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: Fonts.bodyBold,
     color: Palette.ink,
     textAlign: 'center',
   },

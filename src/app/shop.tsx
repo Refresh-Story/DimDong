@@ -9,7 +9,7 @@ import { DimAvatar } from '@/components/DimAvatar';
 import { GemBadge } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { CATEGORY_LABELS, CATEGORY_ORDER, Item } from '@/data/items';
-import { Palette, Radius, Shadow, Spacing } from '@/theme';
+import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 const RARITY_LABEL: Record<Item['rarity'], string> = {
   common: 'Commun',
@@ -156,24 +156,26 @@ export default function ShopScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Palette.panel, paddingHorizontal: Spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.md },
-  back: { width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+  back: { width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
   backText: { fontSize: 28, fontWeight: '800', color: Palette.ink, marginTop: -4 },
-  title: { flex: 1, fontSize: 24, fontWeight: '900', color: Palette.ink },
-  section: { fontSize: 18, fontWeight: '800', color: Palette.primaryDark, marginBottom: Spacing.sm },
+  title: { flex: 1, fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
+  section: { fontSize: 20, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5, marginBottom: Spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   card: {
     width: '47%',
     backgroundColor: Palette.white,
     borderRadius: Radius.lg,
+    borderWidth: 3,
+    borderColor: Palette.outline,
     padding: Spacing.md,
     alignItems: 'center',
     gap: 4,
     ...Shadow.card,
   },
-  cardLegendary: { borderWidth: 2, borderColor: Palette.gold, backgroundColor: '#FFFBEF' },
+  cardLegendary: { backgroundColor: '#FFFBEF', borderColor: Palette.gold },
   preview: { height: 96, justifyContent: 'center', alignItems: 'center' },
-  itemName: { fontSize: 15, fontWeight: '800', color: Palette.ink },
-  rarity: { fontSize: 12, fontWeight: '700', color: Palette.inkSoft, marginBottom: 4 },
+  itemName: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Palette.ink },
+  rarity: { fontSize: 12, fontFamily: Fonts.body, color: Palette.inkSoft, marginBottom: 4 },
   rarityLegendary: { color: '#C8901A' },
   buy: {
     flexDirection: 'row',
@@ -183,11 +185,13 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     paddingVertical: Spacing.sm,
     borderRadius: Radius.pill,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
   },
-  gemSmall: { width: 14, height: 14, backgroundColor: Palette.white, borderRadius: 3, transform: [{ rotate: '45deg' }], borderWidth: 1.5, borderColor: Palette.gemDark },
-  buyText: { color: Palette.white, fontSize: 16, fontWeight: '800' },
+  gemSmall: { width: 14, height: 14, backgroundColor: Palette.white, borderRadius: 3, transform: [{ rotate: '45deg' }], borderWidth: 1.5, borderColor: Palette.ink },
+  buyText: { color: Palette.white, fontSize: 18, fontFamily: Fonts.display, letterSpacing: 0.5 },
   owned: { backgroundColor: Palette.cardSoft },
-  ownedText: { color: Palette.primaryDark, fontWeight: '800' },
+  ownedText: { color: Palette.ink, fontFamily: Fonts.bodyBold },
   toast: {
     position: 'absolute',
     bottom: Spacing.xxl,
@@ -196,6 +200,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.xl,
     borderRadius: Radius.pill,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
   },
-  toastText: { color: Palette.white, fontWeight: '700' },
+  toastText: { color: Palette.white, fontFamily: Fonts.bodyBold },
 });

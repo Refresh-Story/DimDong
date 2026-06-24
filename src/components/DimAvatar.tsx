@@ -11,20 +11,23 @@ import React, { useId, useMemo } from 'react';
 import { View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { accessoryDoc, bodyDoc, DRAW_FRAME } from '@/art/dimArt';
+import { accessoryDoc, bodyDoc, kimonoDoc, DRAW_FRAME } from '@/art/dimArt';
 import { DEFAULT_DOUGH, Item, ItemCategory, getItemById } from '@/data/items';
+import { beltForLevel } from '@/game/rules';
 
 type Props = {
   size?: number;
   equipped: Partial<Record<ItemCategory, string>>;
   catalog: Item[];
+  // Niveau du joueur : pilote la couleur de la ceinture du kimono.
+  level?: number;
 };
 
 const BODY_Z = 8;
 
 type Layer = { key: string; z: number; img?: string; xml?: string };
 
-export function DimAvatar({ size = 200, equipped, catalog }: Props) {
+export function DimAvatar({ size = 200, equipped, catalog, level = 1 }: Props) {
   const width = size;
   const height = (size * DRAW_FRAME.h) / DRAW_FRAME.w;
 
@@ -36,12 +39,25 @@ export function DimAvatar({ size = 200, equipped, catalog }: Props) {
   const dough = colorItem?.color ?? DEFAULT_DOUGH;
   const isRainbow = !!colorItem?.rainbow;
 
+  const kimonoItem = getItemById(catalog, equipped.kimono);
+  const beltColor = beltForLevel(level).color;
+
   const layers = useMemo<Layer[]>(() => {
     const out: Layer[] = [];
 
     // corps : variante de couleur (image) sinon tracé manga
     if (colorItem?.image) out.push({ key: 'body', z: BODY_Z, img: colorItem.image });
     else out.push({ key: 'body', z: BODY_Z, xml: bodyDoc(dough, { rainbow: isRainbow, id: uid }) });
+
+    // Mode kimono : exclusif → seulement corps (couleur) + kimono (ceinture selon le niveau).
+    if (kimonoItem) {
+      out.push({
+        key: kimonoItem.id,
+        z: kimonoItem.zIndex ?? 10,
+        xml: kimonoDoc(kimonoItem.color, beltColor, uid),
+      });
+      return out.sort((a, b) => a.z - b.z);
+    }
 
     // cosmétiques équipés (hors couleur)
     for (const cat of Object.keys(equipped) as ItemCategory[]) {
@@ -54,7 +70,7 @@ export function DimAvatar({ size = 200, equipped, catalog }: Props) {
     }
 
     return out.sort((a, b) => a.z - b.z);
-  }, [equipped, catalog, colorItem?.image, dough, isRainbow, uid]);
+  }, [equipped, catalog, colorItem?.image, dough, isRainbow, uid, kimonoItem, beltColor]);
 
   return (
     <View style={{ width, height }}>

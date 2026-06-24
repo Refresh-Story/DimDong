@@ -26,7 +26,7 @@ function fmt(s: number) {
 
 export default function TimerScreen() {
   const router = useRouter();
-  const { player, catalog, brushCompleted } = useGame();
+  const { player, catalog, level, brushCompleted } = useGame();
   const [phase, setPhase] = useState<Phase>('ready');
   const [left, setLeft] = useState(BRUSH_DURATION_SEC);
   const [count, setCount] = useState(3);
@@ -165,7 +165,7 @@ export default function TimerScreen() {
             <Text style={styles.getReady}>Prépare-toi&nbsp;!</Text>
             <Text style={styles.countdownNum}>{count}</Text>
             <View style={styles.stage}>
-              <DimAvatar size={190} equipped={player.equipped} catalog={catalog} />
+              <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} />
             </View>
           </>
         ) : phase !== 'done' ? (
@@ -182,7 +182,7 @@ export default function TimerScreen() {
 
             <View style={styles.stage}>
               <Animated.View style={{ transform: [{ rotate }] }}>
-                <DimAvatar size={190} equipped={player.equipped} catalog={catalog} />
+                <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} />
               </Animated.View>
             </View>
 
@@ -219,7 +219,7 @@ export default function TimerScreen() {
             </Animated.Text>
             <View style={styles.stage}>
               <Animated.View style={{ transform: [{ translateY: jump }] }}>
-                <DimAvatar size={190} equipped={player.equipped} catalog={catalog} />
+                <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} />
               </Animated.View>
               {result?.rewarded && <GemBurst />}
             </View>

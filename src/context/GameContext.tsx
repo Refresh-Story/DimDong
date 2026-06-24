@@ -19,7 +19,7 @@ import React, {
 } from 'react';
 
 import { db } from '@/firebase';
-import { FALLBACK_CATALOG, Item, ItemCategory } from '@/data/items';
+import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
 import { dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
   BrushResult,
@@ -62,7 +62,8 @@ function sanitize(data: any): PlayerState {
     ...DEFAULT_PLAYER,
     ...data,
     equipped: data?.equipped ?? {},
-    ownedItems: data?.ownedItems ?? [],
+    // le kimono de judo est offert d'office, même aux joueurs déjà sauvegardés
+    ownedItems: Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])])),
     placedDecor: data?.placedDecor ?? [],
   };
 }

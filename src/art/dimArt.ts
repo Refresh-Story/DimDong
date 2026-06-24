@@ -249,6 +249,46 @@ export function accessoryDoc(draw: string, color: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// KIMONO de judo (cadre 200×260, calé sur le corps). Cas à part car il a DEUX
+// couleurs indépendantes : la veste (`jacket`) et la CEINTURE (`belt`, dérivée du
+// niveau du joueur, cf. beltForLevel). Habille le bas du torse (sous la bouche),
+// col croisé en V + obi avec nœud central et deux languettes latérales.
+// Clip sur la silhouette du corps (id namespacé pour react-native-svg).
+export function kimonoInner(jacket: string, belt: string, id = 'k'): string {
+  const clip = `kc_${id}`;
+  const under = darken(jacket, 0.12); // pan du dessous, un ton plus foncé
+  const beltShade = darken(belt, 0.25);
+  const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
+  const body =
+    `<g clip-path="url(#${clip})">` +
+    // pans de la veste, encolure OUVERTE en V (la pâte du corps se voit dans l'ouverture).
+    // Croisé : pan du dessous (droite, plus foncé) puis pan du dessus (gauche) par-dessus.
+    `<path d="M182 186 L140 186 L100 201 L100 250 L182 250 Z" fill="${under}"/>` +
+    `<path d="M18 186 L60 186 L100 201 L114 250 L18 250 Z" fill="${jacket}"/>` +
+    // revers du col repliés le long de l'encolure (dessous puis dessus)
+    `<path d="M140 186 L100 201 L110 201 L130 186 Z" fill="${under}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    `<path d="M60 186 L100 201 L90 201 L70 186 Z" fill="${jacket}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    // CONTOUR du haut : ligne d'épaules + encolure en V, d'un bord à l'autre (calé par le clip)
+    `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
+    // couture du croisé, sous la ceinture
+    `<path d="M100 218 L114 250" stroke="${INK}" stroke-width="3" fill="none" opacity="0.4"/>` +
+    // ceinture (obi) + ombre cel
+    `<rect x="12" y="201" width="176" height="17" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
+    `<path d="M14 213 L186 213" stroke="${beltShade}" stroke-width="3" opacity="0.55" stroke-linecap="round"/>` +
+    // languettes qui dépassent à gauche et à droite
+    `<path d="M90 213 L66 244 L78 248 L100 219 Z" fill="${belt}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M110 213 L134 244 L122 248 L100 219 Z" fill="${belt}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    // nœud central
+    `<rect x="89" y="197" width="22" height="25" rx="3" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
+    `</g>`;
+  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, body);
+}
+
+export function kimonoDoc(jacket: string, belt: string, id?: string): string {
+  return kimonoInner(jacket, belt, id);
+}
+
+// ---------------------------------------------------------------------------
 // DÉCORS (cadre 100×120). Aplats + cel + contour d'encre net.
 export function decorInner(kind: string, c: string): string {
   const d = darken(c, 0.24);

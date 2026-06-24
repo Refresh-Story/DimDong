@@ -29,6 +29,24 @@ export function xpForNextLevel(xp: number): { current: number; needed: number } 
   return { current: xp % LEVEL_STEP, needed: LEVEL_STEP };
 }
 
+// Ceinture de judo : la couleur dépend du niveau du joueur (paliers croissants).
+// Utilisée par le kimono (cf. DimAvatar) — la ceinture n'est pas un objet achetable.
+export type Belt = { maxLevel: number; label: string; color: string };
+
+export const BELTS: Belt[] = [
+  { maxLevel: 3, label: 'Blanche', color: '#ECECEC' },
+  { maxLevel: 5, label: 'Jaune', color: '#F4D23C' },
+  { maxLevel: 7, label: 'Orange', color: '#E8852B' },
+  { maxLevel: 9, label: 'Verte', color: '#3DA45A' },
+  { maxLevel: 11, label: 'Bleue', color: '#2F73CC' },
+  { maxLevel: 13, label: 'Marron', color: '#7A4A24' },
+  { maxLevel: Infinity, label: 'Noire', color: '#22222A' },
+];
+
+export function beltForLevel(level: number): Belt {
+  return BELTS.find((b) => level <= b.maxLevel) ?? BELTS[BELTS.length - 1];
+}
+
 // Clé de jour locale (YYYY-MM-DD) pour le plafond journalier.
 export function dayKey(d: Date): string {
   const y = d.getFullYear();

@@ -11,7 +11,7 @@ import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function InventoryScreen() {
   const router = useRouter();
-  const { player, catalog, equipItem, unequipCategory, toggleDecor } = useGame();
+  const { player, catalog, level, equipItem, unequipCategory, toggleDecor } = useGame();
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -40,7 +40,7 @@ export default function InventoryScreen() {
 
       {/* aperçu en direct */}
       <View style={styles.stage}>
-        <DimAvatar size={150} equipped={player.equipped} catalog={catalog} />
+        <DimAvatar size={150} equipped={player.equipped} catalog={catalog} level={level} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: Spacing.xxl }} showsVerticalScrollIndicator={false}>
@@ -74,7 +74,7 @@ export default function InventoryScreen() {
                         {isDecor ? (
                           <DecorView item={item} size={56} />
                         ) : (
-                          <DimAvatar size={64} equipped={{ [item.category]: item.id }} catalog={catalog} />
+                          <DimAvatar size={64} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                         )}
                       </View>
                       <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>

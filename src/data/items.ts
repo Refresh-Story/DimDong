@@ -7,6 +7,7 @@
 //               rendu par DimAvatar. Permet de tester toute la boucle dès maintenant.
 
 export type ItemCategory =
+  | 'kimono' // tenue de judo (catégorie spéciale : exclusive, ceinture selon le niveau)
   | 'color' // couleur de la pâte du dim-sum
   | 'hair'
   | 'hat'
@@ -29,7 +30,8 @@ export type DrawKind =
   | 'scarf'
   | 'sneakers'
   | 'cape'
-  | 'tuft';
+  | 'tuft'
+  | 'kimono';
 
 // Décorations placées dans la scène (sur le panier), pas portées par le personnage.
 export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern' | 'teapot';
@@ -67,6 +69,7 @@ export const Z = {
 } as const;
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
+  kimono: 'Kimono',
   color: 'Couleurs',
   hair: 'Cheveux',
   hat: 'Chapeaux',
@@ -78,6 +81,7 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
 };
 
 export const CATEGORY_ORDER: ItemCategory[] = [
+  'kimono',
   'color',
   'hat',
   'glasses',
@@ -90,6 +94,7 @@ export const CATEGORY_ORDER: ItemCategory[] = [
 
 // Catégories portées par le personnage (une seule par catégorie à la fois).
 export const WEARABLE_CATEGORIES: ItemCategory[] = [
+  'kimono',
   'color',
   'hat',
   'glasses',
@@ -102,7 +107,14 @@ export const WEARABLE_CATEGORIES: ItemCategory[] = [
 // Catalogue de secours (placeholders dessinés). Utilisé si Firestore est vide
 // ou indisponible. Une fois les visuels IA prêts, on bascule sur le catalogue
 // Firestore (mêmes ids), où chaque objet a une `image`.
+// Kimono de judo : objet unique de la catégorie spéciale `kimono` (gratuit, possédé d'office).
+export const KIMONO_ID = 'kimono_judo';
+
 export const FALLBACK_CATALOG: Item[] = [
+  // Kimono de judo (catégorie spéciale, en premier). Veste blanc cassé ; la ceinture est
+  // colorée dynamiquement selon le niveau (cf. beltForLevel) — pas une couleur d'item.
+  { id: KIMONO_ID, name: 'Kimono de judo', category: 'kimono', price: 0, rarity: 'rare', zIndex: Z.outfit, color: '#F4F1EA', draw: 'kimono' },
+
   // Couleurs de pâte (la pâte par défaut est crème, gratuite/non listée).
   { id: 'color_pink', name: 'Pâte rose', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#F2A9C0' },
   { id: 'color_matcha', name: 'Pâte matcha', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#A9C46C' },

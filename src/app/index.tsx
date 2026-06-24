@@ -1,18 +1,45 @@
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
-import { GemBadge, LevelMedallion } from '@/components/ui';
+import { GemBadge, LevelMedallion, PrimaryButton } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
-  const { ready, player, catalog, level, progress } = useGame();
+  const { ready, player, catalog, level, progress, setName } = useGame();
   const router = useRouter();
+
+  // Édition du nom du personnage.
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState('');
+
+  function openNameEditor() {
+    setDraftName(player.name);
+    setEditing(true);
+  }
+
+  async function saveName() {
+    Keyboard.dismiss();
+    await setName(draftName.trim() || 'Dim');
+    setEditing(false);
+  }
 
   // Petit rebond permanent de Dim.
   const bob = useRef(new Animated.Value(0)).current;
@@ -50,12 +77,17 @@ export default function HomeScreen() {
         {/* barre du haut : médaillon de niveau + nom/progression + gemmes */}
         <View style={styles.topRow}>
           <LevelMedallion level={level} />
-          <View style={styles.namePlate}>
+          <Pressable
+            style={styles.namePlate}
+            onPress={openNameEditor}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Modifier le nom (${player.name})`}>
             <Text style={styles.name} numberOfLines={1}>{player.name}</Text>
             <View style={styles.track}>
               <View style={[styles.fill, { width: `${Math.round(progress * 100)}%` }]} />
             </View>
-          </View>
+          </Pressable>
           <GemBadge count={player.gems} tone="chip" />
         </View>
 
@@ -63,7 +95,7 @@ export default function HomeScreen() {
         <View style={styles.stage}>
           <Animated.View style={{ transform: [{ translateY: bob }] }}>
             {isRainbow && <RainbowAura size={210} />}
-            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} />
+            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} />
           </Animated.View>
         </View>
 
@@ -71,26 +103,49 @@ export default function HomeScreen() {
         <Pressable
           style={({ pressed }) => [styles.brushBtn, pressed && { transform: [{ scale: 0.97 }] }]}
           onPress={() => router.push('/timer')}>
-          <Text style={styles.brushIcon}>🪥</Text>
           <Text style={styles.brushText}>Se brosser les dents</Text>
         </Pressable>
 
         {/* boutique / mes objets */}
         <View style={styles.bottomRow}>
-          <NavCard label="Boutique" emoji="🛍️" onPress={() => router.push('/shop')} />
-          <NavCard label="Mes objets" emoji="🧺" onPress={() => router.push('/inventory')} />
+          <NavCard label="Boutique" onPress={() => router.push('/shop')} />
+          <NavCard label="Mes objets" onPress={() => router.push('/inventory')} />
         </View>
       </SafeAreaView>
+
+      {/* modale : renommer le personnage */}
+      <Modal visible={editing} transparent animationType="fade" onRequestClose={() => setEditing(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalRoot}>
+          <Pressable style={styles.backdrop} onPress={() => setEditing(false)} />
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Nouveau nom</Text>
+            <TextInput
+              value={draftName}
+              onChangeText={setDraftName}
+              placeholder="Nom du personnage"
+              placeholderTextColor={Palette.inkSoft}
+              style={styles.input}
+              maxLength={16}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={saveName}
+              submitBehavior="blurAndSubmit"
+            />
+            <PrimaryButton label="Enregistrer" onPress={saveName} />
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
 
-function NavCard({ label, emoji, onPress }: { label: string; emoji: string; onPress: () => void }) {
+function NavCard({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.navCard, pressed && { transform: [{ scale: 0.97 }] }]}>
-      <Text style={styles.navEmoji}>{emoji}</Text>
       <Text style={styles.navLabel}>{label}</Text>
     </Pressable>
   );
@@ -131,14 +186,11 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: Palette.outline,
     paddingVertical: Spacing.lg,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.sm,
     marginBottom: Spacing.md,
     ...Shadow.card,
   },
-  brushIcon: { fontSize: 24 },
   brushText: { color: Palette.white, fontSize: 26, fontFamily: Fonts.display, letterSpacing: 1 },
 
   bottomRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.sm },
@@ -150,9 +202,38 @@ const styles = StyleSheet.create({
     borderColor: Palette.outline,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
-    gap: 4,
     ...Shadow.card,
   },
-  navEmoji: { fontSize: 28 },
   navLabel: { fontSize: 18, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5 },
+
+  modalRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
+  modalCard: {
+    width: '100%',
+    backgroundColor: Palette.white,
+    borderRadius: Radius.xl,
+    borderWidth: 3,
+    borderColor: Palette.outline,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+    ...Shadow.card,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontFamily: Fonts.display,
+    color: Palette.ink,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    fontSize: 18,
+    fontFamily: Fonts.bodyBold,
+    color: Palette.ink,
+    textAlign: 'center',
+  },
 });

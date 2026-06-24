@@ -20,7 +20,7 @@ const RARITY_LABEL: Record<Item['rarity'], string> = {
 
 export default function ShopScreen() {
   const router = useRouter();
-  const { player, catalog, buyItem, grantItem } = useGame();
+  const { player, catalog, level, buyItem, grantItem } = useGame();
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -103,14 +103,14 @@ export default function ShopScreen() {
                     <View key={item.id} style={[styles.card, legendary && styles.cardLegendary]}>
                       {item.rainbow ? (
                         <Pressable style={styles.preview} onPress={() => secretTap(item)}>
-                          <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} />
+                          <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                         </Pressable>
                       ) : (
                         <View style={styles.preview}>
                           {item.category === 'decor' ? (
                             <DecorView item={item} size={62} />
                           ) : (
-                            <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} />
+                            <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                           )}
                         </View>
                       )}

@@ -1,5 +1,3 @@
-// Petits composants d'interface réutilisables pour Dim-Dong — style "manga / case BD"
-// (contours encre francs, ombres dures décalées, typographie display).
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
@@ -16,7 +14,6 @@ export function GemBadge({
   tone?: 'card' | 'chip';
 }) {
   const big = size === 'lg';
-  // Le badge "pulse" quand le nombre de gemmes change (gain ou dépense).
   const scale = useRef(new Animated.Value(1)).current;
   const first = useRef(true);
   useEffect(() => {
@@ -44,7 +41,6 @@ export function GemBadge({
   );
 }
 
-// Médaillon de niveau : pastille accent contourée encre avec le niveau bien lisible.
 export function LevelMedallion({ level }: { level: number }) {
   return (
     <View style={styles.medallion}>
@@ -74,7 +70,6 @@ export function PrimaryButton({
       style={({ pressed }) => [
         styles.btn,
         { backgroundColor: disabled ? Palette.locked : color },
-        // Effet "appui" manga : la case s'enfonce vers son ombre.
         pressed && !disabled && styles.btnPressed,
         style,
       ]}>
@@ -91,7 +86,6 @@ export function Chip({ label }: { label: string }) {
   );
 }
 
-// Case "manga" réutilisable : fond papier/blanc, contour encre épais, ombre dure.
 export function Panel({
   children,
   style,
@@ -108,8 +102,6 @@ export function Panel({
   );
 }
 
-// Traits de vitesse manga : rayons d'encre convergeant vers un point focal central,
-// avec un disque central laissé libre (où l'on place le personnage). Décoratif.
 export function SpeedLines({
   size,
   color = Palette.ink,
@@ -121,18 +113,17 @@ export function SpeedLines({
   size: number;
   color?: string;
   count?: number;
-  innerRatio?: number; // rayon du disque central laissé vide (0-1)
+  innerRatio?: number;
   strokeWidth?: number;
   opacity?: number;
 }) {
   const c = size / 2;
-  const rOuter = size * 0.72; // déborde un peu pour couvrir les coins
+  const rOuter = size * 0.72;
   const rInner = size * innerRatio;
   const lines = Array.from({ length: count }, (_, i) => {
     const a = (i / count) * Math.PI * 2;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
-    // Longueur légèrement variable pour casser la régularité (rythme manga).
     const jitter = 0.82 + ((i * 47) % 100) / 100 / 3;
     return {
       x1: c + cos * rInner,
@@ -183,7 +174,6 @@ const styles = StyleSheet.create({
     borderColor: Palette.outline,
   },
   gemText: { fontSize: 18, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5 },
-  // Variante "chip" : fond crème, sans ombre (s'intègre dans une surface déjà blanche).
   gemBadgeChip: {
     backgroundColor: Palette.cardSoft,
     shadowOpacity: 0,
@@ -219,14 +209,12 @@ const styles = StyleSheet.create({
     borderColor: Palette.outline,
     ...Shadow.card,
   },
-  // Appui : on décale la case vers son ombre (3,4) qui semble alors "absorbée".
   btnPressed: { transform: [{ translateX: 3 }, { translateY: 4 }], shadowOpacity: 0 },
   btnText: {
     color: Palette.white,
     fontSize: 24,
     fontFamily: Fonts.display,
     letterSpacing: 1,
-    // léger liseré sombre sous le texte pour le détacher du fond coloré
     textShadowColor: Palette.ink,
     textShadowOffset: { width: 0, height: 1.5 },
     textShadowRadius: 0,

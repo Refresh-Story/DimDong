@@ -1,30 +1,12 @@
-// SOURCE UNIQUE des visuels manga de Dim-Dong.
-//
-// Chaque fonction renvoie une CHAÎNE SVG complète (document `<svg>…</svg>`), utilisée :
-//   - par l'app au runtime via `SvgXml` (react-native-svg) — voir DimAvatar / Decor ;
-//   - par le script `scripts/render-items.mjs` (lancé avec `tsx`) pour produire les PNG
-//     uploadés sur Firebase.
-// → app et PNG sont donc PIXEL-IDENTIQUES (même code de tracé).
-//
-// Style manga : aplats + ombrage cel (1 ton plus foncé) + CONTOUR D'ENCRE re-tracé
-// PAR-DESSUS pour des bords nets au pixel près (le contour n'est jamais mangé par une
-// ombre). Personnages sur cadre 200×260, décors sur cadre 100×120, fond transparent.
-//
-// IMPORTANT : react-native-svg partage les `id` de <defs> entre tous les SVG montés.
-// Les ids (clipPath, dégradés) sont donc suffixés par un identifiant unique par item.
 
 export const DRAW_FRAME = { w: 200, h: 260 };
 export const DECOR_FRAME = { w: 100, h: 120 };
 
 const INK = '#16161D';
 
-// Silhouette du corps (dim-sum dodu). Partagée par le remplissage, l'ombre cel (clip)
-// et le contour final.
 const BODY_PATH =
   'M100 72 C150 72 176 108 176 154 C176 206 146 228 100 228 C54 228 24 206 24 154 C24 108 50 72 100 72 Z';
 
-// ---------------------------------------------------------------------------
-// Helpers couleur (mêmes formules que l'app historique).
 export function darken(hex: string, a = 0.24): string {
   const h = hex.replace('#', '');
   if (h.length !== 6) return hex;
@@ -53,14 +35,11 @@ function svg(w: number, h: number, defs: string, body: string): string {
   );
 }
 
-// 4 sortes d'étincelles manga réutilisables.
 function sparkle(cx: number, cy: number, s: number, fill = '#FFE066'): string {
   const d = `M${cx} ${cy - s} C${cx + s * 0.12} ${cy - s * 0.28} ${cx + s * 0.28} ${cy - s * 0.12} ${cx + s} ${cy} C${cx + s * 0.28} ${cy + s * 0.12} ${cx + s * 0.12} ${cy + s * 0.28} ${cx} ${cy + s} C${cx - s * 0.12} ${cy + s * 0.28} ${cx - s * 0.28} ${cy + s * 0.12} ${cx - s} ${cy} C${cx - s * 0.28} ${cy - s * 0.12} ${cx - s * 0.12} ${cy - s * 0.28} ${cx} ${cy - s} Z`;
   return `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`;
 }
 
-// ---------------------------------------------------------------------------
-// CORPS de Dim (cadre 200×260). `id` namespace les defs ; `rainbow` = pâte légendaire.
 export function bodyInner(dough: string, opts: { rainbow?: boolean; id?: string } = {}): string {
   const id = opts.id ?? 'b';
   const clip = `cb_${id}`;
@@ -81,9 +60,6 @@ export function bodyInner(dough: string, opts: { rainbow?: boolean; id?: string 
         `<stop offset="1" stop-color="#C9A0FF"/></linearGradient>`
       : '');
 
-  // Sommet pincé (façon baozi) : monticule plissé + lignes de plis évasées + nœud
-  // torsadé. Réduit à 60 % autour de sa base (y=80) pour se loger proprement sous les
-  // chapeaux (cf. accessoryInner, coiffes descendues de +20).
   const crown =
     `<g transform="translate(100,80) scale(0.6) translate(-100,-80)">` +
     `<path d="M70 82 Q68 54 100 48 Q132 54 130 82" fill="${moundFill}" stroke="${INK}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>` +
@@ -128,13 +104,10 @@ export function bodyDoc(dough: string, opts: { rainbow?: boolean; id?: string } 
   return bodyInner(dough, opts);
 }
 
-// ---------------------------------------------------------------------------
-// ACCESSOIRES (cadre 200×260, calés sur le corps). Aplats + contour d'encre net.
 export function accessoryInner(draw: string, c: string): string {
   const d = darken(c, 0.2);
   const hi = '<ellipse cx="80" cy="34" rx="18" ry="9" fill="#FFFFFF" opacity="0.18"/>';
   switch (draw) {
-    // Coiffes (cap/beanie/crown) descendues de +20 pour bien coiffer le sommet pincé.
     case 'cap':
       return (
         `<g transform="translate(0,20)">` +
@@ -189,7 +162,6 @@ export function accessoryInner(draw: string, c: string): string {
         `<path d="M114 144 L128 140" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.5"/>`
       );
     case 'bowtie':
-      // Nœud papillon arrondi (ailes galbées + plis), descendu de +15.
       return (
         `<g transform="translate(0,15)">` +
         `<path d="M100 192 C82 178 68 181 68 192 C68 203 82 206 100 192 Z" fill="${c}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
@@ -200,7 +172,6 @@ export function accessoryInner(draw: string, c: string): string {
         `</g>`
       );
     case 'scarf':
-      // Écharpe enveloppante + pan tombant nervuré, descendue de +17.
       return (
         `<g transform="translate(0,17)">` +
         `<path d="M44 190 Q100 210 156 190 Q150 210 100 214 Q50 210 44 190 Z" fill="${c}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
@@ -210,8 +181,6 @@ export function accessoryInner(draw: string, c: string): string {
         `</g>`
       );
     case 'sneakers': {
-      // Basket compacte qui épouse l'arrondi du dessous (ne monte pas sur le corps).
-      // Pied gauche en miroir → les deux pointes vers l'extérieur.
       const TY = 217;
       const shoe = (fc: number) =>
         `<rect x="${fc - 23}" y="${TY + 17}" width="46" height="10" rx="5" fill="#FFFFFF" stroke="${INK}" stroke-width="3"/>` +
@@ -222,16 +191,28 @@ export function accessoryInner(draw: string, c: string): string {
       return `<g transform="translate(156,0) scale(-1,1)">${shoe(78)}</g>` + shoe(122);
     }
     case 'cape':
-      // Plus large que le corps pour bien dépasser DERRIÈRE Dim (z-index < corps).
-      // Ourlet festonné + col.
       return (
         `<path d="M50 86 Q100 72 150 86 L182 234 Q150 224 138 244 Q120 224 100 244 Q80 224 62 244 Q50 224 18 234 Z" fill="${c}"/>` +
         `<path d="M100 80 L100 240" stroke="${d}" stroke-width="3" opacity="0.35"/>` +
         `<path d="M50 86 Q100 72 150 86 L182 234 Q150 224 138 244 Q120 224 100 244 Q80 224 62 244 Q50 224 18 234 Z" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
         `<path d="M58 84 Q100 92 142 84 Q138 76 100 75 Q62 76 58 84 Z" fill="${d}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`
       );
+    case 'katanas': {
+      const blade = '#DCE3EC';
+      const guard = '#C8A23E';
+      const kat =
+        `<rect x="92" y="26" width="16" height="10" rx="4" fill="${d}" stroke="${INK}" stroke-width="3.5"/>` +
+        `<rect x="93" y="32" width="14" height="46" rx="6" fill="${c}" stroke="${INK}" stroke-width="4"/>` +
+        `<path d="M94 41 L106 51 M106 41 L94 51 M94 56 L106 66 M106 56 L94 66" stroke="${d}" stroke-width="2.4" opacity="0.8"/>` +
+        `<ellipse cx="100" cy="82" rx="14" ry="7" fill="${guard}" stroke="${INK}" stroke-width="4"/>` +
+        `<path d="M95 88 L105 88 L104 232 L97 252 L95 238 Z" fill="${blade}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+        `<path d="M99 94 L99 232" stroke="#FFFFFF" stroke-width="2.4" opacity="0.6"/>`;
+      return (
+        `<g transform="rotate(32 100 150)">${kat}</g>` +
+        `<g transform="rotate(-32 100 150)">${kat}</g>`
+      );
+    }
     case 'tuft':
-      // Mèche descendue de +30 pour se poser sur le sommet pincé (sinon elle flotte).
       return (
         `<g transform="translate(0,30)">` +
         `<path d="M60 52 Q58 12 84 36 Q88 8 100 32 Q112 8 122 38 Q142 14 140 56 Q100 40 60 52 Z" fill="${c}"/>` +
@@ -248,12 +229,6 @@ export function accessoryDoc(draw: string, color: string): string {
   return svg(DRAW_FRAME.w, DRAW_FRAME.h, '', accessoryInner(draw, color));
 }
 
-// ---------------------------------------------------------------------------
-// KIMONO de judo (cadre 200×260, calé sur le corps). Cas à part car il a DEUX
-// couleurs indépendantes : la veste (`jacket`) et la CEINTURE (`belt`, dérivée du
-// niveau du joueur, cf. beltForLevel). Habille le bas du torse (sous la bouche),
-// col croisé en V + obi avec nœud central et deux languettes latérales.
-// Clip sur la silhouette du corps (id namespacé pour react-native-svg).
 export function kimonoInner(jacket: string, belt: string, id = 'k'): string {
   const clip = `kc_${id}`;
   const under = darken(jacket, 0.12); // pan du dessous, un ton plus foncé
@@ -261,25 +236,22 @@ export function kimonoInner(jacket: string, belt: string, id = 'k'): string {
   const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
   const body =
     `<g clip-path="url(#${clip})">` +
-    // pans de la veste, encolure OUVERTE en V (la pâte du corps se voit dans l'ouverture).
-    // Croisé : pan du dessous (droite, plus foncé) puis pan du dessus (gauche) par-dessus.
     `<path d="M182 186 L140 186 L100 201 L100 250 L182 250 Z" fill="${under}"/>` +
     `<path d="M18 186 L60 186 L100 201 L114 250 L18 250 Z" fill="${jacket}"/>` +
-    // revers du col repliés le long de l'encolure (dessous puis dessus)
     `<path d="M140 186 L100 201 L110 201 L130 186 Z" fill="${under}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
     `<path d="M60 186 L100 201 L90 201 L70 186 Z" fill="${jacket}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
-    // CONTOUR du haut : ligne d'épaules + encolure en V, d'un bord à l'autre (calé par le clip)
     `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
-    // couture du croisé, sous la ceinture
     `<path d="M100 218 L114 250" stroke="${INK}" stroke-width="3" fill="none" opacity="0.4"/>` +
-    // ceinture (obi) + ombre cel
-    `<rect x="12" y="201" width="176" height="17" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
-    `<path d="M14 213 L186 213" stroke="${beltShade}" stroke-width="3" opacity="0.55" stroke-linecap="round"/>` +
-    // languettes qui dépassent à gauche et à droite
-    `<path d="M90 213 L66 244 L78 248 L100 219 Z" fill="${belt}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
-    `<path d="M110 213 L134 244 L122 248 L100 219 Z" fill="${belt}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
-    // nœud central
-    `<rect x="89" y="197" width="22" height="25" rx="3" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
+    `<rect x="12" y="200" width="176" height="18" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
+    `<path d="M14 209 L186 209" stroke="${beltShade}" stroke-width="2" opacity="0.5"/>` +
+    `<path d="M14 214 L186 214" stroke="${beltShade}" stroke-width="2.5" opacity="0.4" stroke-linecap="round"/>` +
+    `<path d="M92 213 Q78 228 62 237 L70 248 Q88 236 102 221 Z" fill="${belt}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<path d="M83 226 Q78 231 72 236" stroke="${beltShade}" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>` +
+    `<path d="M108 213 Q122 228 138 237 L130 248 Q112 236 98 221 Z" fill="${belt}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<path d="M117 226 Q122 231 128 236" stroke="${beltShade}" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>` +
+    `<path d="M89 197 Q100 191 111 197 Q119 205 113 216 Q100 223 87 216 Q81 205 89 197 Z" fill="${belt}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+    `<path d="M96 200 Q94 207 97 214 M104 200 Q106 207 103 214" stroke="${beltShade}" stroke-width="2.2" fill="none" opacity="0.7" stroke-linecap="round"/>` +
+    `<ellipse cx="95" cy="201" rx="5" ry="3" fill="#FFFFFF" opacity="0.25"/>` +
     `</g>`;
   return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, body);
 }
@@ -288,8 +260,6 @@ export function kimonoDoc(jacket: string, belt: string, id?: string): string {
   return kimonoInner(jacket, belt, id);
 }
 
-// ---------------------------------------------------------------------------
-// DÉCORS (cadre 100×120). Aplats + cel + contour d'encre net.
 export function decorInner(kind: string, c: string): string {
   const d = darken(c, 0.24);
   const shadow = '<ellipse cx="50" cy="114" rx="30" ry="6" fill="#16161D" opacity="0.12"/>';

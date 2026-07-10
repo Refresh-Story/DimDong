@@ -1,7 +1,3 @@
-// Vignette d'un décor d'arrière-plan (boutique / inventaire) : mini-carte statique
-// composée depuis la BackgroundConfig (ciel + pastille d'accent + bande de sol).
-// Zéro animation, zéro SVG → coût quasi nul dans une grille.
-// Deux modes, comme DecorView : `image` (PNG Firebase Storage) ou composition locale.
 import { Image } from 'expo-image';
 import React from 'react';
 import { View } from 'react-native';
@@ -35,7 +31,6 @@ export function BackgroundThumb({ item, size = 72 }: { item: Item; size?: number
         overflow: 'hidden',
         backgroundColor: cfg.paper,
       }}>
-      {/* pastille d'accent (soleil / lune / lanterne) */}
       <View
         style={{
           position: 'absolute',
@@ -49,7 +44,6 @@ export function BackgroundThumb({ item, size = 72 }: { item: Item; size?: number
           borderColor: Palette.outline,
         }}
       />
-      {/* sol : rebord + aplat principal */}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: size * 0.4, borderTopWidth: 2.5, borderColor: Palette.outline, backgroundColor: cfg.floor.base }}>
         <View style={{ height: size * 0.12, backgroundColor: cfg.floor.rim, borderBottomWidth: 2, borderColor: Palette.outline }} />
       </View>

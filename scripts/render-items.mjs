@@ -1,19 +1,3 @@
-// Rasterise les visuels manga du catalogue (SOURCE UNIQUE : src/art/dimArt.ts) en PNG
-// transparents, les uploade sur Firebase Storage (catalog/<id>.png), et écrit l'URL dans
-// le champ `image` de catalog.seed.json.
-//
-// Le tracé est EXACTEMENT le même que celui rendu par l'app (DimAvatar / Decor via SvgXml)
-// → app et PNG pixel-identiques.
-//
-// Lancé avec `tsx` (import direct du module TS). Voir package.json → render:items.
-//
-// Prérequis upload : un serviceAccountKey.json à la racine du repo (détecté
-// automatiquement), ou :
-//   export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
-//
-// Lancement :
-//   npm run render:items            # produit les PNG + upload + patch seed
-//   npm run render:items -- --dry-run   # produit les PNG en local seulement
 
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -33,7 +17,6 @@ const SCALE = 4;
 const AVATAR = { w: DRAW_FRAME.w, h: DRAW_FRAME.h };
 const DECOR = { w: DECOR_FRAME.w, h: DECOR_FRAME.h };
 
-// Produit le SVG complet + le cadre pour un item, ou null s'il n'a pas de visuel.
 function svgFor(item) {
   if (item.category === 'color') {
     return { canvas: AVATAR, svg: bodyDoc(item.color, { rainbow: !!item.rainbow, id: item.id }) };
@@ -55,14 +38,13 @@ function rasterize(svg, canvas) {
   return resvg.render().asPng();
 }
 
-// Jeton de téléchargement déterministe (réexécutions → mêmes URLs → remplace en place).
 function tokenFor(id) {
   const h = createHash('sha256').update(id).digest('hex');
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
 }
 function downloadUrl(id, token) {
   const path = encodeURIComponent(`catalog/${id}.png`);
-  return `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${path}?alt=media&token=${token}`;
+  return `https:
 }
 
 async function getBucket() {

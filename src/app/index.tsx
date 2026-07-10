@@ -27,7 +27,6 @@ export default function HomeScreen() {
   const { ready, player, catalog, level, progress, setName } = useGame();
   const router = useRouter();
 
-  // Édition du nom du personnage.
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState('');
 
@@ -42,7 +41,6 @@ export default function HomeScreen() {
     setEditing(false);
   }
 
-  // Petit rebond permanent de Dim.
   const bob = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
@@ -76,7 +74,6 @@ export default function HomeScreen() {
     <View style={{ flex: 1 }}>
       <Scene decor={placedDecor} background={background} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        {/* barre du haut : médaillon de niveau + nom/progression + gemmes */}
         <View style={styles.topRow}>
           <LevelMedallion level={level} />
           <Pressable
@@ -93,7 +90,6 @@ export default function HomeScreen() {
           <GemBadge count={player.gems} tone="chip" />
         </View>
 
-        {/* personnage */}
         <View style={styles.stage}>
           <Animated.View style={{ transform: [{ translateY: bob }] }}>
             {isRainbow && <RainbowAura size={210} />}
@@ -101,21 +97,18 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
 
-        {/* bouton brossage */}
         <Pressable
           style={({ pressed }) => [styles.brushBtn, pressed && { transform: [{ scale: 0.97 }] }]}
           onPress={() => router.push('/timer')}>
           <Text style={styles.brushText}>Se brosser les dents</Text>
         </Pressable>
 
-        {/* boutique / mes objets */}
         <View style={styles.bottomRow}>
           <NavCard label="Boutique" onPress={() => router.push('/shop')} />
           <NavCard label="Mes objets" onPress={() => router.push('/inventory')} />
         </View>
       </SafeAreaView>
 
-      {/* modale : renommer le personnage */}
       <Modal visible={editing} transparent animationType="fade" onRequestClose={() => setEditing(false)}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

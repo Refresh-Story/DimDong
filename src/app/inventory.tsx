@@ -39,7 +39,6 @@ export default function InventoryScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* aperçu en direct */}
       <View style={styles.stage}>
         <DimAvatar size={150} equipped={player.equipped} catalog={catalog} level={level} />
       </View>

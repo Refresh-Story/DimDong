@@ -1,5 +1,3 @@
-// Logique d'économie du jeu, PURE (sans Firebase ni React) → facile à tester.
-// Le GameContext applique ces fonctions puis persiste le résultat.
 import { Item, ItemCategory, KIMONO_ID } from '@/data/items';
 import { GEMS_PER_BRUSH, MAX_REWARDED_BRUSHES_PER_DAY, STARTING_GEMS } from '@/game/rules';
 
@@ -22,7 +20,7 @@ export const DEFAULT_PLAYER: PlayerState = {
   xp: 0,
   totalBrushes: 0,
   equipped: {},
-  ownedItems: [KIMONO_ID], // le kimono de judo est offert d'office
+  ownedItems: [KIMONO_ID],
   placedDecor: [],
   brushDateKey: '',
   brushesToday: 0,
@@ -41,7 +39,6 @@ export function setName(p: PlayerState, name: string): PlayerState {
   return { ...p, name: name.trim() || 'Dim', onboarded: true };
 }
 
-// Débloque un objet gratuitement (secret) : l'ajoute à l'inventaire sans débiter.
 export function grant(p: PlayerState, item: Item): PlayerState {
   if (p.ownedItems.includes(item.id)) return p;
   return { ...p, ownedItems: [...p.ownedItems, item.id] };
@@ -78,8 +75,6 @@ export function brush(p: PlayerState, todayKey: string): { player: PlayerState; 
 }
 
 export function equip(p: PlayerState, item: Item): PlayerState {
-  // Le kimono est exclusif : l'équiper retire tout le reste, on ne garde que la
-  // couleur et le décor de fond (qui ne sont pas portés par le personnage).
   if (item.category === 'kimono') {
     const equipped: PlayerState['equipped'] = {};
     if (p.equipped.color) equipped.color = p.equipped.color;
@@ -87,7 +82,6 @@ export function equip(p: PlayerState, item: Item): PlayerState {
     equipped.kimono = item.id;
     return { ...p, equipped };
   }
-  // Équiper un objet porté (hors couleur et décor de fond) retire le kimono.
   const equipped = { ...p.equipped, [item.category]: item.id };
   if (item.category !== 'color' && item.category !== 'background') delete equipped.kimono;
   return { ...p, equipped };

@@ -1,5 +1,3 @@
-// Gerbe de gemmes + étoile d'impact "manga" qui jaillit (récompense de fin de brossage).
-// Utilise l'API Animated native (pas de reanimated).
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
@@ -10,11 +8,10 @@ const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
 type Props = {
   count?: number;
-  size?: number; // taille d'une gemme
-  spread?: number; // distance max de projection
+  size?: number;
+  spread?: number;
 };
 
-// Étoile d'impact manga : étoile dentelée (rayons alternés intérieur/extérieur).
 function impactPoints(spikes: number, outer: number, inner: number, c: number) {
   const pts: string[] = [];
   for (let i = 0; i < spikes * 2; i++) {
@@ -26,12 +23,10 @@ function impactPoints(spikes: number, outer: number, inner: number, c: number) {
 }
 
 export function GemBurst({ count = 14, size = 18, spread = 150 }: Props) {
-  // Étoile d'impact (un seul "flash" derrière les gemmes).
   const impact = useRef(new Animated.Value(0)).current;
   const starSize = spread * 2.1;
   const points = useRef(impactPoints(14, 50, 21, 50)).current;
 
-  // Une valeur de progression par gemme.
   const gems = useRef(
     Array.from({ length: count }).map((_, i) => {
       const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
@@ -66,7 +61,6 @@ export function GemBurst({ count = 14, size = 18, spread = 150 }: Props) {
 
   return (
     <View pointerEvents="none" style={styles.wrap}>
-      {/* flash d'impact "DON!" derrière les gemmes */}
       <AnimatedSvg
         width={starSize}
         height={starSize}

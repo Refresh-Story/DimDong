@@ -1,6 +1,3 @@
-// Effet spécial pour la pâte légendaire "Rainbow" : halo pulsant + vraies étincelles
-// manga (étoiles 4 branches contourées) qui scintillent autour du personnage.
-// API Animated native.
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -9,7 +6,6 @@ import { Palette } from '@/theme';
 
 const RAINBOW = ['#FF7FA8', '#FFB347', '#FFE066', '#7FD489', '#5FB8FF', '#C9A0FF'];
 
-// Position (en fraction de la boîte) + taille de chaque étoile.
 const SPARKS = [
   { x: 0.12, y: 0.18, s: 0.16 },
   { x: 0.85, y: 0.12, s: 0.12 },
@@ -21,7 +17,6 @@ const SPARKS = [
   { x: 0.68, y: 0.6, s: 0.11 },
 ];
 
-// Étincelle manga 4 branches (concave) — viewBox -50..50, contour encre.
 const SPARKLE_D =
   'M0 -50 C6 -14 14 -6 50 0 C14 6 6 14 0 50 C-6 14 -14 6 -50 0 C-14 -6 -6 -14 0 -50 Z';
 
@@ -67,7 +62,6 @@ export function RainbowAura({ size }: { size: number }) {
 
   return (
     <View pointerEvents="none" style={[styles.wrap, { width: W, height: H }]}>
-      {/* halo pulsant derrière le personnage */}
       <Animated.View
         style={[
           styles.glow,
@@ -82,7 +76,6 @@ export function RainbowAura({ size }: { size: number }) {
           },
         ]}
       />
-      {/* étincelles scintillantes (étoiles 4 branches manga) */}
       {SPARKS.map((sp, i) => {
         const v = sparks[i];
         const opacity = v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 1, 0] });

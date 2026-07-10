@@ -39,13 +39,10 @@ export default function TimerScreen() {
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  // tremblement de Dim pendant le brossage
   const shake = useRef(new Animated.Value(0)).current;
-  // animation de célébration (fin de brossage)
   const pop = useRef(new Animated.Value(0)).current;
   const jump = useRef(new Animated.Value(0)).current;
 
-  // Quand on arrive sur l'écran "done" : Dim saute + le badge "pop".
   useEffect(() => {
     if (phase !== 'done') return;
     pop.setValue(0);
@@ -85,7 +82,6 @@ export default function TimerScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
   }
 
-  // Compte à rebours 3 → 2 → 1 avant le démarrage du minuteur.
   useEffect(() => {
     if (phase !== 'countdown') return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -107,7 +103,6 @@ export default function TimerScreen() {
     };
   }, [phase]);
 
-  // Minuteur du brossage : tourne tant qu'on est en cours et non en pause.
   useEffect(() => {
     if (phase !== 'running' || paused) return;
     intervalRef.current = setInterval(() => {
@@ -118,8 +113,6 @@ export default function TimerScreen() {
     };
   }, [phase, paused]);
 
-  // Guidage par zones (vibration) + fin de brossage : géré hors des updaters de
-  // state pour éviter "Cannot update a component while rendering".
   useEffect(() => {
     if (phase !== 'running') return;
     const elapsed = BRUSH_DURATION_SEC - left;
@@ -136,8 +129,6 @@ export default function TimerScreen() {
     if (countdownRef.current) clearInterval(countdownRef.current);
   }, []);
 
-  // Empêche la mise en veille de l'écran tant que le brossage est actif
-  // (compte à rebours + minuteur). On désactive dès qu'on en sort.
   useEffect(() => {
     const active = phase === 'countdown' || phase === 'running';
     if (active) {
@@ -150,7 +141,6 @@ export default function TimerScreen() {
 
   const elapsed = BRUSH_DURATION_SEC - left;
   const progress = elapsed / BRUSH_DURATION_SEC;
-  const zoneIndex = Math.min(BRUSH_ZONES.length - 1, Math.floor(elapsed / ZONE_SEC));
   const rotate = shake.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] });
   const background = getItemById(catalog, player.equipped.background)?.background;
 
@@ -172,77 +162,87 @@ export default function TimerScreen() {
           </>
         ) : phase !== 'done' ? (
           <>
-            <Text style={styles.bigTime}>{fmt(left)}</Text>
-            <View style={styles.track}>
-              <View style={[styles.fill, { width: `${Math.round(progress * 100)}%` }]} />
-            </View>
-            {phase === 'running' && (
-              <Text style={styles.zone}>
-                {paused ? 'En pause ⏸️' : `Brosse : ${BRUSH_ZONES[zoneIndex]} 🦷`}
-              </Text>
-            )}
-
-            <View style={styles.stage}>
+            <View style={styles.stageGrow}>
               <Animated.View style={{ transform: [{ rotate }] }}>
-                <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} />
+                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} />
               </Animated.View>
             </View>
 
-            {phase === 'ready' ? (
-              <PrimaryButton label="Démarrer le brossage" onPress={start} />
-            ) : (
-              <>
-                {paused ? (
-                  <PrimaryButton
-                    label="Reprendre"
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                      setPaused(false);
-                    }}
-                  />
-                ) : (
-                  <PrimaryButton
-                    label="Pause"
-                    color={Palette.gemDark}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                      setPaused(true);
-                    }}
-                  />
-                )}
-                <Text style={styles.hint}>Continue jusqu'au bout pour gagner tes gemmes&nbsp;!</Text>
-              </>
-            )}
+            <View style={styles.timerCard}>
+              <Text style={[styles.bigTime, paused && styles.bigTimePaused]}>{fmt(left)}</Text>
+              <View style={styles.track}>
+                {BRUSH_ZONES.map((z, i) => {
+                  const segFill = Math.min(1, Math.max(0, progress * BRUSH_ZONES.length - i));
+                  return (
+                    <View key={z} style={styles.seg}>
+                      <View style={[styles.segFill, { width: `${segFill * 100}%` }]} />
+                    </View>
+                  );
+                })}
+              </View>
+              {phase === 'ready' ? (
+                <PrimaryButton label="Démarrer le brossage" onPress={start} style={styles.cardButton} />
+              ) : paused ? (
+                <PrimaryButton
+                  label="Reprendre"
+                  style={styles.cardButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    setPaused(false);
+                  }}
+                />
+              ) : (
+                <PrimaryButton
+                  label="Pause"
+                  color={Palette.gemDark}
+                  style={styles.cardButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    setPaused(true);
+                  }}
+                />
+              )}
+              <Text style={styles.hint}>
+                {phase === 'ready'
+                  ? '2 minutes pour un sourire tout propre !'
+                  : paused
+                    ? 'En pause ⏸️'
+                    : "Continue jusqu'au bout pour gagner tes gemmes !"}
+              </Text>
+            </View>
           </>
         ) : (
-          <View style={styles.doneWrap}>
-            <Animated.Text style={[styles.doneTitle, { transform: [{ scale: pop }] }]}>
-              Bravo&nbsp;! 🎉
-            </Animated.Text>
-            <View style={styles.stage}>
+          <>
+            <View style={styles.stageGrow}>
               <Animated.View style={{ transform: [{ translateY: jump }] }}>
-                <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} />
+                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} />
               </Animated.View>
               {result?.rewarded && <GemBurst />}
             </View>
-            {result?.rewarded ? (
-              <>
-                <Text style={styles.doneText}>Tu as gagné</Text>
-                <Animated.View style={{ transform: [{ scale: pop }] }}>
-                  <GemBadge count={result.gained} size="lg" />
-                </Animated.View>
-                <Text style={styles.smallText}>
-                  Encore {result.remainingToday} brossage(s) récompensé(s) aujourd'hui.
+
+            <View style={styles.timerCard}>
+              <Animated.Text style={[styles.doneTitle, { transform: [{ scale: pop }] }]}>
+                Bravo&nbsp;! 🎉
+              </Animated.Text>
+              {result?.rewarded ? (
+                <>
+                  <Text style={styles.doneText}>Tu as gagné</Text>
+                  <Animated.View style={{ transform: [{ scale: pop }] }}>
+                    <GemBadge count={result.gained} size="lg" />
+                  </Animated.View>
+                  <Text style={styles.smallText}>
+                    Encore {result.remainingToday} brossage(s) récompensé(s) aujourd'hui.
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.doneText}>
+                  Super brossage&nbsp;! Tu as déjà gagné toutes tes gemmes pour aujourd'hui.
+                  Reviens ce soir&nbsp;!
                 </Text>
-              </>
-            ) : (
-              <Text style={styles.doneText}>
-                Super brossage&nbsp;! Tu as déjà gagné toutes tes gemmes pour aujourd'hui. Reviens
-                ce soir&nbsp;!
-              </Text>
-            )}
-            <PrimaryButton label="Retour" onPress={goBack} style={{ marginTop: Spacing.lg }} />
-          </View>
+              )}
+              <PrimaryButton label="Terminé" onPress={goBack} style={styles.cardButton} />
+            </View>
+          </>
         )}
       </SafeAreaView>
     </View>
@@ -253,16 +253,30 @@ const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   close: { position: 'absolute', top: Spacing.xxl, right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
   closeText: { fontSize: 18, fontWeight: '800', color: Palette.ink },
-  bigTime: { fontSize: 80, fontFamily: Fonts.display, color: Palette.primary, letterSpacing: 2 },
+  bigTime: { fontSize: 64, fontFamily: Fonts.display, color: Palette.primary, letterSpacing: 2, lineHeight: 68 },
+  bigTimePaused: { color: Palette.inkSoft },
   getReady: { fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
   countdownNum: { fontSize: 150, fontFamily: Fonts.display, color: Palette.primary, lineHeight: 160 },
-  track: { width: '100%', height: 18, backgroundColor: Palette.white, borderRadius: Radius.pill, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: Palette.accent2 },
-  zone: { fontSize: 18, fontFamily: Fonts.bodyBold, color: Palette.ink },
+  track: { flexDirection: 'row', gap: 6, alignSelf: 'stretch' },
+  seg: { flex: 1, height: 14, backgroundColor: Palette.cardSoft, borderRadius: Radius.pill, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
+  segFill: { height: '100%', backgroundColor: Palette.accent2 },
   stage: { alignItems: 'center', justifyContent: 'center', marginVertical: Spacing.md },
+  stageGrow: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: Spacing.md },
+  timerCard: {
+    alignSelf: 'stretch',
+    backgroundColor: Palette.white,
+    borderRadius: Radius.xl,
+    borderWidth: 3,
+    borderColor: Palette.outline,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+    ...Shadow.card,
+  },
+  cardButton: { alignSelf: 'stretch', marginTop: Spacing.xs },
   hint: { fontSize: 15, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center' },
-  doneWrap: { alignItems: 'center', gap: Spacing.sm },
-  doneTitle: { fontSize: 44, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
+  doneTitle: { fontSize: 40, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
   doneText: { fontSize: 18, color: Palette.ink, textAlign: 'center', fontFamily: Fonts.bodyBold },
   smallText: { fontSize: 14, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center' },
 });

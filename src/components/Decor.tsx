@@ -1,6 +1,3 @@
-// Décorations du salon de dim-sum (bonsaï, cerisier, bambou, lanterne, théière), manga.
-// Tracé issu de la SOURCE UNIQUE `@/art/dimArt` (mêmes formes que les PNG générés).
-// Deux modes : `image` (PNG Firebase Storage) ou `decor` (tracé manga via SvgXml).
 import { Image } from 'expo-image';
 import React from 'react';
 import { SvgXml } from 'react-native-svg';

@@ -25,7 +25,6 @@ export default function ShopScreen() {
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Secret : 10 appuis d'affilée sur la Rainbow → débloquée gratuitement.
   const secretTaps = useRef(0);
   const secretTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {

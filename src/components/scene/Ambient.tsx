@@ -1,6 +1,3 @@
-// Ambiances animées de la scène. `steam` reprend les colonnes de vapeur historiques ;
-// `fall` / `rise` / `twinkle` sont un système de particules générique (feuilles,
-// pétales, écume, étincelles, étoiles) — 6 à 8 éléments animés `useNativeDriver`.
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
 
@@ -50,8 +47,6 @@ export function Ambient({ ambient }: { ambient: AmbientConfig }) {
   }
 }
 
-// Colonne de vapeur : 3 bouffées qui montent et s'estompent en boucle (décalées).
-// (Déplacée depuis Scene.tsx ; couleur paramétrée.)
 function SteamColumn({ left, delay, color }: { left: number; delay: number; color: string }) {
   return (
     <View style={{ position: 'absolute', bottom: `${FLOOR_RATIO * 100}%`, left }} pointerEvents="none">
@@ -75,7 +70,6 @@ function Puff({ delay, x, color }: { delay: number; x: number; color: string }) 
     return () => anim.stop();
   }, [t, delay]);
 
-  // opacité 0 aux deux extrémités → le reset de la boucle (1 → 0) est invisible.
   const opacity = t.interpolate({ inputRange: [0, 0.18, 0.7, 1], outputRange: [0, 0.45, 0.25, 0] });
   const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, -78] });
   const scale = t.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1.5] });
@@ -83,10 +77,8 @@ function Puff({ delay, x, color }: { delay: number; x: number; color: string }) 
   return <Animated.View style={[styles.steamPuff, { left: x, backgroundColor: color, opacity, transform: [{ translateY }, { scale }] }]} />;
 }
 
-// Positions déterministes (pas de Math.random : stables entre rendus).
 const frac = (i: number, step: number) => ((i * step) % 100) / 100;
 
-// Particule qui tombe du haut de l'écran jusqu'au sol (feuille, pétale…).
 function FallingParticle({ index, color, petal }: { index: number; color: string; petal: boolean }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -125,7 +117,6 @@ function FallingParticle({ index, color, petal }: { index: number; color: string
   );
 }
 
-// Particule qui monte depuis le rebord du sol (écume, étincelle…).
 function RisingParticle({ index, color }: { index: number; color: string }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -162,7 +153,6 @@ function RisingParticle({ index, color }: { index: number; color: string }) {
   );
 }
 
-// Particule fixe qui scintille (étoile, néon…), dans la moitié haute de l'écran.
 function TwinkleParticle({ index, color }: { index: number; color: string }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {

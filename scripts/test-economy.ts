@@ -1,5 +1,3 @@
-// Test automatisé de la logique d'économie (achat, brossage, équipement).
-// Lancement : npx tsx scripts/test-economy.ts  (ou npm test)
 const assert = {
   ok(cond: boolean, msg: string) {
     if (!cond) throw new Error(msg);
@@ -100,7 +98,6 @@ check('activer un 2e décor remplace le 1er (un seul actif)', f.equipped.backgro
 f = unequip(f, 'background');
 check('désactiver → retour au décor par défaut', f.equipped.background === undefined);
 
-// Non-régressions kimono ↔ décor de fond (les deux ne se marchent pas dessus).
 const kimono = item('kimono_judo');
 f = equip(equip({ ...DEFAULT_PLAYER }, kimono), bgBamboo);
 check('activer un décor ne retire pas le kimono', f.equipped.kimono === 'kimono_judo' && f.equipped.background === 'bg_bamboo');

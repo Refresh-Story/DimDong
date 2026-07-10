@@ -17,6 +17,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 
 import { db } from '@/firebase';
 import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
@@ -121,11 +122,32 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const persist = useCallback((p: PlayerState) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
       AsyncStorage.setItem(PLAYER_KEY, JSON.stringify(p)).catch((e) =>
         console.warn('Sauvegarde locale échouée', e)
       );
     }, 300);
   }, []);
+
+  // Force l'écriture en attente immédiatement (sans attendre le debounce).
+  // Indispensable avant que l'OS ne suspende l'app : sinon les gemmes gagnées
+  // juste avant de fermer/verrouiller l'app sont perdues.
+  const flush = useCallback(() => {
+    if (!saveTimer.current) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    AsyncStorage.setItem(PLAYER_KEY, JSON.stringify(playerRef.current)).catch((e) =>
+      console.warn('Sauvegarde locale échouée', e)
+    );
+  }, []);
+
+  // Dès que l'app passe en arrière-plan/inactif, on flush la sauvegarde en attente.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') flush();
+    });
+    return () => sub.remove();
+  }, [flush]);
 
   // Mise à jour optimiste + persistance locale.
   const commit = useCallback(

@@ -10,6 +10,7 @@ import { DimAvatar } from '@/components/DimAvatar';
 import { Scene } from '@/components/Scene';
 import { GemBadge, PrimaryButton } from '@/components/ui';
 import { BrushResult, useGame } from '@/context/GameContext';
+import { getItemById } from '@/data/items';
 import { BRUSH_DURATION_SEC, BRUSH_ZONES } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
@@ -151,10 +152,11 @@ export default function TimerScreen() {
   const progress = elapsed / BRUSH_DURATION_SEC;
   const zoneIndex = Math.min(BRUSH_ZONES.length - 1, Math.floor(elapsed / ZONE_SEC));
   const rotate = shake.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] });
+  const background = getItemById(catalog, player.equipped.background)?.background;
 
   return (
     <View style={{ flex: 1 }}>
-      <Scene />
+      <Scene background={background} />
       <SafeAreaView style={styles.safe}>
         <Pressable style={styles.close} onPress={goBack}>
           <Text style={styles.closeText}>✕</Text>

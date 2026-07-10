@@ -3,6 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { useGame } from '@/context/GameContext';
@@ -54,6 +55,7 @@ export default function InventoryScreen() {
           const items = owned.filter((i) => i.category === cat);
           if (!items.length) return null;
           const isDecor = cat === 'decor';
+          const isBackground = cat === 'background';
           const equippedId = player.equipped[cat];
           return (
             <View key={cat} style={{ marginBottom: Spacing.lg }}>
@@ -73,13 +75,17 @@ export default function InventoryScreen() {
                       <View style={styles.preview}>
                         {isDecor ? (
                           <DecorView item={item} size={56} />
+                        ) : isBackground ? (
+                          <BackgroundThumb item={item} size={64} />
                         ) : (
                           <DimAvatar size={64} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                         )}
                       </View>
                       <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                       <Text style={[styles.status, isOn && { color: Palette.primaryDark }]}>
-                        {isOn ? (isDecor ? 'Placé ✓' : 'Équipé ✓') : isDecor ? 'Toucher pour placer' : 'Toucher pour mettre'}
+                        {isOn
+                          ? isDecor ? 'Placé ✓' : isBackground ? 'Actif ✓' : 'Équipé ✓'
+                          : isDecor ? 'Toucher pour placer' : isBackground ? 'Toucher pour activer' : 'Toucher pour mettre'}
                       </Text>
                     </Pressable>
                   );

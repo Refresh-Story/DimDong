@@ -78,16 +78,18 @@ export function brush(p: PlayerState, todayKey: string): { player: PlayerState; 
 }
 
 export function equip(p: PlayerState, item: Item): PlayerState {
-  // Le kimono est exclusif : l'équiper retire tout le reste, on ne garde que la couleur.
+  // Le kimono est exclusif : l'équiper retire tout le reste, on ne garde que la
+  // couleur et le décor de fond (qui ne sont pas portés par le personnage).
   if (item.category === 'kimono') {
     const equipped: PlayerState['equipped'] = {};
     if (p.equipped.color) equipped.color = p.equipped.color;
+    if (p.equipped.background) equipped.background = p.equipped.background;
     equipped.kimono = item.id;
     return { ...p, equipped };
   }
-  // Équiper n'importe quel autre objet (hors couleur) retire le kimono.
+  // Équiper un objet porté (hors couleur et décor de fond) retire le kimono.
   const equipped = { ...p.equipped, [item.category]: item.id };
-  if (item.category !== 'color') delete equipped.kimono;
+  if (item.category !== 'color' && item.category !== 'background') delete equipped.kimono;
   return { ...p, equipped };
 }
 

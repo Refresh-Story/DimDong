@@ -20,7 +20,7 @@ import React, {
 import { AppState } from 'react-native';
 
 import { db } from '@/firebase';
-import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
+import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID, mergeCatalog } from '@/data/items';
 import { dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
   BrushResult,
@@ -99,9 +99,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // 2) Catalogue : cache local immédiat, puis rafraîchissement Firestore (lecture seule).
   useEffect(() => {
     (async () => {
+      // Le catalogue distant est toujours FUSIONNÉ avec le catalogue embarqué
+      // (mergeCatalog) : un Firestore plus ancien que l'app ne doit pas masquer les
+      // nouveaux objets embarqués (ex. décors de fond). On met en cache la version
+      // brute Firestore, pour que le merge suive les évolutions du fallback.
       try {
         const cached = await AsyncStorage.getItem(CATALOG_KEY);
-        if (cached) setCatalog(JSON.parse(cached) as Item[]);
+        if (cached) setCatalog(mergeCatalog(JSON.parse(cached) as Item[]));
       } catch {
         // pas de cache : on garde FALLBACK_CATALOG
       }
@@ -109,7 +113,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const snap = await getDocs(collection(db, 'catalog'));
         if (!snap.empty) {
           const items = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Item[];
-          setCatalog(items);
+          setCatalog(mergeCatalog(items));
           AsyncStorage.setItem(CATALOG_KEY, JSON.stringify(items)).catch(() => {});
         }
       } catch {

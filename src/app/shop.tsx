@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { GemBadge } from '@/components/ui';
@@ -109,6 +110,8 @@ export default function ShopScreen() {
                         <View style={styles.preview}>
                           {item.category === 'decor' ? (
                             <DecorView item={item} size={62} />
+                          ) : item.category === 'background' ? (
+                            <BackgroundThumb item={item} size={72} />
                           ) : (
                             <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                           )}

@@ -6,6 +6,8 @@
 //  - `draw`   : un accessoire dessiné en code (placeholder jouable AVANT les images IA),
 //               rendu par DimAvatar. Permet de tester toute la boucle dès maintenant.
 
+import type { BackgroundKind } from '@/data/backgrounds';
+
 export type ItemCategory =
   | 'kimono' // tenue de judo (catégorie spéciale : exclusive, ceinture selon le niveau)
   | 'color' // couleur de la pâte du dim-sum
@@ -15,6 +17,7 @@ export type ItemCategory =
   | 'outfit'
   | 'shoes'
   | 'accessory'
+  | 'background' // décor d'arrière-plan plein écran (un seul actif à la fois)
   | 'decor';
 
 // Couleur par défaut de la pâte du dim-sum (si aucune couleur équipée).
@@ -55,6 +58,8 @@ export type Item = {
   decor?: DecorKind;
   x?: number; // position horizontale dans la scène (0 = gauche, 1 = droite)
   w?: number; // largeur de la décoration en px
+  // Décors d'arrière-plan uniquement : clé de la config dans BACKGROUNDS.
+  background?: BackgroundKind;
 };
 
 // Ordre d'empilement des couches (le corps de base est à 0).
@@ -77,6 +82,7 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   outfit: 'Tenues',
   shoes: 'Chaussures',
   accessory: 'Accessoires',
+  background: 'Décors de fond',
   decor: 'Décorations',
 };
 
@@ -89,6 +95,7 @@ export const CATEGORY_ORDER: ItemCategory[] = [
   'accessory',
   'outfit',
   'shoes',
+  'background',
   'decor',
 ];
 
@@ -140,6 +147,17 @@ export const FALLBACK_CATALOG: Item[] = [
   { id: 'hair_purple', name: 'Mèche violette', category: 'hair', price: 25, rarity: 'common', zIndex: Z.hair, color: '#B07BE0', draw: 'tuft' },
   { id: 'hair_orange', name: 'Mèche orange', category: 'hair', price: 25, rarity: 'common', zIndex: Z.hair, color: '#F19A3E', draw: 'tuft' },
 
+  // Décors d'arrière-plan plein écran (un seul actif à la fois, via equipped.background).
+  // `color` = teinte dominante, utilisée par la vignette de la boutique.
+  { id: 'bg_bamboo', name: 'Forêt de bambous', category: 'background', price: 80, rarity: 'common', zIndex: 0, color: '#6FB23E', background: 'bamboo' },
+  { id: 'bg_dojo', name: 'Dojo', category: 'background', price: 100, rarity: 'common', zIndex: 0, color: '#B7C68B', background: 'dojo' },
+  { id: 'bg_sushi', name: 'Restaurant de sushis', category: 'background', price: 150, rarity: 'rare', zIndex: 0, color: '#31538F', background: 'sushi' },
+  { id: 'bg_sakura', name: 'Jardin de sakura', category: 'background', price: 150, rarity: 'rare', zIndex: 0, color: '#F6A8C4', background: 'sakura' },
+  { id: 'bg_wave', name: 'La Grande Vague', category: 'background', price: 220, rarity: 'epic', zIndex: 0, color: '#2E6BA6', background: 'wave' },
+  { id: 'bg_matsuri', name: 'Festival matsuri', category: 'background', price: 260, rarity: 'epic', zIndex: 0, color: '#EE3B30', background: 'matsuri' },
+  { id: 'bg_neon', name: 'Tokyo néon', category: 'background', price: 300, rarity: 'epic', zIndex: 0, color: '#FF5C8A', background: 'neon' },
+  { id: 'bg_space', name: 'Sur la Lune', category: 'background', price: 450, rarity: 'legendary', zIndex: 0, color: '#3F4470', background: 'space' },
+
   // Décorations asiatiques (posées sur le panier, plusieurs possibles en même temps).
   { id: 'decor_bonsai', name: 'Bonsaï', category: 'decor', price: 60, rarity: 'common', zIndex: 1, color: '#3E8C4A', decor: 'bonsai', x: 0.84, w: 90 },
   { id: 'decor_tree', name: 'Cerisier', category: 'decor', price: 80, rarity: 'rare', zIndex: 1, color: '#F4A6C0', decor: 'sakura', x: 0.15, w: 104 },
@@ -151,4 +169,13 @@ export const FALLBACK_CATALOG: Item[] = [
 export function getItemById(catalog: Item[], id?: string | null): Item | undefined {
   if (!id) return undefined;
   return catalog.find((i) => i.id === id);
+}
+
+// Fusionne le catalogue distant (Firestore) avec le catalogue embarqué : le distant
+// gagne à id égal, et les objets du fallback absents du distant sont ajoutés à la
+// suite. Sans ce merge, un catalogue Firestore plus ancien que l'app masquerait les
+// nouveaux objets embarqués (ex. les décors de fond).
+export function mergeCatalog(remote: Item[], fallback: Item[] = FALLBACK_CATALOG): Item[] {
+  const ids = new Set(remote.map((i) => i.id));
+  return [...remote, ...fallback.filter((i) => !ids.has(i.id))];
 }

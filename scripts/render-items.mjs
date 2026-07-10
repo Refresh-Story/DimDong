@@ -7,7 +7,8 @@
 //
 // Lancé avec `tsx` (import direct du module TS). Voir package.json → render:items.
 //
-// Prérequis upload :
+// Prérequis upload : un serviceAccountKey.json à la racine du repo (détecté
+// automatiquement), ou :
 //   export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 //
 // Lancement :
@@ -19,6 +20,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { Resvg } from '@resvg/resvg-js';
 
 import { accessoryDoc, bodyDoc, decorDoc, DRAW_FRAME, DECOR_FRAME } from '../src/art/dimArt.ts';
+import { ensureAdminCredentials } from './credentials.mjs';
 
 const PROJECT_ID = 'dim-dong';
 const BUCKET = 'dim-dong.firebasestorage.app';
@@ -74,9 +76,9 @@ async function main() {
   const items = JSON.parse(await readFile(SEED_URL, 'utf8'));
   await mkdir(OUT_DIR, { recursive: true });
 
-  const canUpload = !DRY_RUN && !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const canUpload = !DRY_RUN && !!ensureAdminCredentials();
   if (!DRY_RUN && !canUpload) {
-    console.warn('⚠️  GOOGLE_APPLICATION_CREDENTIALS absent : rendu local seulement (pas d\'upload).');
+    console.warn('⚠️  Aucune clé de compte de service trouvée : rendu local seulement (pas d\'upload).');
   }
   const bucket = canUpload ? await getBucket() : null;
 

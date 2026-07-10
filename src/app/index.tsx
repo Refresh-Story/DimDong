@@ -20,6 +20,7 @@ import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
 import { GemBadge, LevelMedallion, PrimaryButton } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
+import { getItemById } from '@/data/items';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
@@ -69,10 +70,11 @@ export default function HomeScreen() {
 
   const placedDecor = catalog.filter((i) => player.placedDecor.includes(i.id));
   const isRainbow = !!catalog.find((i) => i.id === player.equipped.color)?.rainbow;
+  const background = getItemById(catalog, player.equipped.background)?.background;
 
   return (
     <View style={{ flex: 1 }}>
-      <Scene decor={placedDecor} />
+      <Scene decor={placedDecor} background={background} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         {/* barre du haut : médaillon de niveau + nom/progression + gemmes */}
         <View style={styles.topRow}>

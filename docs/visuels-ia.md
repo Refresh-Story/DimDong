@@ -9,7 +9,10 @@ et la génération des PNG → app et images **pixel-identiques**.
 Fonctions qui renvoient des **chaînes SVG** (cadre 200×260 pour le personnage/accessoires,
 100×120 pour les décors) :
 
-- `bodyDoc(dough, { rainbow?, id? })` — corps de Dim (dim-sum). `id` namespace les `<defs>`.
+- `bodyDoc(dough, { rainbow?, id?, emotion? })` — corps de Dim (dim-sum). `id` namespace les
+  `<defs>` ; `emotion` (`joy` par défaut, `sad`, `angry`, `serene`, `scared`) change le visage.
+  Les PNG générés gardent le visage `joy` : quand une autre émotion est active, `DimAvatar`
+  retombe sur le tracé SVG.
 - `accessoryDoc(draw, color)` — un accessoire (`cap`, `crown`, `beanie`, `glasses`,
   `sunglasses`, `bowtie`, `scarf`, `sneakers`, `cape`, `tuft`).
 - `decorDoc(kind, color)` — une décoration (`bonsai`, `sakura`, `bamboo`, `lantern`, `teapot`).

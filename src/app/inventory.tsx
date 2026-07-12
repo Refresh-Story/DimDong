@@ -40,7 +40,7 @@ export default function InventoryScreen() {
       </View>
 
       <View style={styles.stage}>
-        <DimAvatar size={150} equipped={player.equipped} catalog={catalog} level={level} />
+        <DimAvatar size={150} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: Spacing.xxl }} showsVerticalScrollIndicator={false}>

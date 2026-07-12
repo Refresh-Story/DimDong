@@ -3,7 +3,7 @@ import React, { useId, useMemo } from 'react';
 import { View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { accessoryDoc, bodyDoc, kimonoDoc, DRAW_FRAME } from '@/art/dimArt';
+import { accessoryDoc, bodyDoc, kimonoDoc, DEFAULT_EMOTION, DRAW_FRAME, Emotion } from '@/art/dimArt';
 import { DEFAULT_DOUGH, Item, ItemCategory, getItemById } from '@/data/items';
 import { beltForLevel } from '@/game/rules';
 
@@ -12,13 +12,14 @@ type Props = {
   equipped: Partial<Record<ItemCategory, string>>;
   catalog: Item[];
   level?: number;
+  emotion?: Emotion;
 };
 
 const BODY_Z = 8;
 
 type Layer = { key: string; z: number; img?: string; xml?: string };
 
-export function DimAvatar({ size = 200, equipped, catalog, level = 1 }: Props) {
+export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = DEFAULT_EMOTION }: Props) {
   const width = size;
   const height = (size * DRAW_FRAME.h) / DRAW_FRAME.w;
 
@@ -34,8 +35,10 @@ export function DimAvatar({ size = 200, equipped, catalog, level = 1 }: Props) {
   const layers = useMemo<Layer[]>(() => {
     const out: Layer[] = [];
 
-    if (colorItem?.image) out.push({ key: 'body', z: BODY_Z, img: colorItem.image });
-    else out.push({ key: 'body', z: BODY_Z, xml: bodyDoc(dough, { rainbow: isRainbow, id: uid }) });
+    // Les corps PNG pré-rendus ont le visage "joie" cuit dedans : dès qu'une autre
+    // émotion est active, on retombe sur le SVG pour afficher le bon visage.
+    if (colorItem?.image && emotion === 'joy') out.push({ key: 'body', z: BODY_Z, img: colorItem.image });
+    else out.push({ key: 'body', z: BODY_Z, xml: bodyDoc(dough, { rainbow: isRainbow, id: uid, emotion }) });
 
     if (kimonoItem) {
       out.push({
@@ -63,7 +66,7 @@ export function DimAvatar({ size = 200, equipped, catalog, level = 1 }: Props) {
     }
 
     return out.sort((a, b) => a.z - b.z);
-  }, [equipped, catalog, colorItem?.image, dough, isRainbow, uid, kimonoItem, beltColor]);
+  }, [equipped, catalog, colorItem?.image, dough, isRainbow, uid, kimonoItem, beltColor, emotion]);
 
   return (
     <View style={{ width, height }}>

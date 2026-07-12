@@ -1,4 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,11 +21,12 @@ import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
 import { GemBadge, LevelMedallion, PrimaryButton } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
+import { EMOTIONS } from '@/data/emotions';
 import { getItemById } from '@/data/items';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
-  const { ready, player, catalog, level, progress, setName } = useGame();
+  const { ready, player, catalog, level, progress, setName, setEmotion } = useGame();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
@@ -93,8 +95,32 @@ export default function HomeScreen() {
         <View style={styles.stage}>
           <Animated.View style={{ transform: [{ translateY: bob }] }}>
             {isRainbow && <RainbowAura size={210} />}
-            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} />
+            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
           </Animated.View>
+        </View>
+
+        <View style={styles.emotionRow}>
+          {EMOTIONS.map((e) => {
+            const isOn = player.emotion === e.id;
+            return (
+              <Pressable
+                key={e.id}
+                accessibilityRole="button"
+                accessibilityLabel={e.label}
+                accessibilityState={{ selected: isOn }}
+                onPress={() => {
+                  Haptics.selectionAsync().catch(() => {});
+                  setEmotion(e.id);
+                }}
+                style={({ pressed }) => [
+                  styles.emotionChip,
+                  isOn && styles.emotionChipOn,
+                  pressed && { transform: [{ scale: 0.95 }] },
+                ]}>
+                <Text style={styles.emotionLabel}>{e.label}</Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Pressable
@@ -174,6 +200,29 @@ const styles = StyleSheet.create({
   fill: { height: '100%', backgroundColor: Palette.accent2 },
 
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  emotionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  emotionChip: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.pill,
+    backgroundColor: Palette.white,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadow.card,
+  },
+  emotionChipOn: {
+    backgroundColor: Palette.accent,
+  },
+  emotionLabel: { fontSize: 14, fontFamily: Fonts.bodyBold, color: Palette.ink },
 
   brushBtn: {
     backgroundColor: Palette.primary,

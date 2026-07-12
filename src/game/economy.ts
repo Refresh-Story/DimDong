@@ -1,3 +1,4 @@
+import type { Emotion } from '@/art/dimArt';
 import { Item, ItemCategory, KIMONO_ID } from '@/data/items';
 import { GEMS_PER_BRUSH, MAX_REWARDED_BRUSHES_PER_DAY, STARTING_GEMS } from '@/game/rules';
 
@@ -12,6 +13,7 @@ export type PlayerState = {
   brushDateKey: string;
   brushesToday: number;
   onboarded: boolean;
+  emotion: Emotion;
 };
 
 export const DEFAULT_PLAYER: PlayerState = {
@@ -25,6 +27,7 @@ export const DEFAULT_PLAYER: PlayerState = {
   brushDateKey: '',
   brushesToday: 0,
   onboarded: false,
+  emotion: 'joy',
 };
 
 export type BrushResult = {
@@ -37,6 +40,11 @@ export type BuyStatus = 'ok' | 'owned' | 'insufficient';
 
 export function setName(p: PlayerState, name: string): PlayerState {
   return { ...p, name: name.trim() || 'Dim', onboarded: true };
+}
+
+// Gratuit et illimité : aucun coût en gemmes, aucune possession requise.
+export function setEmotion(p: PlayerState, emotion: Emotion): PlayerState {
+  return p.emotion === emotion ? p : { ...p, emotion };
 }
 
 export function grant(p: PlayerState, item: Item): PlayerState {

@@ -2,6 +2,9 @@
 export const DRAW_FRAME = { w: 200, h: 260 };
 export const DECOR_FRAME = { w: 100, h: 120 };
 
+export type Emotion = 'joy' | 'sad' | 'angry' | 'serene' | 'scared';
+export const DEFAULT_EMOTION: Emotion = 'joy';
+
 const INK = '#16161D';
 
 const BODY_PATH =
@@ -40,7 +43,91 @@ function sparkle(cx: number, cy: number, s: number, fill = '#FFE066'): string {
   return `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`;
 }
 
-export function bodyInner(dough: string, opts: { rainbow?: boolean; id?: string } = {}): string {
+const eye = (cx: number) =>
+  `<ellipse cx="${cx}" cy="150" rx="13" ry="17" fill="${INK}"/>` +
+  `<circle cx="${cx - 4}" cy="143" r="5" fill="#FFFFFF"/>` +
+  `<circle cx="${cx + 4}" cy="157" r="2.4" fill="#FFFFFF" opacity="0.85"/>`;
+
+const cheeks = (opacity = 0.85, fill = '#F08AA8') =>
+  `<ellipse cx="52" cy="168" rx="12" ry="7" fill="${fill}" opacity="${opacity}"/>` +
+  `<ellipse cx="148" cy="168" rx="12" ry="7" fill="${fill}" opacity="${opacity}"/>`;
+
+// Visage selon l'émotion. Yeux centrés en cx=76/124 cy=150, bouche vers y 176-192 ;
+// les sourcils doivent rester sous y≈114 pour ne pas toucher la couronne.
+function face(emotion: Emotion): string {
+  switch (emotion) {
+    case 'sad':
+      return (
+        cheeks(0.5) +
+        `<g stroke="${INK}" stroke-width="4.5" fill="none" stroke-linecap="round">` +
+        `<path d="M63 131 Q73 124 88 130"/>` +
+        `<path d="M137 131 Q127 124 112 130"/>` +
+        `</g>` +
+        `<ellipse cx="76" cy="152" rx="13" ry="15" fill="${INK}"/>` +
+        `<circle cx="72" cy="146" r="4" fill="#FFFFFF"/>` +
+        `<ellipse cx="124" cy="152" rx="13" ry="15" fill="${INK}"/>` +
+        `<circle cx="120" cy="146" r="4" fill="#FFFFFF"/>` +
+        `<path d="M67 172 C63 179 63 184 67 186 C71 184 71 179 67 172 Z" fill="#8FD3FF" stroke="${INK}" stroke-width="2.5"/>` +
+        `<path d="M88 190 Q100 178 112 190" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round"/>`
+      );
+    case 'angry':
+      return (
+        cheeks(0.85, '#E8657F') +
+        `<g stroke="${INK}" stroke-width="5.5" fill="none" stroke-linecap="round">` +
+        `<path d="M60 129 L90 141"/>` +
+        `<path d="M140 129 L110 141"/>` +
+        `</g>` +
+        `<ellipse cx="76" cy="153" rx="12" ry="12" fill="${INK}"/>` +
+        `<circle cx="73" cy="148" r="3" fill="#FFFFFF"/>` +
+        `<ellipse cx="124" cy="153" rx="12" ry="12" fill="${INK}"/>` +
+        `<circle cx="121" cy="148" r="3" fill="#FFFFFF"/>` +
+        `<g stroke="#E5322B" stroke-width="3.5" fill="none" stroke-linecap="round">` +
+        `<path d="M146 106 Q150 112 146 118"/>` +
+        `<path d="M158 106 Q154 112 158 118"/>` +
+        `<path d="M143 112 L149 112"/>` +
+        `<path d="M155 112 L161 112"/>` +
+        `</g>` +
+        `<path d="M86 190 Q100 179 114 190" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round"/>`
+      );
+    case 'serene':
+      return (
+        cheeks() +
+        `<g stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round">` +
+        `<path d="M64 149 Q76 157 88 149"/>` +
+        `<path d="M112 149 Q124 157 136 149"/>` +
+        `</g>` +
+        `<path d="M92 181 Q100 187 108 181" stroke="${INK}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`
+      );
+    case 'scared':
+      return (
+        cheeks(0.35) +
+        `<g stroke="${INK}" stroke-width="4" fill="none" stroke-linecap="round">` +
+        `<path d="M62 121 Q76 114 90 121"/>` +
+        `<path d="M110 121 Q124 114 138 121"/>` +
+        `</g>` +
+        `<circle cx="76" cy="150" r="14" fill="#FFFFFF" stroke="${INK}" stroke-width="4"/>` +
+        `<circle cx="76" cy="152" r="4.5" fill="${INK}"/>` +
+        `<circle cx="124" cy="150" r="14" fill="#FFFFFF" stroke="${INK}" stroke-width="4"/>` +
+        `<circle cx="124" cy="152" r="4.5" fill="${INK}"/>` +
+        `<path d="M154 116 C150 124 150 129 154 131 C158 129 158 124 154 116 Z" fill="#8FD3FF" stroke="${INK}" stroke-width="2.5"/>` +
+        `<ellipse cx="100" cy="186" rx="8" ry="10" fill="${INK}"/>`
+      );
+    case 'joy':
+    default:
+      return (
+        cheeks() +
+        eye(76) +
+        eye(124) +
+        `<path d="M88 176 Q100 192 112 176 Q100 184 88 176 Z" fill="${INK}"/>` +
+        `<path d="M96 182 Q100 187 105 182 Z" fill="#F08AA8"/>`
+      );
+  }
+}
+
+export function bodyInner(
+  dough: string,
+  opts: { rainbow?: boolean; id?: string; emotion?: Emotion } = {}
+): string {
   const id = opts.id ?? 'b';
   const clip = `cb_${id}`;
   const rb = `rb_${id}`;
@@ -74,11 +161,6 @@ export function bodyInner(dough: string, opts: { rainbow?: boolean; id?: string 
     `<path d="M99 52 Q104 55 100 60" stroke="${INK}" stroke-width="2" fill="none" opacity="0.55" stroke-linecap="round"/>` +
     `</g>`;
 
-  const eye = (cx: number) =>
-    `<ellipse cx="${cx}" cy="150" rx="13" ry="17" fill="${INK}"/>` +
-    `<circle cx="${cx - 4}" cy="143" r="5" fill="#FFFFFF"/>` +
-    `<circle cx="${cx + 4}" cy="157" r="2.4" fill="#FFFFFF" opacity="0.85"/>`;
-
   const body =
     `<ellipse cx="100" cy="248" rx="58" ry="10" fill="#16161D" opacity="0.1"/>` +
     `<ellipse cx="78" cy="232" rx="16" ry="10" fill="${bodyFill}" stroke="${INK}" stroke-width="5"/>` +
@@ -89,18 +171,16 @@ export function bodyInner(dough: string, opts: { rainbow?: boolean; id?: string 
     `</g>` +
     `<path d="${BODY_PATH}" fill="none" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>` +
     crown +
-    `<ellipse cx="52" cy="168" rx="12" ry="7" fill="#F08AA8" opacity="0.85"/>` +
-    `<ellipse cx="148" cy="168" rx="12" ry="7" fill="#F08AA8" opacity="0.85"/>` +
-    eye(76) +
-    eye(124) +
-    `<path d="M88 176 Q100 192 112 176 Q100 184 88 176 Z" fill="${INK}"/>` +
-    `<path d="M96 182 Q100 187 105 182 Z" fill="#F08AA8"/>` +
+    face(opts.emotion ?? DEFAULT_EMOTION) +
     (rainbow ? sparkle(168, 60, 11) + sparkle(150, 96, 7, '#FFFFFF') + sparkle(40, 150, 8, '#FFB3DE') : '');
 
   return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, body);
 }
 
-export function bodyDoc(dough: string, opts: { rainbow?: boolean; id?: string } = {}): string {
+export function bodyDoc(
+  dough: string,
+  opts: { rainbow?: boolean; id?: string; emotion?: Emotion } = {}
+): string {
   return bodyInner(dough, opts);
 }
 

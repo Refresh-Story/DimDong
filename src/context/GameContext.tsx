@@ -12,6 +12,8 @@ import React, {
 import { AppState } from 'react-native';
 
 import { db } from '@/firebase';
+import type { Emotion } from '@/art/dimArt';
+import { isEmotion } from '@/data/emotions';
 import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID, mergeCatalog } from '@/data/items';
 import { dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
@@ -23,6 +25,7 @@ import {
   buy as buyOp,
   equip as equipOp,
   grant as grantOp,
+  setEmotion as setEmotionOp,
   setName as setNameOp,
   toggleDecor as toggleDecorOp,
   unequip as unequipOp,
@@ -40,6 +43,7 @@ type GameContextValue = {
   level: number;
   progress: number;
   setName: (name: string) => Promise<void>;
+  setEmotion: (emotion: Emotion) => Promise<void>;
   brushCompleted: () => Promise<BrushResult>;
   buyItem: (item: Item) => Promise<'ok' | 'owned' | 'insufficient'>;
   grantItem: (item: Item) => Promise<void>;
@@ -57,6 +61,7 @@ function sanitize(data: any): PlayerState {
     equipped: data?.equipped ?? {},
     ownedItems: Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])])),
     placedDecor: data?.placedDecor ?? [],
+    emotion: isEmotion(data?.emotion) ? data.emotion : DEFAULT_PLAYER.emotion,
   };
 }
 
@@ -144,6 +149,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [commit]
   );
 
+  const setEmotion = useCallback(
+    async (emotion: Emotion) => {
+      commit(setEmotionOp(playerRef.current, emotion));
+    },
+    [commit]
+  );
+
   const brushCompleted = useCallback(async (): Promise<BrushResult> => {
     const { player, result } = brushOp(playerRef.current, dayKey(new Date()));
     commit(player);
@@ -195,6 +207,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       level: levelFromXp(player.xp),
       progress: levelProgress(player.xp),
       setName,
+      setEmotion,
       brushCompleted,
       buyItem,
       grantItem,
@@ -202,7 +215,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       unequipCategory,
       toggleDecor,
     }),
-    [ready, player, catalog, setName, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
+    [ready, player, catalog, setName, setEmotion, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

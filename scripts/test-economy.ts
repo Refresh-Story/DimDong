@@ -5,7 +5,7 @@ const assert = {
 };
 
 import { FALLBACK_CATALOG, getItemById, mergeCatalog } from '@/data/items';
-import { DEFAULT_PLAYER, brush, buy, equip, grant, toggleDecor, unequip } from '@/game/economy';
+import { DEFAULT_PLAYER, brush, buy, equip, grant, setEmotion, toggleDecor, unequip } from '@/game/economy';
 import { dayKey } from '@/game/rules';
 
 const item = (id: string) => {
@@ -116,5 +116,12 @@ const remoteWithBg = [...remote, { ...bgBamboo, price: 999 }];
 merged = mergeCatalog(remoteWithBg);
 check('à id égal, la version distante gagne', merged.find((i) => i.id === 'bg_bamboo')?.price === 999);
 check('pas de doublon d’id après fusion', merged.filter((i) => i.id === 'bg_bamboo').length === 1);
+
+console.log('--- Émotions ---');
+const base = { ...DEFAULT_PLAYER };
+check("émotion par défaut : 'joy'", base.emotion === 'joy');
+const em = setEmotion(base, 'sad');
+check("changer d'émotion est gratuit (gemmes inchangées)", em.emotion === 'sad' && em.gems === base.gems);
+check('même émotion → même objet (aucune écriture inutile)', setEmotion(em, 'sad') === em);
 
 console.log(`\n✅ ${pass} vérifications réussies.`);

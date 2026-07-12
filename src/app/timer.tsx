@@ -157,14 +157,14 @@ export default function TimerScreen() {
             <Text style={styles.getReady}>Prépare-toi&nbsp;!</Text>
             <Text style={styles.countdownNum}>{count}</Text>
             <View style={styles.stage}>
-              <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} />
+              <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
             </View>
           </>
         ) : phase !== 'done' ? (
           <>
             <View style={styles.stageGrow}>
               <Animated.View style={{ transform: [{ rotate }] }}>
-                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} />
+                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
               </Animated.View>
             </View>
 
@@ -215,7 +215,7 @@ export default function TimerScreen() {
           <>
             <View style={styles.stageGrow}>
               <Animated.View style={{ transform: [{ translateY: jump }] }}>
-                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} />
+                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
               </Animated.View>
               {result?.rewarded && <GemBurst />}
             </View>

@@ -115,9 +115,9 @@ export default function HomeScreen() {
                 style={({ pressed }) => [
                   styles.emotionChip,
                   isOn && styles.emotionChipOn,
-                  pressed && { transform: [{ scale: 0.92 }] },
+                  pressed && { transform: [{ scale: 0.95 }] },
                 ]}>
-                <Text style={styles.emotionEmoji}>{e.emoji}</Text>
+                <Text style={styles.emotionLabel}>{e.label}</Text>
               </Pressable>
             );
           })}
@@ -203,14 +203,15 @@ const styles = StyleSheet.create({
 
   emotionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
   emotionChip: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.pill,
     backgroundColor: Palette.white,
     borderWidth: 2.5,
     borderColor: Palette.outline,
@@ -220,9 +221,8 @@ const styles = StyleSheet.create({
   },
   emotionChipOn: {
     backgroundColor: Palette.accent,
-    transform: [{ scale: 1.08 }],
   },
-  emotionEmoji: { fontSize: 24, lineHeight: 30 },
+  emotionLabel: { fontSize: 14, fontFamily: Fonts.bodyBold, color: Palette.ink },
 
   brushBtn: {
     backgroundColor: Palette.primary,

@@ -1,11 +1,11 @@
 import { Emotion } from '@/art/dimArt';
 
-export const EMOTIONS: { id: Emotion; label: string; emoji: string }[] = [
-  { id: 'joy', label: 'Joie', emoji: '😄' },
-  { id: 'sad', label: 'Tristesse', emoji: '😢' },
-  { id: 'angry', label: 'Colère', emoji: '😠' },
-  { id: 'serene', label: 'Sérénité', emoji: '😌' },
-  { id: 'scared', label: 'Peur', emoji: '😱' },
+export const EMOTIONS: { id: Emotion; label: string }[] = [
+  { id: 'joy', label: 'Joie' },
+  { id: 'sad', label: 'Tristesse' },
+  { id: 'angry', label: 'Colère' },
+  { id: 'serene', label: 'Sérénité' },
+  { id: 'scared', label: 'Peur' },
 ];
 
 export function isEmotion(v: unknown): v is Emotion {

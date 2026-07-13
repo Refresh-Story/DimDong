@@ -29,7 +29,7 @@ export type DrawKind =
   | 'tuft'
   | 'kimono';
 
-export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern' | 'teapot';
+export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern';
 
 export type Item = {
   id: string;
@@ -138,7 +138,6 @@ export const FALLBACK_CATALOG: Item[] = [
   { id: 'decor_tree', name: 'Cerisier', category: 'decor', price: 80, rarity: 'rare', zIndex: 1, color: '#F4A6C0', decor: 'sakura', x: 0.15, w: 104 },
   { id: 'decor_flowers', name: 'Bambou', category: 'decor', price: 30, rarity: 'common', zIndex: 1, color: '#6FB23E', decor: 'bamboo', x: 0.3, w: 70 },
   { id: 'decor_mushroom', name: 'Lanterne', category: 'decor', price: 35, rarity: 'common', zIndex: 1, color: '#D6453F', decor: 'lantern', x: 0.7, w: 56 },
-  { id: 'decor_pond', name: 'Théière', category: 'decor', price: 70, rarity: 'rare', zIndex: 1, color: '#6FA9C9', decor: 'teapot', x: 0.5, w: 96 },
 ];
 
 export function getItemById(catalog: Item[], id?: string | null): Item | undefined {

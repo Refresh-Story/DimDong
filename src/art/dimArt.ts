@@ -7,7 +7,7 @@ export const DEFAULT_EMOTION: Emotion = 'joy';
 
 const INK = '#16161D';
 
-const BODY_PATH =
+export const BODY_PATH =
   'M100 72 C150 72 176 108 176 154 C176 206 146 228 100 228 C54 228 24 206 24 154 C24 108 50 72 100 72 Z';
 
 export function darken(hex: string, a = 0.24): string {
@@ -162,7 +162,6 @@ export function bodyInner(
     `</g>`;
 
   const body =
-    `<ellipse cx="100" cy="248" rx="58" ry="10" fill="#16161D" opacity="0.1"/>` +
     `<ellipse cx="78" cy="232" rx="16" ry="10" fill="${bodyFill}" stroke="${INK}" stroke-width="5"/>` +
     `<ellipse cx="122" cy="232" rx="16" ry="10" fill="${bodyFill}" stroke="${INK}" stroke-width="5"/>` +
     `<path d="${BODY_PATH}" fill="${bodyFill}"/>` +
@@ -401,17 +400,6 @@ export function decorInner(kind: string, c: string): string {
         `<rect x="36" y="101" width="28" height="8" rx="3" fill="#F4C430" stroke="${INK}" stroke-width="3"/>` +
         `<rect x="46" y="107" width="8" height="11" rx="2" fill="#F4C430" stroke="${INK}" stroke-width="2.5"/>`
       );
-    case 'teapot':
-      return (
-        shadow +
-        `<path d="M24 82 Q6 78 10 64 Q18 74 30 78 Z" fill="${c}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
-        `<path d="M76 72 Q96 70 90 96 Q86 100 80 96" stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"/>` +
-        `<path d="M76 72 Q94 70 88 95" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round"/>` +
-        `<ellipse cx="50" cy="86" rx="30" ry="24" fill="${c}" stroke="${INK}" stroke-width="3.5"/>` +
-        `<path d="M22 88 Q50 100 78 88" stroke="${INK}" stroke-width="2.5" opacity="0.35" fill="none"/>` +
-        `<ellipse cx="50" cy="63" rx="20" ry="8" fill="${lighten(c, 0.12)}" stroke="${INK}" stroke-width="3"/>` +
-        `<circle cx="50" cy="57" r="5" fill="${d}" stroke="${INK}" stroke-width="2.5"/>`
-      );
     default:
       return '';
   }
@@ -419,4 +407,27 @@ export function decorInner(kind: string, c: string): string {
 
 export function decorDoc(kind: string, color: string): string {
   return svg(DECOR_FRAME.w, DECOR_FRAME.h, '', decorInner(kind, color));
+}
+
+export const BRUSH_FRAME = { w: 120, h: 64 };
+
+// Brosse à dents de l'écran de brossage : tête à gauche (poils vers le haut,
+// côté bouche), manche vers la droite, inclinaison de base incrustée.
+export function toothbrushDoc(handleColor = '#FF4757'): string {
+  const neck = darken(handleColor, 0.2);
+  const head = lighten(handleColor, 0.3);
+  const body =
+    `<g transform="rotate(-18 30 24)">` +
+    `<rect x="46" y="30" width="66" height="14" rx="7" fill="${handleColor}" stroke="${INK}" stroke-width="5"/>` +
+    `<path d="M56 34 L100 34" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>` +
+    `<path d="M40 32 L52 30 L52 44 L40 42 Z" fill="${neck}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+    `<rect x="10" y="30" width="36" height="14" rx="7" fill="${head}" stroke="${INK}" stroke-width="4"/>` +
+    `<rect x="13" y="18" width="30" height="13" rx="4" fill="#FFFFFF" stroke="${INK}" stroke-width="3.5"/>` +
+    `<path d="M19 21 L19 28 M25 21 L25 28 M31 21 L31 28 M37 21 L37 28" stroke="${INK}" stroke-width="2" opacity="0.35" stroke-linecap="round"/>` +
+    `<circle cx="12" cy="16" r="6.5" fill="#FFFFFF" stroke="${INK}" stroke-width="2.5"/>` +
+    `<circle cx="22" cy="11" r="5" fill="#FFFFFF" stroke="${INK}" stroke-width="2.5"/>` +
+    `<circle cx="33" cy="14" r="4.5" fill="#FFFFFF" stroke="${INK}" stroke-width="2.5"/>` +
+    sparkle(46, 12, 5, '#BDEBFF') +
+    `</g>`;
+  return svg(BRUSH_FRAME.w, BRUSH_FRAME.h, '', body);
 }

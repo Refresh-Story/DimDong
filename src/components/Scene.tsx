@@ -53,12 +53,16 @@ export function Scene({
 
       <View style={styles.floor}>
         <Floor floor={cfg.floor} />
+      </View>
+
+      {/* Objets posés sur la ligne d'horizon, au-dessus de la zone UI (émotions, boutons). */}
+      <View style={styles.decorLayer} pointerEvents="none">
         {decor.map((item) => {
           const w = item.w ?? 90;
           return (
             <View
               key={item.id}
-              style={{ position: 'absolute', top: 30, left: (item.x ?? 0.5) * SCREEN_W - w / 2 }}>
+              style={{ position: 'absolute', bottom: -22, left: (item.x ?? 0.5) * SCREEN_W - w / 2 }}>
               <DecorView item={item} size={w} />
             </View>
           );
@@ -87,5 +91,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderTopWidth: 3,
     borderColor: Palette.outline,
+  },
+
+  decorLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: `${FLOOR_RATIO * 100}%`,
+    height: 0,
   },
 });

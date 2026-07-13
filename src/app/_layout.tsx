@@ -41,10 +41,18 @@ export default function RootLayout() {
         <GameProvider>
           <StatusBar style="dark" />
           <Stack
-            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Palette.panel } }}>
+            screenOptions={{
+              headerShown: false,
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
+              contentStyle: { backgroundColor: Palette.panel },
+            }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="onboarding" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="timer" options={{ presentation: 'card' }} />
+            <Stack.Screen
+              name="timer"
+              options={{ presentation: 'card', gestureEnabled: false, fullScreenGestureEnabled: false }}
+            />
             <Stack.Screen name="shop" options={{ presentation: 'card' }} />
             <Stack.Screen name="inventory" options={{ presentation: 'card' }} />
           </Stack>

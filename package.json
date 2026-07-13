@@ -55,6 +55,7 @@
     "lint": "expo lint",
     "test": "tsx scripts/test-economy.ts",
     "render:items": "tsx scripts/render-items.mjs",
+    "render:store-assets": "tsx scripts/render-store-assets.mjs",
     "seed:catalog": "node scripts/seed-catalog.mjs"
   },
   "private": true

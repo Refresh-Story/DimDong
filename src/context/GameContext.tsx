@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { AppState } from 'react-native';
 
-import { db } from '@/firebase';
+import { getDb } from '@/firebase';
 import type { Emotion } from '@/art/dimArt';
 import { isEmotion } from '@/data/emotions';
 import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID, mergeCatalog } from '@/data/items';
@@ -96,7 +96,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       } catch {
       }
       try {
-        const snap = await getDocs(collection(db, 'catalog'));
+        const snap = await getDocs(collection(getDb(), 'catalog'));
         if (!snap.empty) {
           const items = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Item[];
           setCatalog(mergeCatalog(items));

@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SvgXml } from 'react-native-svg';
 
+import { BRUSH_FRAME, DRAW_FRAME, toothbrushDoc } from '@/art/dimArt';
 import { GemBurst } from '@/components/GemBurst';
 import { DimAvatar } from '@/components/DimAvatar';
 import { Scene } from '@/components/Scene';
@@ -19,6 +21,13 @@ type Phase = 'ready' | 'countdown' | 'running' | 'done';
 const ZONE_SEC = BRUSH_DURATION_SEC / BRUSH_ZONES.length;
 const KEEP_AWAKE_TAG = 'dim-dong-brushing';
 
+// À size 200, 1 unité du viewBox 200x260 = 1 px ; la bouche de Dim est vers (100, 184).
+const AVATAR_SIZE = 200;
+const BRUSH_WIDTH = 110;
+const BRUSH_HEIGHT = (BRUSH_WIDTH * BRUSH_FRAME.h) / BRUSH_FRAME.w;
+const BRUSH_LEFT = 72;
+const BRUSH_TOP = 171;
+
 function fmt(s: number) {
   const m = Math.floor(s / 60);
   const r = s % 60;
@@ -27,6 +36,7 @@ function fmt(s: number) {
 
 export default function TimerScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { player, catalog, level, brushCompleted } = useGame();
   const [phase, setPhase] = useState<Phase>('ready');
   const [left, setLeft] = useState(BRUSH_DURATION_SEC);
@@ -39,7 +49,9 @@ export default function TimerScreen() {
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  const shake = useRef(new Animated.Value(0)).current;
+  const sway = useRef(new Animated.Value(0)).current;
+  const bob = useRef(new Animated.Value(0)).current;
+  const scrub = useRef(new Animated.Value(0)).current;
   const pop = useRef(new Animated.Value(0)).current;
   const jump = useRef(new Animated.Value(0)).current;
 
@@ -63,16 +75,42 @@ export default function TimerScreen() {
 
   useEffect(() => {
     if (phase !== 'running' || paused) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shake, { toValue: 1, duration: 120, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(shake, { toValue: -1, duration: 120, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(shake, { toValue: 0, duration: 120, easing: Easing.linear, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [phase, paused, shake]);
+    const swayEase = Easing.inOut(Easing.sin);
+    const scrubEase = Easing.inOut(Easing.quad);
+    const loops = [
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(sway, { toValue: 1, duration: 600, easing: swayEase, useNativeDriver: true }),
+          Animated.timing(sway, { toValue: -1, duration: 1200, easing: swayEase, useNativeDriver: true }),
+          Animated.timing(sway, { toValue: 0, duration: 600, easing: swayEase, useNativeDriver: true }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bob, { toValue: -6, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(bob, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        ])
+      ),
+      // Frottements en rafales de 4 allers-retours, puis courte pause.
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scrub, { toValue: 1, duration: 140, easing: scrubEase, useNativeDriver: true }),
+          Animated.timing(scrub, { toValue: -1, duration: 140, easing: scrubEase, useNativeDriver: true }),
+          Animated.timing(scrub, { toValue: 1, duration: 140, easing: scrubEase, useNativeDriver: true }),
+          Animated.timing(scrub, { toValue: -1, duration: 140, easing: scrubEase, useNativeDriver: true }),
+          Animated.timing(scrub, { toValue: 0, duration: 140, easing: scrubEase, useNativeDriver: true }),
+          Animated.delay(380),
+        ])
+      ),
+    ];
+    loops.forEach((l) => l.start());
+    return () => {
+      loops.forEach((l) => l.stop());
+      sway.setValue(0);
+      bob.setValue(0);
+      scrub.setValue(0);
+    };
+  }, [phase, paused, sway, bob, scrub]);
 
   function start() {
     setLeft(BRUSH_DURATION_SEC);
@@ -141,14 +179,17 @@ export default function TimerScreen() {
 
   const elapsed = BRUSH_DURATION_SEC - left;
   const progress = elapsed / BRUSH_DURATION_SEC;
-  const rotate = shake.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] });
+  const swayRotate = sway.interpolate({ inputRange: [-1, 1], outputRange: ['-2.5deg', '2.5deg'] });
+  const scrubX = scrub.interpolate({ inputRange: [-1, 1], outputRange: [-13, 13] });
+  const scrubRotate = scrub.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] });
+  const brushXml = useMemo(() => toothbrushDoc(Palette.primary), []);
   const background = getItemById(catalog, player.equipped.background)?.background;
 
   return (
     <View style={{ flex: 1 }}>
       <Scene background={background} />
       <SafeAreaView style={styles.safe}>
-        <Pressable style={styles.close} onPress={goBack}>
+        <Pressable style={[styles.close, { top: insets.top + Spacing.md }]} onPress={goBack}>
           <Text style={styles.closeText}>✕</Text>
         </Pressable>
 
@@ -163,9 +204,24 @@ export default function TimerScreen() {
         ) : phase !== 'done' ? (
           <>
             <View style={styles.stageGrow}>
-              <Animated.View style={{ transform: [{ rotate }] }}>
-                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
-              </Animated.View>
+              <View style={{ width: AVATAR_SIZE, height: (AVATAR_SIZE * DRAW_FRAME.h) / DRAW_FRAME.w }}>
+                <Animated.View style={{ transform: [{ translateY: bob }, { rotate: swayRotate }] }}>
+                  <DimAvatar size={AVATAR_SIZE} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
+                </Animated.View>
+                {phase === 'running' && !paused && (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      left: BRUSH_LEFT,
+                      top: BRUSH_TOP,
+                      transform: [{ translateX: scrubX }, { rotate: scrubRotate }],
+                    }}
+                  >
+                    <SvgXml xml={brushXml} width={BRUSH_WIDTH} height={BRUSH_HEIGHT} />
+                  </Animated.View>
+                )}
+              </View>
             </View>
 
             <View style={styles.timerCard}>
@@ -251,7 +307,7 @@ export default function TimerScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
-  close: { position: 'absolute', top: Spacing.xxl, right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+  close: { position: 'absolute', right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...Shadow.card },
   closeText: { fontSize: 18, fontWeight: '800', color: Palette.ink },
   bigTime: { fontSize: 64, fontFamily: Fonts.display, color: Palette.primary, letterSpacing: 2, lineHeight: 68 },
   bigTimePaused: { color: Palette.inkSoft },

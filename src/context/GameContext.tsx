@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, getDocs } from '@react-native-firebase/firestore';
 import React, {
   createContext,
   useCallback,
@@ -11,10 +10,9 @@ import React, {
 } from 'react';
 import { AppState } from 'react-native';
 
-import { getDb } from '@/firebase';
 import type { Emotion } from '@/art/dimArt';
 import { isEmotion } from '@/data/emotions';
-import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID, mergeCatalog } from '@/data/items';
+import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
 import { dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
   BrushResult,
@@ -34,7 +32,8 @@ import {
 export type { BrushResult, PlayerState } from '@/game/economy';
 
 const PLAYER_KEY = 'dimdong.player';
-const CATALOG_KEY = 'dimdong.catalog';
+// Ancien cache du catalogue distant (Firebase) ; purgé au démarrage.
+const LEGACY_CATALOG_KEY = 'dimdong.catalog';
 
 type GameContextValue = {
   ready: boolean;
@@ -67,7 +66,7 @@ function sanitize(data: any): PlayerState {
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [player, setPlayer] = useState<PlayerState>(DEFAULT_PLAYER);
-  const [catalog, setCatalog] = useState<Item[]>(FALLBACK_CATALOG);
+  const catalog: Item[] = FALLBACK_CATALOG;
   const [ready, setReady] = useState(false);
 
   const playerRef = useRef<PlayerState>(DEFAULT_PLAYER);
@@ -85,25 +84,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       } finally {
         setReady(true);
       }
-    })();
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const cached = await AsyncStorage.getItem(CATALOG_KEY);
-        if (cached) setCatalog(mergeCatalog(JSON.parse(cached) as Item[]));
-      } catch {
-      }
-      try {
-        const snap = await getDocs(collection(getDb(), 'catalog'));
-        if (!snap.empty) {
-          const items = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Item[];
-          setCatalog(mergeCatalog(items));
-          AsyncStorage.setItem(CATALOG_KEY, JSON.stringify(items)).catch(() => {});
-        }
-      } catch {
-      }
+      AsyncStorage.removeItem(LEGACY_CATALOG_KEY).catch(() => {});
     })();
   }, []);
 

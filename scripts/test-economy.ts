@@ -4,7 +4,7 @@ const assert = {
   },
 };
 
-import { FALLBACK_CATALOG, getItemById, mergeCatalog } from '@/data/items';
+import { FALLBACK_CATALOG, getItemById } from '@/data/items';
 import { DEFAULT_PLAYER, brush, buy, equip, grant, setEmotion, toggleDecor, unequip } from '@/game/economy';
 import { dayKey } from '@/game/rules';
 
@@ -40,12 +40,12 @@ r = buy(p, gold);
 check("achat trop cher (120 > 10) → 'insufficient'", r.status === 'insufficient');
 check('solde inchangé après refus', r.player.gems === 10);
 
-const rainbow = item('color_rainbow'); // 1000 gemmes, légendaire
-check('Rainbow est bien légendaire + rainbow + 1000', rainbow.rarity === 'legendary' && rainbow.rainbow === true && rainbow.price === 1000);
+const rainbow = item('color_rainbow'); // 500 gemmes, légendaire
+check('Rainbow est bien légendaire + rainbow + 500', rainbow.rarity === 'legendary' && rainbow.rainbow === true && rainbow.price === 500);
 r = buy({ ...DEFAULT_PLAYER }, rainbow);
 check("Rainbow inabordable au départ → 'insufficient'", r.status === 'insufficient');
-r = buy({ ...DEFAULT_PLAYER, gems: 1000 }, rainbow);
-check('Rainbow achetée avec 1000 → ok, solde 0', r.status === 'ok' && r.player.gems === 0 && r.player.ownedItems.includes('color_rainbow'));
+r = buy({ ...DEFAULT_PLAYER, gems: 500 }, rainbow);
+check('Rainbow achetée avec 500 → ok, solde 0', r.status === 'ok' && r.player.gems === 0 && r.player.ownedItems.includes('color_rainbow'));
 
 console.log('--- Secret (déblocage gratuit) ---');
 const g = grant({ ...DEFAULT_PLAYER }, rainbow);
@@ -84,7 +84,7 @@ console.log('--- Décors de fond ---');
 const backgrounds = FALLBACK_CATALOG.filter((i) => i.category === 'background');
 check('8 décors de fond au catalogue', backgrounds.length === 8);
 check('chaque décor a une clé `background` unique', new Set(backgrounds.map((i) => i.background)).size === 8 && backgrounds.every((i) => !!i.background));
-check('prix entre 80 et 450 gemmes', backgrounds.every((i) => i.price >= 80 && i.price <= 450));
+check('prix entre 80 et 400 gemmes', backgrounds.every((i) => i.price >= 80 && i.price <= 400));
 
 const bgBamboo = item('bg_bamboo'); // 80 gemmes
 const bgDojo = item('bg_dojo');
@@ -107,15 +107,6 @@ f = equip(equip({ ...DEFAULT_PLAYER }, cap), bgBamboo);
 check('activer un décor ne touche pas au chapeau', f.equipped.hat === 'cap_red' && f.equipped.background === 'bg_bamboo');
 f = equip({ ...DEFAULT_PLAYER, equipped: { hat: 'cap_red', background: 'bg_bamboo' } }, kimono);
 check('le kimono retire bien le chapeau mais garde le décor', f.equipped.hat === undefined && f.equipped.background === 'bg_bamboo');
-
-console.log('--- Fusion du catalogue (Firestore + embarqué) ---');
-const remote = FALLBACK_CATALOG.filter((i) => i.category !== 'background').map((i) => ({ ...i }));
-let merged = mergeCatalog(remote);
-check('les décors de fond réapparaissent si absents du distant', merged.filter((i) => i.category === 'background').length === 8);
-const remoteWithBg = [...remote, { ...bgBamboo, price: 999 }];
-merged = mergeCatalog(remoteWithBg);
-check('à id égal, la version distante gagne', merged.find((i) => i.id === 'bg_bamboo')?.price === 999);
-check('pas de doublon d’id après fusion', merged.filter((i) => i.id === 'bg_bamboo').length === 1);
 
 console.log('--- Émotions ---');
 const base = { ...DEFAULT_PLAYER };

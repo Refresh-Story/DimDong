@@ -19,7 +19,6 @@
       "icon": "./assets/expo.icon",
       "supportsTablet": false,
       "bundleIdentifier": "com.refreshstory.dimdong",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -35,17 +34,14 @@
           "backgroundColor": "#F5F1E8"
         }
       ],
-      "expo-audio",
-      "@react-native-firebase/app",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ]
+      "expo-audio"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/a2232c18-6032-452a-ba78-404800b94c33"
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

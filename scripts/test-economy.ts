@@ -6,7 +6,7 @@ const assert = {
 
 import { FALLBACK_CATALOG, getItemById } from '@/data/items';
 import { DEFAULT_PLAYER, brush, buy, equip, grant, setEmotion, toggleDecor, unequip } from '@/game/economy';
-import { dayKey } from '@/game/rules';
+import { beltForLevel, dayKey } from '@/game/rules';
 
 const item = (id: string) => {
   const it = getItemById(FALLBACK_CATALOG, id);
@@ -108,6 +108,15 @@ f = equip(equip({ ...DEFAULT_PLAYER }, cap), bgBamboo);
 check('activer un décor ne touche pas au chapeau', f.equipped.hat === 'cap_red' && f.equipped.background === 'bg_bamboo');
 f = equip({ ...DEFAULT_PLAYER, equipped: { hat: 'cap_red', background: 'bg_bamboo' } }, kimono);
 check('le kimono retire bien le chapeau mais garde le décor', f.equipped.hat === undefined && f.equipped.background === 'bg_bamboo');
+
+console.log('--- Ceintures (une tous les 3 niveaux) ---');
+check('niveaux 1 à 3 → Blanche', [1, 2, 3].every((l) => beltForLevel(l).label === 'Blanche'));
+check('niveaux 4 à 6 → Jaune', [4, 5, 6].every((l) => beltForLevel(l).label === 'Jaune'));
+check('niveaux 7 à 9 → Orange', [7, 8, 9].every((l) => beltForLevel(l).label === 'Orange'));
+check('niveaux 10 à 12 → Verte', [10, 11, 12].every((l) => beltForLevel(l).label === 'Verte'));
+check('niveaux 13 à 15 → Bleue', [13, 14, 15].every((l) => beltForLevel(l).label === 'Bleue'));
+check('niveaux 16 à 18 → Marron', [16, 17, 18].every((l) => beltForLevel(l).label === 'Marron'));
+check('niveau 19 et au-delà → Noire', [19, 25, 100].every((l) => beltForLevel(l).label === 'Noire'));
 
 console.log('--- Émotions ---');
 const base = { ...DEFAULT_PLAYER };

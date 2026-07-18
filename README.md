@@ -20,7 +20,7 @@ npx expo run:ios   # génère ios/, pod install, build et lance le simulateur
 
 1. Accueil : Dim dans son salon de dim-sum, niveau et gemmes.
 2. **Se brosser les dents** → minuteur 2 min (guidage par zones, vibrations).
-3. Fin du minuteur → **gemmes + XP** (plafonné à 2 brossages récompensés/jour).
+3. Fin du minuteur → **gemmes + XP** (chaque brossage est récompensé).
 4. **Boutique** → acheter un accessoire.
 5. **Mes objets** → équiper/déséquiper, Dim change en direct.
 
@@ -33,7 +33,7 @@ npx expo run:ios   # génère ios/, pod install, build et lance le simulateur
 | `src/components/DimAvatar.tsx` | Personnage en couches (corps + accessoires empilés) |
 | `src/components/Scene.tsx` | Décor (ciel, soleil, herbe, barrière) |
 | `src/data/items.ts` | Catalogue + catégories (placeholders dessinés `draw`) |
-| `src/game/rules.ts` | Durée, gains, niveaux, plafond journalier |
+| `src/game/rules.ts` | Durée, gains, niveaux |
 | `src/firebase.ts` | Init `@react-native-firebase` (Firestore, lecture seule) |
 
 ## Données & Firebase

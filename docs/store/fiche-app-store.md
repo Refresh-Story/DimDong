@@ -33,7 +33,7 @@ PENSÉ POUR LES ENFANTS (ET LEURS PARENTS)
 • Pas de publicité
 • Pas d'achats intégrés : tout se gagne en se brossant les dents
 • Pas de compte à créer : les données restent sur l'appareil
-• Une routine saine : 2 brossages récompensés par jour, matin et soir, ni plus ni moins
+• Une routine saine : chaque brossage est récompensé, matin et soir
 
 Dim t'attend. À ta brosse !
 

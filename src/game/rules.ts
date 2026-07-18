@@ -2,7 +2,6 @@
 export const BRUSH_DURATION_SEC = 120;
 export const GEMS_PER_BRUSH = 10;
 export const STARTING_GEMS = 30;
-export const MAX_REWARDED_BRUSHES_PER_DAY = 2;
 
 export const BRUSH_ZONES = [
   'En haut à gauche',

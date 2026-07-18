@@ -53,21 +53,22 @@ check('grant : Rainbow obtenue sans payer (gemmes inchangées)', g.gems === 30 &
 const g2 = grant(g, rainbow);
 check('grant : pas de doublon si déjà possédée', g2.ownedItems.filter((id) => id === 'color_rainbow').length === 1);
 
-console.log('--- Brossage (récompense + plafond journalier) ---');
+console.log('--- Brossage (récompense à chaque brossage, sans plafond) ---');
 const today = dayKey(new Date());
 let q = { ...DEFAULT_PLAYER };
 let b = brush(q, today);
-check('1er brossage récompensé (+10)', b.result.rewarded && b.result.gained === 10 && b.player.gems === 40);
+check('1er brossage récompensé (+10)', b.result.gained === 10 && b.player.gems === 40);
 q = b.player;
 b = brush(q, today);
-check('2e brossage récompensé (+10) → 50', b.result.rewarded && b.player.gems === 50);
+check('2e brossage récompensé (+10) → 50', b.result.gained === 10 && b.player.gems === 50);
 q = b.player;
 b = brush(q, today);
-check('3e brossage le même jour → non récompensé (plafond 2/j)', !b.result.rewarded && b.player.gems === 50);
-check('mais le brossage est compté (totalBrushes = 3)', b.player.totalBrushes === 3);
+check('3e brossage le même jour → toujours récompensé (+10) → 60', b.result.gained === 10 && b.player.gems === 60);
+check('le brossage est compté (totalBrushes = 3)', b.player.totalBrushes === 3);
+check('chaque brossage donne 1 XP', b.player.xp === 3);
 q = b.player;
 b = brush(q, '2099-01-01'); // nouveau jour
-check('nouveau jour → de nouveau récompensé', b.result.rewarded && b.player.gems === 60);
+check('nouveau jour → récompensé aussi', b.result.gained === 10 && b.player.gems === 70);
 
 console.log('--- Équipement / décor ---');
 let e = equip({ ...DEFAULT_PLAYER }, cap);

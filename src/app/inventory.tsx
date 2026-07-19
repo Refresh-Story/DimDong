@@ -8,7 +8,7 @@ import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { useGame } from '@/context/GameContext';
 import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory } from '@/data/items';
-import { beltForPlayer, earnedBelts, isSenseiName } from '@/game/rules';
+import { availableBelts, beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function InventoryScreen() {
@@ -19,9 +19,8 @@ export default function InventoryScreen() {
 
   const owned = catalog.filter((i) => player.ownedItems.includes(i.id));
 
-  const sensei = isSenseiName(player.name);
   const belt = beltForPlayer(player.name, level, player.selectedBelt);
-  const belts = earnedBelts(level);
+  const belts = availableBelts(player.name, level);
 
   function toggle(item: Item) {
     Haptics.selectionAsync().catch(() => {});
@@ -69,6 +68,29 @@ export default function InventoryScreen() {
           return (
             <View key={cat} style={{ marginBottom: Spacing.lg }}>
               <Text style={styles.section}>{CATEGORY_LABELS[cat]}</Text>
+              {cat === 'kimono' && (
+                <View style={styles.beltRow}>
+                  {belts.map((b) => {
+                    const isOn = b.label === belt.label;
+                    return (
+                      <Pressable
+                        key={b.label}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Ceinture ${b.label}`}
+                        accessibilityState={{ selected: isOn }}
+                        onPress={() => pickBelt(b.label)}
+                        style={({ pressed }) => [
+                          styles.beltDot,
+                          { backgroundColor: b.color },
+                          isOn && styles.beltDotOn,
+                          pressed && { transform: [{ scale: 0.9 }] },
+                        ]}>
+                        {b.accent && <View style={[styles.beltDotAccent, { backgroundColor: b.accent }]} />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
               <View style={styles.grid}>
                 {items.map((item) => {
                   const isOn = isDecor ? player.placedDecor.includes(item.id) : equippedId === item.id;
@@ -104,37 +126,6 @@ export default function InventoryScreen() {
           );
         })}
 
-        <View style={{ marginBottom: Spacing.lg }}>
-          <Text style={styles.section}>Ceinture</Text>
-          {sensei && (
-            <Text style={styles.beltNote}>
-              Tant que ton nom contient «&nbsp;sensei&nbsp;», Dim porte la ceinture des grands maîtres.
-            </Text>
-          )}
-          <View style={styles.grid}>
-            {belts.map((b) => {
-              const isOn = !sensei && b.label === belt.label;
-              return (
-                <Pressable
-                  key={b.label}
-                  onPress={() => pickBelt(b.label)}
-                  style={({ pressed }) => [
-                    styles.card,
-                    isOn && styles.cardOn,
-                    pressed && { transform: [{ scale: 0.96 }] },
-                  ]}>
-                  <View style={styles.preview}>
-                    <View style={[styles.beltSwatch, { backgroundColor: b.color }]} />
-                  </View>
-                  <Text style={styles.itemName} numberOfLines={1}>{b.label}</Text>
-                  <Text style={[styles.status, isOn && { color: Palette.primaryDark }]}>
-                    {isOn ? 'Portée ✓' : 'Toucher pour porter'}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -165,6 +156,15 @@ const styles = StyleSheet.create({
   preview: { height: 88, justifyContent: 'center', alignItems: 'center' },
   itemName: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Palette.ink },
   status: { fontSize: 12, fontFamily: Fonts.body, color: Palette.inkSoft },
-  beltNote: { fontSize: 13, fontFamily: Fonts.body, color: Palette.inkSoft, marginBottom: Spacing.sm },
-  beltSwatch: { width: 64, height: 22, borderRadius: 8, borderWidth: 2.5, borderColor: Palette.outline },
+  beltRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
+  beltDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
+    overflow: 'hidden',
+  },
+  beltDotOn: { borderWidth: 4, borderColor: Palette.primaryDark, transform: [{ scale: 1.15 }] },
+  beltDotAccent: { position: 'absolute', left: 0, right: 0, top: 10, height: 10 },
 });

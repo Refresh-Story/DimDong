@@ -6,7 +6,7 @@ const assert = {
 
 import { FALLBACK_CATALOG, getItemById } from '@/data/items';
 import { DEFAULT_PLAYER, brush, buy, equip, grant, selectBelt, setEmotion, toggleDecor, unequip } from '@/game/economy';
-import { SENSEI_BELT, beltForLevel, beltForPlayer, dayKey, earnedBelts, isSenseiName } from '@/game/rules';
+import { SENSEI_BELT, availableBelts, beltForLevel, beltForPlayer, dayKey, earnedBelts, isSenseiName } from '@/game/rules';
 
 const item = (id: string) => {
   const it = getItemById(FALLBACK_CATALOG, id);
@@ -140,7 +140,16 @@ check('null → retour à la ceinture du niveau', s.selectedBelt === null);
 check('beltForPlayer : ceinture du niveau par défaut', beltForPlayer('Dim', 7, null).label === 'Orange');
 check('beltForPlayer : la sélection prime sur le niveau', beltForPlayer('Dim', 7, 'Jaune').label === 'Jaune');
 check('beltForPlayer : sélection non obtenue ignorée', beltForPlayer('Dim', 7, 'Noire').label === 'Orange');
-check('beltForPlayer : Sensei prime sur tout', beltForPlayer('Dim Sensei', 7, 'Jaune') === SENSEI_BELT);
+
+check(
+  'Sensei proposée seulement si le nom contient « sensei »',
+  availableBelts('DimSensei', 1).includes(SENSEI_BELT) && !availableBelts('Dim', 19).includes(SENSEI_BELT)
+);
+check('un nom sensei ne force pas la ceinture', beltForPlayer('DimSensei', 7, null).label === 'Orange');
+check('Sensei sélectionnable avec le bon nom', beltForPlayer('DimSensei', 7, 'Sensei') === SENSEI_BELT);
+check('sélection Sensei ignorée sans le bon nom', beltForPlayer('Dim', 7, 'Sensei').label === 'Orange');
+check('selectBelt accepte Sensei avec le bon nom', selectBelt({ ...DEFAULT_PLAYER, name: 'DimSensei' }, 'Sensei').selectedBelt === 'Sensei');
+check('selectBelt refuse Sensei sans le bon nom', selectBelt({ ...DEFAULT_PLAYER }, 'Sensei').selectedBelt === null);
 
 console.log('--- Émotions ---');
 const base = { ...DEFAULT_PLAYER };

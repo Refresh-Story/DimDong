@@ -1,6 +1,6 @@
 import type { Emotion } from '@/art/dimArt';
 import { Item, ItemCategory, KIMONO_ID } from '@/data/items';
-import { GEMS_PER_BRUSH, STARTING_GEMS, earnedBelts, levelFromXp } from '@/game/rules';
+import { GEMS_PER_BRUSH, STARTING_GEMS, availableBelts, levelFromXp } from '@/game/rules';
 
 export type PlayerState = {
   name: string;
@@ -48,9 +48,9 @@ export function setEmotion(p: PlayerState, emotion: Emotion): PlayerState {
   return p.emotion === emotion ? p : { ...p, emotion };
 }
 
-// Porter une ceinture déjà obtenue ; null = revenir à la ceinture du niveau.
+// Porter une ceinture disponible ; null = revenir à la ceinture du niveau.
 export function selectBelt(p: PlayerState, label: string | null): PlayerState {
-  if (label !== null && !earnedBelts(levelFromXp(p.xp)).some((b) => b.label === label)) return p;
+  if (label !== null && !availableBelts(p.name, levelFromXp(p.xp)).some((b) => b.label === label)) return p;
   return p.selectedBelt === label ? p : { ...p, selectedBelt: label };
 }
 

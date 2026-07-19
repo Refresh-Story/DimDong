@@ -13,7 +13,7 @@ import { AppState } from 'react-native';
 import type { Emotion } from '@/art/dimArt';
 import { isEmotion } from '@/data/emotions';
 import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
-import { BELTS, dayKey, levelFromXp, levelProgress } from '@/game/rules';
+import { BELTS, SENSEI_BELT, dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
   BrushResult,
   BuyStatus,
@@ -63,7 +63,9 @@ function sanitize(data: any): PlayerState {
     ownedItems: Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])])),
     placedDecor: data?.placedDecor ?? [],
     emotion: isEmotion(data?.emotion) ? data.emotion : DEFAULT_PLAYER.emotion,
-    selectedBelt: BELTS.some((b) => b.label === data?.selectedBelt) ? data.selectedBelt : null,
+    selectedBelt: [...BELTS, SENSEI_BELT].some((b) => b.label === data?.selectedBelt)
+      ? data.selectedBelt
+      : null,
   };
 }
 

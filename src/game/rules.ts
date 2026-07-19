@@ -52,10 +52,15 @@ export function earnedBelts(level: number): Belt[] {
   return BELTS.slice(0, BELTS.indexOf(beltForLevel(level)) + 1);
 }
 
-// Priorité : Sensei > ceinture choisie (si obtenue) > ceinture du niveau.
+// Ceintures portables : celles déjà obtenues, plus la Sensei si le nom s'y prête.
+export function availableBelts(name: string, level: number): Belt[] {
+  const belts = earnedBelts(level);
+  return isSenseiName(name) ? [...belts, SENSEI_BELT] : belts;
+}
+
+// La ceinture choisie si elle est disponible, sinon celle du niveau.
 export function beltForPlayer(name: string, level: number, selectedBelt: string | null): Belt {
-  if (isSenseiName(name)) return SENSEI_BELT;
-  const selected = earnedBelts(level).find((b) => b.label === selectedBelt);
+  const selected = availableBelts(name, level).find((b) => b.label === selectedBelt);
   return selected ?? beltForLevel(level);
 }
 

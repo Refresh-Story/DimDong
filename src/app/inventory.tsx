@@ -8,7 +8,7 @@ import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { useGame } from '@/context/GameContext';
 import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory } from '@/data/items';
-import { beltForPlayer, earnedBelts, isSenseiName } from '@/game/rules';
+import { availableBelts, beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function InventoryScreen() {
@@ -19,9 +19,8 @@ export default function InventoryScreen() {
 
   const owned = catalog.filter((i) => player.ownedItems.includes(i.id));
 
-  const sensei = isSenseiName(player.name);
   const belt = beltForPlayer(player.name, level, player.selectedBelt);
-  const belts = earnedBelts(level);
+  const belts = availableBelts(player.name, level);
 
   function toggle(item: Item) {
     Haptics.selectionAsync().catch(() => {});
@@ -106,14 +105,9 @@ export default function InventoryScreen() {
 
         <View style={{ marginBottom: Spacing.lg }}>
           <Text style={styles.section}>Ceinture</Text>
-          {sensei && (
-            <Text style={styles.beltNote}>
-              Tant que ton nom contient «&nbsp;sensei&nbsp;», Dim porte la ceinture des grands maîtres.
-            </Text>
-          )}
           <View style={styles.grid}>
             {belts.map((b) => {
-              const isOn = !sensei && b.label === belt.label;
+              const isOn = b.label === belt.label;
               return (
                 <Pressable
                   key={b.label}
@@ -124,7 +118,14 @@ export default function InventoryScreen() {
                     pressed && { transform: [{ scale: 0.96 }] },
                   ]}>
                   <View style={styles.preview}>
-                    <View style={[styles.beltSwatch, { backgroundColor: b.color }]} />
+                    <View style={[styles.beltSwatch, { backgroundColor: b.color }]}>
+                      {b.accent && (
+                        <>
+                          <View style={[styles.beltSwatchAccent, { left: 12, backgroundColor: b.accent }]} />
+                          <View style={[styles.beltSwatchAccent, { left: 38, backgroundColor: b.accent }]} />
+                        </>
+                      )}
+                    </View>
                   </View>
                   <Text style={styles.itemName} numberOfLines={1}>{b.label}</Text>
                   <Text style={[styles.status, isOn && { color: Palette.primaryDark }]}>
@@ -165,6 +166,6 @@ const styles = StyleSheet.create({
   preview: { height: 88, justifyContent: 'center', alignItems: 'center' },
   itemName: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Palette.ink },
   status: { fontSize: 12, fontFamily: Fonts.body, color: Palette.inkSoft },
-  beltNote: { fontSize: 13, fontFamily: Fonts.body, color: Palette.inkSoft, marginBottom: Spacing.sm },
-  beltSwatch: { width: 64, height: 22, borderRadius: 8, borderWidth: 2.5, borderColor: Palette.outline },
+  beltSwatch: { width: 64, height: 22, borderRadius: 8, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
+  beltSwatchAccent: { position: 'absolute', top: 0, bottom: 0, width: 14 },
 });

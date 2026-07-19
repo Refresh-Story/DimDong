@@ -44,7 +44,7 @@ export default function ShopScreen() {
       if (secretTimer.current) clearTimeout(secretTimer.current);
       grantItem(it);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      flash('🌈 Secret débloqué ! Rainbow offert !');
+      flash('Secret débloqué ! Rainbow offert !');
     }
   }
 
@@ -68,7 +68,7 @@ export default function ShopScreen() {
       flash('Tu as déjà cet objet.');
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-      flash('Pas assez de gemmes 💎');
+      flash('Pas assez de gemmes');
     }
   }
 

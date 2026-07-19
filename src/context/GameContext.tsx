@@ -13,7 +13,7 @@ import { AppState } from 'react-native';
 import type { Emotion } from '@/art/dimArt';
 import { isEmotion } from '@/data/emotions';
 import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
-import { dayKey, levelFromXp, levelProgress } from '@/game/rules';
+import { BELTS, dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
   BrushResult,
   BuyStatus,
@@ -23,6 +23,7 @@ import {
   buy as buyOp,
   equip as equipOp,
   grant as grantOp,
+  selectBelt as selectBeltOp,
   setEmotion as setEmotionOp,
   setName as setNameOp,
   toggleDecor as toggleDecorOp,
@@ -43,6 +44,7 @@ type GameContextValue = {
   progress: number;
   setName: (name: string) => Promise<void>;
   setEmotion: (emotion: Emotion) => Promise<void>;
+  selectBelt: (label: string | null) => Promise<void>;
   brushCompleted: () => Promise<BrushResult>;
   buyItem: (item: Item) => Promise<'ok' | 'owned' | 'insufficient'>;
   grantItem: (item: Item) => Promise<void>;
@@ -61,6 +63,7 @@ function sanitize(data: any): PlayerState {
     ownedItems: Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])])),
     placedDecor: data?.placedDecor ?? [],
     emotion: isEmotion(data?.emotion) ? data.emotion : DEFAULT_PLAYER.emotion,
+    selectedBelt: BELTS.some((b) => b.label === data?.selectedBelt) ? data.selectedBelt : null,
   };
 }
 
@@ -137,6 +140,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [commit]
   );
 
+  const selectBelt = useCallback(
+    async (label: string | null) => {
+      commit(selectBeltOp(playerRef.current, label));
+    },
+    [commit]
+  );
+
   const brushCompleted = useCallback(async (): Promise<BrushResult> => {
     const { player, result } = brushOp(playerRef.current, dayKey(new Date()));
     commit(player);
@@ -189,6 +199,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       progress: levelProgress(player.xp),
       setName,
       setEmotion,
+      selectBelt,
       brushCompleted,
       buyItem,
       grantItem,
@@ -196,7 +207,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       unequipCategory,
       toggleDecor,
     }),
-    [ready, player, catalog, setName, setEmotion, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
+    [ready, player, catalog, setName, setEmotion, selectBelt, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

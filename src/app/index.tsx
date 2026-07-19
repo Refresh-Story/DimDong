@@ -23,6 +23,7 @@ import { GemBadge, LevelMedallion, PrimaryButton } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { EMOTIONS } from '@/data/emotions';
 import { getItemById } from '@/data/items';
+import { beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
@@ -95,7 +96,7 @@ export default function HomeScreen() {
         <View style={styles.stage}>
           <Animated.View style={{ transform: [{ translateY: bob }] }}>
             {isRainbow && <RainbowAura size={210} />}
-            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
+            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} belt={beltForPlayer(player.name, level, player.selectedBelt)} />
           </Animated.View>
         </View>
 

@@ -5,7 +5,7 @@ import { SvgXml } from 'react-native-svg';
 
 import { accessoryDoc, bodyDoc, kimonoDoc, DEFAULT_EMOTION, DRAW_FRAME, Emotion } from '@/art/dimArt';
 import { DEFAULT_DOUGH, Item, ItemCategory, getItemById } from '@/data/items';
-import { beltForLevel } from '@/game/rules';
+import { Belt, beltForLevel } from '@/game/rules';
 
 type Props = {
   size?: number;
@@ -13,13 +13,15 @@ type Props = {
   catalog: Item[];
   level?: number;
   emotion?: Emotion;
+  // Ceinture à afficher (Sensei, sélection…) ; défaut : celle du niveau.
+  belt?: Belt;
 };
 
 const BODY_Z = 8;
 
 type Layer = { key: string; z: number; img?: string; xml?: string };
 
-export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = DEFAULT_EMOTION }: Props) {
+export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = DEFAULT_EMOTION, belt }: Props) {
   const width = size;
   const height = (size * DRAW_FRAME.h) / DRAW_FRAME.w;
 
@@ -30,7 +32,7 @@ export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = 
   const isRainbow = !!colorItem?.rainbow;
 
   const kimonoItem = getItemById(catalog, equipped.kimono);
-  const beltColor = beltForLevel(level).color;
+  const { color: beltColor, accent: beltAccent } = belt ?? beltForLevel(level);
 
   const layers = useMemo<Layer[]>(() => {
     const out: Layer[] = [];
@@ -44,7 +46,7 @@ export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = 
       out.push({
         key: kimonoItem.id,
         z: kimonoItem.zIndex ?? 10,
-        xml: kimonoDoc(kimonoItem.color, beltColor, uid),
+        xml: kimonoDoc(kimonoItem.color, beltColor, uid, beltAccent),
       });
       for (const cat of Object.keys(equipped) as ItemCategory[]) {
         if (cat === 'color' || cat === 'kimono') continue;
@@ -66,7 +68,7 @@ export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = 
     }
 
     return out.sort((a, b) => a.z - b.z);
-  }, [equipped, catalog, colorItem?.image, dough, isRainbow, uid, kimonoItem, beltColor, emotion]);
+  }, [equipped, catalog, colorItem?.image, dough, isRainbow, uid, kimonoItem, beltColor, beltAccent, emotion]);
 
   return (
     <View style={{ width, height }}>

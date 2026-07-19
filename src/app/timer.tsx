@@ -13,7 +13,7 @@ import { Scene } from '@/components/Scene';
 import { GemBadge, PrimaryButton } from '@/components/ui';
 import { BrushResult, useGame } from '@/context/GameContext';
 import { getItemById } from '@/data/items';
-import { BRUSH_DURATION_SEC, BRUSH_ZONES } from '@/game/rules';
+import { BRUSH_DURATION_SEC, BRUSH_ZONES, beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 type Phase = 'ready' | 'countdown' | 'running' | 'done';
@@ -48,6 +48,7 @@ export default function TimerScreen() {
   const lastZone = useRef(-1);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const belt = beltForPlayer(player.name, level, player.selectedBelt);
 
   const sway = useRef(new Animated.Value(0)).current;
   const bob = useRef(new Animated.Value(0)).current;
@@ -198,7 +199,7 @@ export default function TimerScreen() {
             <Text style={styles.getReady}>Prépare-toi&nbsp;!</Text>
             <Text style={styles.countdownNum}>{count}</Text>
             <View style={styles.stage}>
-              <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
+              <DimAvatar size={190} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} belt={belt} />
             </View>
           </>
         ) : phase !== 'done' ? (
@@ -206,7 +207,7 @@ export default function TimerScreen() {
             <View style={styles.stageGrow}>
               <View style={{ width: AVATAR_SIZE, height: (AVATAR_SIZE * DRAW_FRAME.h) / DRAW_FRAME.w }}>
                 <Animated.View style={{ transform: [{ translateY: bob }, { rotate: swayRotate }] }}>
-                  <DimAvatar size={AVATAR_SIZE} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
+                  <DimAvatar size={AVATAR_SIZE} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} belt={belt} />
                 </Animated.View>
                 {phase === 'running' && !paused && (
                   <Animated.View
@@ -262,7 +263,7 @@ export default function TimerScreen() {
                 {phase === 'ready'
                   ? '2 minutes pour un sourire tout propre !'
                   : paused
-                    ? 'En pause ⏸️'
+                    ? 'En pause'
                     : "Continue jusqu'au bout pour gagner tes gemmes !"}
               </Text>
             </View>
@@ -271,7 +272,7 @@ export default function TimerScreen() {
           <>
             <View style={styles.stageGrow}>
               <Animated.View style={{ transform: [{ translateY: jump }] }}>
-                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
+                <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} belt={belt} />
               </Animated.View>
               {result && <GemBurst />}
             </View>
@@ -301,10 +302,10 @@ const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   close: { position: 'absolute', right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...Shadow.card },
   closeText: { fontSize: 18, fontWeight: '800', color: Palette.ink },
-  bigTime: { fontSize: 64, fontFamily: Fonts.digits, color: Palette.primary, letterSpacing: 2, lineHeight: 68 },
+  bigTime: { fontSize: 64, fontFamily: Fonts.digits, color: Palette.primary, letterSpacing: 2 },
   bigTimePaused: { color: Palette.inkSoft },
   getReady: { fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
-  countdownNum: { fontSize: 150, fontFamily: Fonts.digits, color: Palette.primary, lineHeight: 160 },
+  countdownNum: { fontSize: 150, fontFamily: Fonts.digits, color: Palette.primary },
   track: { flexDirection: 'row', gap: 6, alignSelf: 'stretch' },
   seg: { flex: 1, height: 14, backgroundColor: Palette.cardSoft, borderRadius: Radius.pill, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
   segFill: { height: '100%', backgroundColor: Palette.accent2 },

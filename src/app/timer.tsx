@@ -278,7 +278,7 @@ export default function TimerScreen() {
 
             <View style={styles.timerCard}>
               <Animated.Text style={[styles.doneTitle, { transform: [{ scale: pop }] }]}>
-                Bravo&nbsp;! 🎉
+                Bravo&nbsp;!
               </Animated.Text>
               {result && (
                 <>
@@ -301,10 +301,10 @@ const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   close: { position: 'absolute', right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...Shadow.card },
   closeText: { fontSize: 18, fontWeight: '800', color: Palette.ink },
-  bigTime: { fontSize: 64, fontFamily: Fonts.display, color: Palette.primary, letterSpacing: 2, lineHeight: 68 },
+  bigTime: { fontSize: 64, fontFamily: Fonts.digits, color: Palette.primary, letterSpacing: 2, lineHeight: 68 },
   bigTimePaused: { color: Palette.inkSoft },
   getReady: { fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
-  countdownNum: { fontSize: 150, fontFamily: Fonts.display, color: Palette.primary, lineHeight: 160 },
+  countdownNum: { fontSize: 150, fontFamily: Fonts.digits, color: Palette.primary, lineHeight: 160 },
   track: { flexDirection: 'row', gap: 6, alignSelf: 'stretch' },
   seg: { flex: 1, height: 14, backgroundColor: Palette.cardSoft, borderRadius: Radius.pill, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
   segFill: { height: '100%', backgroundColor: Palette.accent2 },

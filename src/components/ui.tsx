@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Palette.outline,
   },
-  gemText: { fontSize: 18, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5 },
+  gemText: { fontSize: 18, fontFamily: Fonts.digits, color: Palette.ink, letterSpacing: 0.5 },
   gemBadgeChip: {
     backgroundColor: Palette.cardSoft,
     shadowOpacity: 0,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadow.card,
   },
-  medallionNum: { fontSize: 22, fontFamily: Fonts.display, color: Palette.ink, lineHeight: 24 },
+  medallionNum: { fontSize: 22, fontFamily: Fonts.digits, color: Palette.ink, lineHeight: 24 },
   medallionLabel: {
     fontSize: 8,
     fontFamily: Fonts.bodyBold,

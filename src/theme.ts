@@ -69,4 +69,6 @@ export const Fonts = {
   display: 'MangaDisplay',
   body: 'MangaBody',
   bodyBold: 'MangaBodyBold',
+  // Pour les nombres : le 1 et le 7 de MangaDisplay (Bangers) se confondent.
+  digits: 'MangaBodyBold',
 } as const;

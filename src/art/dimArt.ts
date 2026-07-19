@@ -308,11 +308,28 @@ export function accessoryDoc(draw: string, color: string): string {
   return svg(DRAW_FRAME.w, DRAW_FRAME.h, '', accessoryInner(draw, color));
 }
 
-export function kimonoInner(jacket: string, belt: string, id = 'k'): string {
+export function kimonoInner(jacket: string, belt: string, id = 'k', beltAccent?: string): string {
   const clip = `kc_${id}`;
   const under = darken(jacket, 0.12); // pan du dessous, un ton plus foncé
   const beltShade = darken(belt, 0.25);
   const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
+  // Segments alternés (façon kōhaku), pointes des pans et liseré du nœud dans la
+  // couleur d'accent : la ceinture bicolore des grands maîtres.
+  const accentBand = beltAccent
+    ? `<rect x="26" y="202" width="22" height="14" fill="${beltAccent}"/>` +
+      `<rect x="62" y="202" width="22" height="14" fill="${beltAccent}"/>` +
+      `<rect x="116" y="202" width="22" height="14" fill="${beltAccent}"/>` +
+      `<rect x="152" y="202" width="22" height="14" fill="${beltAccent}"/>`
+    : '';
+  const accentTailL = beltAccent
+    ? `<path d="M76 229 Q70 234 64 238" stroke="${beltAccent}" stroke-width="8" fill="none" stroke-linecap="round"/>`
+    : '';
+  const accentTailR = beltAccent
+    ? `<path d="M124 229 Q130 234 136 238" stroke="${beltAccent}" stroke-width="8" fill="none" stroke-linecap="round"/>`
+    : '';
+  const accentKnot = beltAccent
+    ? `<path d="M96 200 Q94 207 97 214 M104 200 Q106 207 103 214" stroke="${beltAccent}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+    : '';
   const body =
     `<g clip-path="url(#${clip})">` +
     `<path d="M182 186 L140 186 L100 201 L100 250 L182 250 Z" fill="${under}"/>` +
@@ -322,21 +339,25 @@ export function kimonoInner(jacket: string, belt: string, id = 'k'): string {
     `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
     `<path d="M100 218 L114 250" stroke="${INK}" stroke-width="3" fill="none" opacity="0.4"/>` +
     `<rect x="12" y="200" width="176" height="18" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
+    accentBand +
     `<path d="M14 209 L186 209" stroke="${beltShade}" stroke-width="2" opacity="0.5"/>` +
     `<path d="M14 214 L186 214" stroke="${beltShade}" stroke-width="2.5" opacity="0.4" stroke-linecap="round"/>` +
     `<path d="M92 213 Q78 228 62 237 L70 248 Q88 236 102 221 Z" fill="${belt}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    accentTailL +
     `<path d="M83 226 Q78 231 72 236" stroke="${beltShade}" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>` +
     `<path d="M108 213 Q122 228 138 237 L130 248 Q112 236 98 221 Z" fill="${belt}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    accentTailR +
     `<path d="M117 226 Q122 231 128 236" stroke="${beltShade}" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>` +
     `<path d="M89 197 Q100 191 111 197 Q119 205 113 216 Q100 223 87 216 Q81 205 89 197 Z" fill="${belt}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
-    `<path d="M96 200 Q94 207 97 214 M104 200 Q106 207 103 214" stroke="${beltShade}" stroke-width="2.2" fill="none" opacity="0.7" stroke-linecap="round"/>` +
+    (accentKnot ||
+      `<path d="M96 200 Q94 207 97 214 M104 200 Q106 207 103 214" stroke="${beltShade}" stroke-width="2.2" fill="none" opacity="0.7" stroke-linecap="round"/>`) +
     `<ellipse cx="95" cy="201" rx="5" ry="3" fill="#FFFFFF" opacity="0.25"/>` +
     `</g>`;
   return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, body);
 }
 
-export function kimonoDoc(jacket: string, belt: string, id?: string): string {
-  return kimonoInner(jacket, belt, id);
+export function kimonoDoc(jacket: string, belt: string, id?: string, beltAccent?: string): string {
+  return kimonoInner(jacket, belt, id, beltAccent);
 }
 
 export function decorInner(kind: string, c: string): string {

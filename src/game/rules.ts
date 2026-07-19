@@ -24,7 +24,7 @@ export function xpForNextLevel(xp: number): { current: number; needed: number } 
   return { current: xp % LEVEL_STEP, needed: LEVEL_STEP };
 }
 
-export type Belt = { maxLevel: number; label: string; color: string };
+export type Belt = { maxLevel: number; label: string; color: string; accent?: string };
 
 // Une ceinture tous les 3 niveaux : Blanche 1-3, Jaune 4-6, Orange 7-9…
 export const BELTS: Belt[] = [
@@ -39,6 +39,24 @@ export const BELTS: Belt[] = [
 
 export function beltForLevel(level: number): Belt {
   return BELTS.find((b) => level <= b.maxLevel) ?? BELTS[BELTS.length - 1];
+}
+
+// Ceinture des grands maîtres, réservée aux noms contenant « sensei ».
+export const SENSEI_BELT: Belt = { maxLevel: Infinity, label: 'Sensei', color: '#22222A', accent: '#C62828' };
+
+export function isSenseiName(name: string): boolean {
+  return name.toLowerCase().includes('sensei');
+}
+
+export function earnedBelts(level: number): Belt[] {
+  return BELTS.slice(0, BELTS.indexOf(beltForLevel(level)) + 1);
+}
+
+// Priorité : Sensei > ceinture choisie (si obtenue) > ceinture du niveau.
+export function beltForPlayer(name: string, level: number, selectedBelt: string | null): Belt {
+  if (isSenseiName(name)) return SENSEI_BELT;
+  const selected = earnedBelts(level).find((b) => b.label === selectedBelt);
+  return selected ?? beltForLevel(level);
 }
 
 export function dayKey(d: Date): string {

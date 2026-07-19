@@ -5,8 +5,8 @@ const assert = {
 };
 
 import { FALLBACK_CATALOG, getItemById } from '@/data/items';
-import { DEFAULT_PLAYER, brush, buy, equip, grant, setEmotion, toggleDecor, unequip } from '@/game/economy';
-import { beltForLevel, dayKey } from '@/game/rules';
+import { DEFAULT_PLAYER, brush, buy, equip, grant, selectBelt, setEmotion, toggleDecor, unequip } from '@/game/economy';
+import { SENSEI_BELT, beltForLevel, beltForPlayer, dayKey, earnedBelts, isSenseiName } from '@/game/rules';
 
 const item = (id: string) => {
   const it = getItemById(FALLBACK_CATALOG, id);
@@ -117,6 +117,30 @@ check('niveaux 10 à 12 → Verte', [10, 11, 12].every((l) => beltForLevel(l).la
 check('niveaux 13 à 15 → Bleue', [13, 14, 15].every((l) => beltForLevel(l).label === 'Bleue'));
 check('niveaux 16 à 18 → Marron', [16, 17, 18].every((l) => beltForLevel(l).label === 'Marron'));
 check('niveau 19 et au-delà → Noire', [19, 25, 100].every((l) => beltForLevel(l).label === 'Noire'));
+
+console.log('--- Ceinture Sensei + sélection ---');
+check('« sensei » détecté quelle que soit la casse', ['Sensei', 'SENSEI', 'DimSensei', 'sEnSeI'].every(isSenseiName));
+check("'Dim' n'active pas la ceinture Sensei", !isSenseiName('Dim'));
+check('la ceinture Sensei est noire et rouge', SENSEI_BELT.color === '#22222A' && SENSEI_BELT.accent === '#C62828');
+check('niveau 1 → 1 ceinture obtenue', earnedBelts(1).length === 1);
+check('niveau 7 → 3 ceintures obtenues', earnedBelts(7).length === 3);
+check('niveau 19 → les 7 ceintures', earnedBelts(19).length === 7);
+
+const lvl7 = { ...DEFAULT_PLAYER, xp: 24 }; // niveau 7
+let s = selectBelt(lvl7, 'Blanche');
+check('sélectionner une ceinture obtenue', s.selectedBelt === 'Blanche');
+s = selectBelt(s, 'Noire');
+check('ceinture non obtenue → refusée', s.selectedBelt === 'Blanche');
+s = selectBelt(s, 'Turquoise');
+check('label inconnu → refusé', s.selectedBelt === 'Blanche');
+check('même sélection → même objet (aucune écriture inutile)', selectBelt(s, 'Blanche') === s);
+s = selectBelt(s, null);
+check('null → retour à la ceinture du niveau', s.selectedBelt === null);
+
+check('beltForPlayer : ceinture du niveau par défaut', beltForPlayer('Dim', 7, null).label === 'Orange');
+check('beltForPlayer : la sélection prime sur le niveau', beltForPlayer('Dim', 7, 'Jaune').label === 'Jaune');
+check('beltForPlayer : sélection non obtenue ignorée', beltForPlayer('Dim', 7, 'Noire').label === 'Orange');
+check('beltForPlayer : Sensei prime sur tout', beltForPlayer('Dim Sensei', 7, 'Jaune') === SENSEI_BELT);
 
 console.log('--- Émotions ---');
 const base = { ...DEFAULT_PLAYER };

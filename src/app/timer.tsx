@@ -262,7 +262,7 @@ export default function TimerScreen() {
                 {phase === 'ready'
                   ? '2 minutes pour un sourire tout propre !'
                   : paused
-                    ? 'En pause ⏸️'
+                    ? 'En pause'
                     : "Continue jusqu'au bout pour gagner tes gemmes !"}
               </Text>
             </View>
@@ -301,10 +301,10 @@ const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   close: { position: 'absolute', right: Spacing.lg, width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...Shadow.card },
   closeText: { fontSize: 18, fontWeight: '800', color: Palette.ink },
-  bigTime: { fontSize: 64, fontFamily: Fonts.digits, color: Palette.primary, letterSpacing: 2, lineHeight: 68 },
+  bigTime: { fontSize: 64, fontFamily: Fonts.digits, color: Palette.primary, letterSpacing: 2 },
   bigTimePaused: { color: Palette.inkSoft },
   getReady: { fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
-  countdownNum: { fontSize: 150, fontFamily: Fonts.digits, color: Palette.primary, lineHeight: 160 },
+  countdownNum: { fontSize: 150, fontFamily: Fonts.digits, color: Palette.primary },
   track: { flexDirection: 'row', gap: 6, alignSelf: 'stretch' },
   seg: { flex: 1, height: 14, backgroundColor: Palette.cardSoft, borderRadius: Radius.pill, borderWidth: 2.5, borderColor: Palette.outline, overflow: 'hidden' },
   segFill: { height: '100%', backgroundColor: Palette.accent2 },

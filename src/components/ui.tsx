@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadow.card,
   },
-  medallionNum: { fontSize: 22, fontFamily: Fonts.digits, color: Palette.ink, lineHeight: 24 },
+  medallionNum: { fontSize: 22, fontFamily: Fonts.digits, color: Palette.ink, lineHeight: 28 },
   medallionLabel: {
     fontSize: 8,
     fontFamily: Fonts.bodyBold,

@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     borderColor: Palette.outline,
   },
   gemSmall: { width: 14, height: 14, backgroundColor: Palette.white, borderRadius: 3, transform: [{ rotate: '45deg' }], borderWidth: 1.5, borderColor: Palette.ink },
-  buyText: { color: Palette.white, fontSize: 18, fontFamily: Fonts.display, letterSpacing: 0.5 },
+  buyText: { color: Palette.white, fontSize: 18, fontFamily: Fonts.digits, letterSpacing: 0.5 },
   owned: { backgroundColor: Palette.cardSoft },
   ownedText: { color: Palette.ink, fontFamily: Fonts.bodyBold },
   toast: {

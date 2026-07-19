@@ -1,6 +1,6 @@
 import type { Emotion } from '@/art/dimArt';
 import { Item, ItemCategory, KIMONO_ID } from '@/data/items';
-import { GEMS_PER_BRUSH, MAX_REWARDED_BRUSHES_PER_DAY, STARTING_GEMS } from '@/game/rules';
+import { GEMS_PER_BRUSH, STARTING_GEMS } from '@/game/rules';
 
 export type PlayerState = {
   name: string;
@@ -31,9 +31,7 @@ export const DEFAULT_PLAYER: PlayerState = {
 };
 
 export type BrushResult = {
-  rewarded: boolean;
   gained: number;
-  remainingToday: number;
 };
 
 export type BuyStatus = 'ok' | 'owned' | 'insufficient';
@@ -61,25 +59,18 @@ export function buy(p: PlayerState, item: Item): { player: PlayerState; status: 
   };
 }
 
+// Chaque brossage est récompensé : aucun plafond journalier.
 export function brush(p: PlayerState, todayKey: string): { player: PlayerState; result: BrushResult } {
   const brushesToday = p.brushDateKey === todayKey ? p.brushesToday : 0;
-  const canReward = brushesToday < MAX_REWARDED_BRUSHES_PER_DAY;
   const player: PlayerState = {
     ...p,
     totalBrushes: p.totalBrushes + 1,
-    gems: p.gems + (canReward ? GEMS_PER_BRUSH : 0),
-    xp: p.xp + (canReward ? 1 : 0),
+    gems: p.gems + GEMS_PER_BRUSH,
+    xp: p.xp + 1,
     brushDateKey: todayKey,
-    brushesToday: brushesToday + (canReward ? 1 : 0),
+    brushesToday: brushesToday + 1,
   };
-  return {
-    player,
-    result: {
-      rewarded: canReward,
-      gained: canReward ? GEMS_PER_BRUSH : 0,
-      remainingToday: Math.max(0, MAX_REWARDED_BRUSHES_PER_DAY - player.brushesToday),
-    },
-  };
+  return { player, result: { gained: GEMS_PER_BRUSH } };
 }
 
 export function equip(p: PlayerState, item: Item): PlayerState {

@@ -2,7 +2,6 @@
 export const BRUSH_DURATION_SEC = 120;
 export const GEMS_PER_BRUSH = 10;
 export const STARTING_GEMS = 30;
-export const MAX_REWARDED_BRUSHES_PER_DAY = 2;
 
 export const BRUSH_ZONES = [
   'En haut à gauche',
@@ -27,13 +26,14 @@ export function xpForNextLevel(xp: number): { current: number; needed: number } 
 
 export type Belt = { maxLevel: number; label: string; color: string };
 
+// Une ceinture tous les 3 niveaux : Blanche 1-3, Jaune 4-6, Orange 7-9…
 export const BELTS: Belt[] = [
   { maxLevel: 3, label: 'Blanche', color: '#ECECEC' },
-  { maxLevel: 5, label: 'Jaune', color: '#F4D23C' },
-  { maxLevel: 7, label: 'Orange', color: '#E8852B' },
-  { maxLevel: 9, label: 'Verte', color: '#3DA45A' },
-  { maxLevel: 11, label: 'Bleue', color: '#2F73CC' },
-  { maxLevel: 13, label: 'Marron', color: '#7A4A24' },
+  { maxLevel: 6, label: 'Jaune', color: '#F4D23C' },
+  { maxLevel: 9, label: 'Orange', color: '#E8852B' },
+  { maxLevel: 12, label: 'Verte', color: '#3DA45A' },
+  { maxLevel: 15, label: 'Bleue', color: '#2F73CC' },
+  { maxLevel: 18, label: 'Marron', color: '#7A4A24' },
   { maxLevel: Infinity, label: 'Noire', color: '#22222A' },
 ];
 

@@ -273,28 +273,20 @@ export default function TimerScreen() {
               <Animated.View style={{ transform: [{ translateY: jump }] }}>
                 <DimAvatar size={200} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} />
               </Animated.View>
-              {result?.rewarded && <GemBurst />}
+              {result && <GemBurst />}
             </View>
 
             <View style={styles.timerCard}>
               <Animated.Text style={[styles.doneTitle, { transform: [{ scale: pop }] }]}>
                 Bravo&nbsp;! 🎉
               </Animated.Text>
-              {result?.rewarded ? (
+              {result && (
                 <>
                   <Text style={styles.doneText}>Tu as gagné</Text>
                   <Animated.View style={{ transform: [{ scale: pop }] }}>
                     <GemBadge count={result.gained} size="lg" />
                   </Animated.View>
-                  <Text style={styles.smallText}>
-                    Encore {result.remainingToday} brossage(s) récompensé(s) aujourd'hui.
-                  </Text>
                 </>
-              ) : (
-                <Text style={styles.doneText}>
-                  Super brossage&nbsp;! Tu as déjà gagné toutes tes gemmes pour aujourd'hui.
-                  Reviens ce soir&nbsp;!
-                </Text>
               )}
               <PrimaryButton label="Terminé" onPress={goBack} style={styles.cardButton} />
             </View>
@@ -333,6 +325,4 @@ const styles = StyleSheet.create({
   cardButton: { alignSelf: 'stretch', marginTop: Spacing.xs },
   hint: { fontSize: 15, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center' },
   doneTitle: { fontSize: 40, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
-  doneText: { fontSize: 18, color: Palette.ink, textAlign: 'center', fontFamily: Fonts.bodyBold },
-  smallText: { fontSize: 14, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center' },
-});
+  doneText: { fontSize: 18, color: Palette.ink, textAlign: 'center', fontFamily: Fonts.bodyBold },});

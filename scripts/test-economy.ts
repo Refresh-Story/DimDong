@@ -6,7 +6,7 @@ const assert = {
 
 import { FALLBACK_CATALOG, getItemById } from '@/data/items';
 import { DEFAULT_PLAYER, brush, buy, equip, grant, setEmotion, toggleDecor, unequip } from '@/game/economy';
-import { dayKey } from '@/game/rules';
+import { beltForLevel, dayKey } from '@/game/rules';
 
 const item = (id: string) => {
   const it = getItemById(FALLBACK_CATALOG, id);
@@ -53,21 +53,22 @@ check('grant : Rainbow obtenue sans payer (gemmes inchangées)', g.gems === 30 &
 const g2 = grant(g, rainbow);
 check('grant : pas de doublon si déjà possédée', g2.ownedItems.filter((id) => id === 'color_rainbow').length === 1);
 
-console.log('--- Brossage (récompense + plafond journalier) ---');
+console.log('--- Brossage (récompense à chaque brossage, sans plafond) ---');
 const today = dayKey(new Date());
 let q = { ...DEFAULT_PLAYER };
 let b = brush(q, today);
-check('1er brossage récompensé (+10)', b.result.rewarded && b.result.gained === 10 && b.player.gems === 40);
+check('1er brossage récompensé (+10)', b.result.gained === 10 && b.player.gems === 40);
 q = b.player;
 b = brush(q, today);
-check('2e brossage récompensé (+10) → 50', b.result.rewarded && b.player.gems === 50);
+check('2e brossage récompensé (+10) → 50', b.result.gained === 10 && b.player.gems === 50);
 q = b.player;
 b = brush(q, today);
-check('3e brossage le même jour → non récompensé (plafond 2/j)', !b.result.rewarded && b.player.gems === 50);
-check('mais le brossage est compté (totalBrushes = 3)', b.player.totalBrushes === 3);
+check('3e brossage le même jour → toujours récompensé (+10) → 60', b.result.gained === 10 && b.player.gems === 60);
+check('le brossage est compté (totalBrushes = 3)', b.player.totalBrushes === 3);
+check('chaque brossage donne 1 XP', b.player.xp === 3);
 q = b.player;
 b = brush(q, '2099-01-01'); // nouveau jour
-check('nouveau jour → de nouveau récompensé', b.result.rewarded && b.player.gems === 60);
+check('nouveau jour → récompensé aussi', b.result.gained === 10 && b.player.gems === 70);
 
 console.log('--- Équipement / décor ---');
 let e = equip({ ...DEFAULT_PLAYER }, cap);
@@ -107,6 +108,15 @@ f = equip(equip({ ...DEFAULT_PLAYER }, cap), bgBamboo);
 check('activer un décor ne touche pas au chapeau', f.equipped.hat === 'cap_red' && f.equipped.background === 'bg_bamboo');
 f = equip({ ...DEFAULT_PLAYER, equipped: { hat: 'cap_red', background: 'bg_bamboo' } }, kimono);
 check('le kimono retire bien le chapeau mais garde le décor', f.equipped.hat === undefined && f.equipped.background === 'bg_bamboo');
+
+console.log('--- Ceintures (une tous les 3 niveaux) ---');
+check('niveaux 1 à 3 → Blanche', [1, 2, 3].every((l) => beltForLevel(l).label === 'Blanche'));
+check('niveaux 4 à 6 → Jaune', [4, 5, 6].every((l) => beltForLevel(l).label === 'Jaune'));
+check('niveaux 7 à 9 → Orange', [7, 8, 9].every((l) => beltForLevel(l).label === 'Orange'));
+check('niveaux 10 à 12 → Verte', [10, 11, 12].every((l) => beltForLevel(l).label === 'Verte'));
+check('niveaux 13 à 15 → Bleue', [13, 14, 15].every((l) => beltForLevel(l).label === 'Bleue'));
+check('niveaux 16 à 18 → Marron', [16, 17, 18].every((l) => beltForLevel(l).label === 'Marron'));
+check('niveau 19 et au-delà → Noire', [19, 25, 100].every((l) => beltForLevel(l).label === 'Noire'));
 
 console.log('--- Émotions ---');
 const base = { ...DEFAULT_PLAYER };

@@ -68,29 +68,6 @@ export default function InventoryScreen() {
           return (
             <View key={cat} style={{ marginBottom: Spacing.lg }}>
               <Text style={styles.section}>{CATEGORY_LABELS[cat]}</Text>
-              {cat === 'kimono' && (
-                <View style={styles.beltRow}>
-                  {belts.map((b) => {
-                    const isOn = b.label === belt.label;
-                    return (
-                      <Pressable
-                        key={b.label}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Ceinture ${b.label}`}
-                        accessibilityState={{ selected: isOn }}
-                        onPress={() => pickBelt(b.label)}
-                        style={({ pressed }) => [
-                          styles.beltDot,
-                          { backgroundColor: b.color },
-                          isOn && styles.beltDotOn,
-                          pressed && { transform: [{ scale: 0.9 }] },
-                        ]}>
-                        {b.accent && <View style={[styles.beltDotAccent, { backgroundColor: b.accent }]} />}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              )}
               <View style={styles.grid}>
                 {items.map((item) => {
                   const isOn = isDecor ? player.placedDecor.includes(item.id) : equippedId === item.id;
@@ -121,6 +98,29 @@ export default function InventoryScreen() {
                     </Pressable>
                   );
                 })}
+                {cat === 'kimono' && (
+                  <View style={styles.beltPanel}>
+                    {belts.map((b) => {
+                      const isOn = b.label === belt.label;
+                      return (
+                        <Pressable
+                          key={b.label}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ceinture ${b.label}`}
+                          accessibilityState={{ selected: isOn }}
+                          onPress={() => pickBelt(b.label)}
+                          style={({ pressed }) => [
+                            styles.beltDot,
+                            { backgroundColor: b.color },
+                            isOn && styles.beltDotOn,
+                            pressed && { transform: [{ scale: 0.9 }] },
+                          ]}>
+                          {b.accent && <View style={[styles.beltDotAccent, { backgroundColor: b.accent }]} />}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
             </View>
           );
@@ -156,7 +156,17 @@ const styles = StyleSheet.create({
   preview: { height: 88, justifyContent: 'center', alignItems: 'center' },
   itemName: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Palette.ink },
   status: { fontSize: 12, fontFamily: Fonts.body, color: Palette.inkSoft },
-  beltRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
+  beltPanel: {
+    flex: 1,
+    minWidth: 120,
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignContent: 'center',
+  },
   beltDot: {
     width: 30,
     height: 30,

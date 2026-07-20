@@ -78,7 +78,17 @@ export default function HomeScreen() {
       <Scene decor={placedDecor} background={background} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.topRow}>
-          <LevelMedallion level={level} />
+          <Pressable
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              router.push('/progression');
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Niveau ${level}, voir la progression`}
+            style={({ pressed }) => pressed && { transform: [{ scale: 0.92 }] }}>
+            <LevelMedallion level={level} />
+          </Pressable>
           <Pressable
             style={styles.namePlate}
             onPress={openNameEditor}

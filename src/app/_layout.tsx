@@ -42,6 +42,10 @@ export default function RootLayout() {
               name="timer"
               options={{ presentation: 'card', gestureEnabled: false, fullScreenGestureEnabled: false }}
             />
+            <Stack.Screen
+              name="progression"
+              options={{ presentation: 'card', gestureEnabled: false, fullScreenGestureEnabled: false }}
+            />
             <Stack.Screen name="shop" options={{ presentation: 'card' }} />
             <Stack.Screen name="inventory" options={{ presentation: 'card' }} />
           </Stack>

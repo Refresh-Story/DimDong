@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
-import { GemBadge, LevelMedallion, PrimaryButton } from '@/components/ui';
+import { GemBadge, LevelMedallion, PrimaryButton, SpeedLines } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { EMOTIONS } from '@/data/emotions';
 import { getItemById } from '@/data/items';
@@ -27,7 +27,7 @@ import { beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
-  const { ready, player, catalog, level, progress, setName, setEmotion } = useGame();
+  const { ready, player, catalog, level, progress, activeProfileId, setName, setEmotion } = useGame();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
@@ -56,6 +56,21 @@ export default function HomeScreen() {
     return () => loop.stop();
   }, [bob]);
 
+  // Entrée du dim-sum après la sélection : rebond + flash de speed lines.
+  const enterScale = useRef(new Animated.Value(0.5)).current;
+  const enterFlash = useRef(new Animated.Value(0)).current;
+  const hasProfile = activeProfileId !== null;
+  useEffect(() => {
+    if (!hasProfile) return;
+    Animated.parallel([
+      Animated.spring(enterScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+      Animated.sequence([
+        Animated.timing(enterFlash, { toValue: 1, duration: 180, useNativeDriver: true }),
+        Animated.timing(enterFlash, { toValue: 0, duration: 320, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, [hasProfile, enterScale, enterFlash]);
+
   if (!ready) {
     return (
       <View style={styles.loading}>
@@ -65,8 +80,8 @@ export default function HomeScreen() {
     );
   }
 
-  if (!player.onboarded) {
-    return <Redirect href="/onboarding" />;
+  if (!hasProfile) {
+    return <Redirect href="/profiles" />;
   }
 
   const placedDecor = catalog.filter((i) => player.placedDecor.includes(i.id));
@@ -104,7 +119,10 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.stage}>
-          <Animated.View style={{ transform: [{ translateY: bob }] }}>
+          <Animated.View style={[styles.flashWrap, { opacity: enterFlash }]} pointerEvents="none">
+            <SpeedLines size={300} opacity={0.55} />
+          </Animated.View>
+          <Animated.View style={{ transform: [{ translateY: bob }, { scale: enterScale }] }}>
             {isRainbow && <RainbowAura size={210} />}
             <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} belt={beltForPlayer(player.name, level, player.selectedBelt)} />
           </Animated.View>
@@ -211,6 +229,15 @@ const styles = StyleSheet.create({
   fill: { height: '100%', backgroundColor: Palette.accent2 },
 
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  flashWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   emotionRow: {
     flexDirection: 'row',

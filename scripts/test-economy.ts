@@ -6,6 +6,16 @@ const assert = {
 
 import { FALLBACK_CATALOG, getItemById } from '@/data/items';
 import { DEFAULT_PLAYER, brush, buy, equip, grant, selectBelt, setEmotion, toggleDecor, unequip } from '@/game/economy';
+import {
+  EMPTY_PROFILES,
+  MAX_PROFILES,
+  addProfile,
+  canCreateProfile,
+  getProfile,
+  migrateLegacyPlayer,
+  removeProfile,
+  updateProfile,
+} from '@/game/profiles';
 import { SENSEI_BELT, availableBelts, beltForLevel, beltForPlayer, dayKey, earnedBelts, isSenseiName } from '@/game/rules';
 
 const item = (id: string) => {
@@ -157,5 +167,39 @@ check("émotion par défaut : 'joy'", base.emotion === 'joy');
 const em = setEmotion(base, 'sad');
 check("changer d'émotion est gratuit (gemmes inchangées)", em.emotion === 'sad' && em.gems === base.gems);
 check('même émotion → même objet (aucune écriture inutile)', setEmotion(em, 'sad') === em);
+
+console.log('--- Profils (multi-comptes) ---');
+check('état vide → création possible', canCreateProfile(EMPTY_PROFILES));
+let ps = addProfile(EMPTY_PROFILES, 'id-1', '  Momo  ', 1000);
+check('création du premier profil', ps !== null && ps.profiles.length === 1);
+check('nom trimé à la création', ps!.profiles[0].player.name === 'Momo');
+check('profil créé déjà onboardé', ps!.profiles[0].player.onboarded === true);
+check('profil créé avec les gemmes de départ', ps!.profiles[0].player.gems === 30);
+check('id et date conservés', ps!.profiles[0].id === 'id-1' && ps!.profiles[0].createdAt === 1000);
+check('nom vide → création refusée', addProfile(EMPTY_PROFILES, 'id-x', '   ', 0) === null);
+
+for (let i = 2; i <= MAX_PROFILES; i++) ps = addProfile(ps!, `id-${i}`, `Dim ${i}`, 1000 + i);
+check(`${MAX_PROFILES} profils créés`, ps !== null && ps.profiles.length === MAX_PROFILES);
+check('limite atteinte → création impossible', !canCreateProfile(ps!));
+check(`${MAX_PROFILES + 1}e profil refusé`, addProfile(ps!, 'id-trop', 'Trop', 9999) === null);
+check('ordre de création préservé', ps!.profiles.map((r) => r.id).join(',') === 'id-1,id-2,id-3,id-4,id-5');
+
+const richPlayer = { ...DEFAULT_PLAYER, name: 'Riche', gems: 999, xp: 12 };
+let ups = updateProfile(ps!, 'id-2', richPlayer);
+check('updateProfile remplace le bon profil', getProfile(ups, 'id-2')?.player.gems === 999);
+check('updateProfile ne touche pas les autres', getProfile(ups, 'id-1')?.player.gems === 30 && getProfile(ups, 'id-3')?.player.gems === 30);
+check('updateProfile id inconnu → même objet', updateProfile(ps!, 'id-inconnu', richPlayer) === ps);
+
+let rm = removeProfile(ups, 'id-3');
+check('removeProfile retire le bon profil', rm.profiles.length === 4 && getProfile(rm, 'id-3') === undefined);
+check('removeProfile préserve l’ordre des autres', rm.profiles.map((r) => r.id).join(',') === 'id-1,id-2,id-4,id-5');
+check('removeProfile id inconnu → même objet', removeProfile(rm, 'id-3') === rm);
+check('après suppression → création à nouveau possible', canCreateProfile(rm));
+
+const legacy = { ...DEFAULT_PLAYER, name: 'Ancien', gems: 120, xp: 8, ownedItems: ['kimono', 'cap_red'], onboarded: true };
+const mig = migrateLegacyPlayer(legacy, 'id-legacy', 2000);
+check('migration → un seul profil', mig.profiles.length === 1);
+check('migration → PlayerState conservé tel quel', mig.profiles[0].player === legacy);
+check('getProfile(null) → undefined', getProfile(mig, null) === undefined);
 
 console.log(`\n✅ ${pass} vérifications réussies.`);

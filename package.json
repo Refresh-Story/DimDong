@@ -19,6 +19,7 @@
     "expo-router": "~56.2.11",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
+    "expo-store-review": "~56.0.3",
     "expo-symbols": "~56.0.6",
     "expo-system-ui": "~56.0.5",
     "expo-updates": "~56.0.21",
@@ -51,7 +52,9 @@
     "submit:ios": "eas build --platform ios --profile production --auto-submit",
     "lint": "expo lint",
     "test": "tsx scripts/test-economy.ts",
-    "render:store-assets": "tsx scripts/render-store-assets.mjs"
+    "render:store-assets": "tsx scripts/render-store-assets.mjs",
+    "render:store-screenshots": "tsx scripts/render-store-screenshots.mjs",
+    "check:store-copy": "node scripts/check-store-copy.mjs"
   },
   "private": true
 }

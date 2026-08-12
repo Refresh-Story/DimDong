@@ -64,6 +64,10 @@ export function beltForPlayer(name: string, level: number, selectedBelt: string 
   return selected ?? beltForLevel(level);
 }
 
+// Brossages après lesquels on propose de noter l'app (iOS plafonne à 3 demandes/an,
+// et n'affiche la popup que s'il le juge opportun).
+export const REVIEW_MILESTONES = [5, 30];
+
 export function dayKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');

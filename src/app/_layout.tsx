@@ -36,8 +36,16 @@ export default function RootLayout() {
               fullScreenGestureEnabled: true,
               contentStyle: { backgroundColor: Palette.panel },
             }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="onboarding" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="index" options={{ animation: 'fade', animationTypeForReplace: 'push' }} />
+            <Stack.Screen
+              name="profiles"
+              options={{
+                animation: 'fade',
+                animationTypeForReplace: 'push',
+                gestureEnabled: false,
+                fullScreenGestureEnabled: false,
+              }}
+            />
             <Stack.Screen
               name="timer"
               options={{ presentation: 'card', gestureEnabled: false, fullScreenGestureEnabled: false }}

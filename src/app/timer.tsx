@@ -13,13 +13,25 @@ import { Scene } from '@/components/Scene';
 import { GemBadge, PrimaryButton } from '@/components/ui';
 import { BrushResult, useGame } from '@/context/GameContext';
 import { getItemById } from '@/data/items';
-import { BRUSH_DURATION_SEC, BRUSH_ZONES, beltForPlayer } from '@/game/rules';
+import * as StoreReview from 'expo-store-review';
+
+import { BRUSH_DURATION_SEC, BRUSH_ZONES, REVIEW_MILESTONES, beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 type Phase = 'ready' | 'countdown' | 'running' | 'done';
 
 const ZONE_SEC = BRUSH_DURATION_SEC / BRUSH_ZONES.length;
 const KEEP_AWAKE_TAG = 'dim-dong-brushing';
+
+// Propose de noter l'app aux brossages jalons, une fois la célébration affichée.
+function maybeRequestReview(totalBrushes: number) {
+  if (!REVIEW_MILESTONES.includes(totalBrushes)) return;
+  setTimeout(() => {
+    StoreReview.isAvailableAsync()
+      .then((available) => (available ? StoreReview.requestReview() : undefined))
+      .catch(() => {});
+  }, 1800);
+}
 
 // À size 200, 1 unité du viewBox 200x260 = 1 px ; la bouche de Dim est vers (100, 184).
 const AVATAR_SIZE = 200;
@@ -72,7 +84,8 @@ export default function TimerScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     const r = await brushCompleted();
     setResult(r);
-  }, [brushCompleted]);
+    maybeRequestReview(player.totalBrushes + 1);
+  }, [brushCompleted, player.totalBrushes]);
 
   useEffect(() => {
     if (phase !== 'running' || paused) return;

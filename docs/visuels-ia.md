@@ -102,10 +102,16 @@ c'est lui qui touche l'horizon.
 ### Boucle de travail
 
 ```
-npm run render:scenes                                   # 9 décors × 4 formats + planches-contact
-npm run render:scenes -- --only=neon --guides           # un décor, avec les repères de mise en page
+npx tsx scripts/render-scenes.mjs                       # 9 décors × 4 formats + planches-contact
+npx tsx scripts/render-scenes.mjs --only=neon --guides  # un décor, avec les repères de mise en page
 ```
 
-Sortie dans `scripts/scene-png/` (ignoré par git). Le script et l'app appellent le **même**
+> Volontairement **pas** de script npm : `app.json` utilise `runtimeVersion.policy = "fingerprint"`,
+> et le bloc `scripts` de `package.json` fait partie de l'empreinte native. Y ajouter une commande
+> d'outillage change la runtimeVersion et empêche silencieusement un `eas update` d'atteindre les
+> builds déjà installés. Même raison pour l'ignore des PNG, placé dans `.git/info/exclude` plutôt
+> que dans `.gitignore` (lui aussi source d'empreinte).
+
+Sortie dans `scripts/scene-png/` (ignoré localement). Le script et l'app appellent le **même**
 compositeur (`src/art/sceneCompose.ts`) : les aperçus ne peuvent pas mentir. `_contact--*.png`
 est l'image à regarder pour juger « ces décors font-ils famille ? ».

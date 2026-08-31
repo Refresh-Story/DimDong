@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
+import { speedLinePaths } from '@/art/sceneGeom';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export function GemBadge({
@@ -117,22 +118,8 @@ export function SpeedLines({
   strokeWidth?: number;
   opacity?: number;
 }) {
-  const c = size / 2;
-  const rOuter = size * 0.72;
-  const rInner = size * innerRatio;
-  const lines = Array.from({ length: count }, (_, i) => {
-    const a = (i / count) * Math.PI * 2;
-    const cos = Math.cos(a);
-    const sin = Math.sin(a);
-    const jitter = 0.82 + ((i * 47) % 100) / 100 / 3;
-    return {
-      x1: c + cos * rInner,
-      y1: c + sin * rInner,
-      x2: c + cos * rOuter * jitter,
-      y2: c + sin * rOuter * jitter,
-      w: strokeWidth * (i % 3 === 0 ? 1.8 : 1),
-    };
-  });
+  // Géométrie partagée avec le compositeur de scène : les deux ne peuvent pas diverger.
+  const lines = speedLinePaths(size, count, innerRatio, strokeWidth);
   return (
     <Svg width={size} height={size} style={{ opacity }} pointerEvents="none">
       {lines.map((l, i) => (

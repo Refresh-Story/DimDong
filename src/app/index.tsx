@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,11 +24,14 @@ import { GemBadge, LevelMedallion, PrimaryButton, SpeedLines } from '@/component
 import { useGame } from '@/context/GameContext';
 import { EMOTIONS } from '@/data/emotions';
 import { getItemById } from '@/data/items';
+import { sceneGeom } from '@/art/sceneGeom';
 import { beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function HomeScreen() {
-  const { ready, player, catalog, level, progress, activeProfileId, setName, setEmotion } = useGame();
+  const { ready, player, catalog, level, progress, activeProfileId, clearActiveProfile, setName, setEmotion } =
+    useGame();
+  const win = useWindowDimensions();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
@@ -87,10 +91,44 @@ export default function HomeScreen() {
   const placedDecor = catalog.filter((i) => player.placedDecor.includes(i.id));
   const isRainbow = !!catalog.find((i) => i.id === player.equipped.color)?.rainbow;
   const background = getItemById(catalog, player.equipped.background)?.background;
+  // La taille du dim suit la hauteur de ciel disponible : il ne peut plus percuter le HUD
+  // ni le bouton de brossage sur un petit écran.
+  const geom = sceneGeom(win.width, win.height);
+  const dimSize = Math.max(150, Math.min(210, geom.skyH * 0.44));
 
   return (
     <View style={{ flex: 1 }}>
-      <Scene decor={placedDecor} background={background} />
+      <Scene
+        decor={placedDecor}
+        background={background}
+        stage={
+          <Animated.View
+            style={{ marginBottom: -dimSize * 0.12, transform: [{ translateY: bob }, { scale: enterScale }] }}>
+            {/* Ombre de contact : c'est elle qui pose le dim au sol plutôt que de le laisser flotter. */}
+            <View
+              style={{
+                position: 'absolute',
+                alignSelf: 'center',
+                bottom: dimSize * 0.14,
+                width: dimSize * 0.6,
+                height: dimSize * 0.15,
+                borderRadius: dimSize * 0.3,
+                backgroundColor: Palette.ink,
+                opacity: 0.18,
+              }}
+            />
+            {isRainbow && <RainbowAura size={dimSize} />}
+            <DimAvatar
+              size={dimSize}
+              equipped={player.equipped}
+              catalog={catalog}
+              level={level}
+              emotion={player.emotion}
+              belt={beltForPlayer(player.name, level, player.selectedBelt)}
+            />
+          </Animated.View>
+        }
+      />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.topRow}>
           <Pressable
@@ -116,15 +154,31 @@ export default function HomeScreen() {
             </View>
           </Pressable>
           <GemBadge count={player.gems} tone="chip" />
+          <Pressable
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              clearActiveProfile();
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Changer de dim-sum (profil actuel : ${player.name})`}
+            style={({ pressed }) => [styles.switchBtn, pressed && { transform: [{ scale: 0.92 }] }]}>
+            <DimAvatar
+              size={32}
+              equipped={player.equipped}
+              catalog={catalog}
+              level={level}
+              emotion={player.emotion}
+              belt={beltForPlayer(player.name, level, player.selectedBelt)}
+            />
+          </Pressable>
         </View>
 
-        <View style={styles.stage}>
+        {/* Le personnage est posé sur l'horizon par la scène ; cette zone ne fait que
+            réserver sa place dans la colonne d'UI. */}
+        <View style={styles.stage} pointerEvents="none">
           <Animated.View style={[styles.flashWrap, { opacity: enterFlash }]} pointerEvents="none">
             <SpeedLines size={300} opacity={0.55} />
-          </Animated.View>
-          <Animated.View style={{ transform: [{ translateY: bob }, { scale: enterScale }] }}>
-            {isRainbow && <RainbowAura size={210} />}
-            <DimAvatar size={210} equipped={player.equipped} catalog={catalog} level={level} emotion={player.emotion} belt={beltForPlayer(player.name, level, player.selectedBelt)} />
           </Animated.View>
         </View>
 
@@ -207,7 +261,7 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     backgroundColor: Palette.white,
     borderRadius: Radius.xl,
     borderWidth: 3,
@@ -217,6 +271,18 @@ const styles = StyleSheet.create({
     ...Shadow.card,
   },
   namePlate: { flex: 1, gap: 6 },
+  switchBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Palette.cardSoft,
+    borderWidth: 3,
+    borderColor: Palette.outline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    ...Shadow.card,
+  },
   name: { fontSize: 18, fontFamily: Fonts.bodyBold, color: Palette.ink },
   track: {
     height: 11,

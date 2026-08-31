@@ -1,12 +1,27 @@
 import { Image } from 'expo-image';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
+import { composeSceneSvg } from '@/art/sceneCompose';
+import { sceneGeom } from '@/art/sceneGeom';
 import { getBackground } from '@/data/backgrounds';
 import { Item } from '@/data/items';
 import { Palette, Radius } from '@/theme';
 
+/**
+ * Vignette de boutique. Elle rend le VRAI décor, à la taille de la case : l'art étant
+ * généré pour sa boîte, la même source sert l'écran de jeu et un carré de 72 px.
+ * Avant, la vignette fabriquait un faux carré à partir de deux couleurs, et ne
+ * ressemblait donc pas à l'objet vendu.
+ */
 export function BackgroundThumb({ item, size = 72 }: { item: Item; size?: number }) {
+  const cfg = getBackground(item.background);
+  const xml = useMemo(() => {
+    const g = sceneGeom(size, size);
+    return composeSceneSvg(cfg, g, { scope: `t${item.id}`, ambientPhase: null });
+  }, [cfg, item.id, size]);
+
   if (item.image) {
     return (
       <Image
@@ -16,9 +31,6 @@ export function BackgroundThumb({ item, size = 72 }: { item: Item; size?: number
       />
     );
   }
-
-  const cfg = getBackground(item.background);
-  const accent = cfg.upper.colors[1] ?? cfg.upper.colors[0] ?? item.color;
 
   return (
     <View
@@ -31,22 +43,7 @@ export function BackgroundThumb({ item, size = 72 }: { item: Item; size?: number
         overflow: 'hidden',
         backgroundColor: cfg.paper,
       }}>
-      <View
-        style={{
-          position: 'absolute',
-          top: size * 0.14,
-          right: size * 0.14,
-          width: size * 0.28,
-          height: size * 0.28,
-          borderRadius: size * 0.14,
-          backgroundColor: accent,
-          borderWidth: 2,
-          borderColor: Palette.outline,
-        }}
-      />
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: size * 0.4, borderTopWidth: 2.5, borderColor: Palette.outline, backgroundColor: cfg.floor.base }}>
-        <View style={{ height: size * 0.12, backgroundColor: cfg.floor.rim, borderBottomWidth: 2, borderColor: Palette.outline }} />
-      </View>
+      <SvgXml xml={xml} width={size} height={size} />
     </View>
   );
 }

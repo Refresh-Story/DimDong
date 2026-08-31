@@ -60,6 +60,7 @@ type GameContextValue = {
   activeProfileId: string | null;
   createProfile: (name: string) => Promise<string | null>;
   selectProfile: (id: string) => Promise<void>;
+  clearActiveProfile: () => Promise<void>;
   deleteProfile: (id: string) => Promise<void>;
   setName: (name: string) => Promise<void>;
   setEmotion: (emotion: Emotion) => Promise<void>;
@@ -217,6 +218,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [persistNow]
   );
 
+  // Retour au sélecteur sans quitter l'app : index.tsx redirige dès que l'id est null.
+  const clearActiveProfile = useCallback(async () => {
+    if (!activeIdRef.current) return;
+    await persistNow();
+    activeIdRef.current = null;
+    setActiveProfileId(null);
+  }, [persistNow]);
+
   const deleteProfile = useCallback(
     async (id: string) => {
       const s = removeProfile(profilesRef.current, id);
@@ -308,6 +317,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       activeProfileId,
       createProfile,
       selectProfile,
+      clearActiveProfile,
       deleteProfile,
       setName,
       setEmotion,
@@ -319,7 +329,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       unequipCategory,
       toggleDecor,
     }),
-    [ready, player, catalog, profilesState, activeProfileId, createProfile, selectProfile, deleteProfile, setName, setEmotion, selectBelt, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
+    [ready, player, catalog, profilesState, activeProfileId, createProfile, selectProfile, clearActiveProfile, deleteProfile, setName, setEmotion, selectBelt, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

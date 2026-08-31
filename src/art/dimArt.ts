@@ -29,6 +29,25 @@ export function lighten(hex: string, a = 0.3): string {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
+/**
+ * Mélange deux couleurs. `darken`/`lighten` ne poussent que vers le noir ou le blanc ;
+ * la perspective atmosphérique exige de pousser vers la couleur du CIEL — c'est ce qui
+ * fait reculer un plan lointain bien plus efficacement qu'un dégradé.
+ */
+export function mix(a: string, b: string, t = 0.5): string {
+  const ha = a.replace('#', '');
+  const hb = b.replace('#', '');
+  if (ha.length !== 6 || hb.length !== 6) return a;
+  const na = parseInt(ha, 16);
+  const nb = parseInt(hb, 16);
+  const ch = (sh: number) => {
+    const va = (na >> sh) & 255;
+    const vb = (nb >> sh) & 255;
+    return Math.max(0, Math.min(255, Math.round(va + (vb - va) * t)));
+  };
+  return `#${((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1)}`;
+}
+
 function svg(w: number, h: number, defs: string, body: string): string {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">` +

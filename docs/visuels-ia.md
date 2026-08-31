@@ -51,3 +51,61 @@ image quand la couleur est équipée. Le `rainbow` ajoute un dégradé arc-en-ci
 > Note : les jetons de téléchargement étant déterministes (dérivés de l'id), réuploader un
 > item conserve la même URL → l'app affiche la nouvelle image sans re-seed (le re-seed reste
 > utile quand un item gagne un champ `image` pour la première fois, ex. les couleurs).
+
+## Décors : `src/art/sceneGeom.ts`, `sceneArt.ts`, `sceneCompose.ts`
+
+Les décors suivent les mêmes règles de tracé que le personnage (aplat → ombre cel → contour
+d'encre re-tracé), avec trois principes en plus.
+
+### 1. L'art est généré POUR sa boîte
+
+`sceneGeom(w, h)` donne la géométrie de la scène (`horizonY`, `skyH`, `floorH`, `u`) ;
+`artFrame(boxW, boxH)` en dérive un cadre de largeur fixe (390) et de **hauteur proportionnelle
+à la boîte cible**. Le `viewBox` a donc le même ratio que sa boîte : rien n'est rogné, et tout
+rejoint l'horizon exactement — sur n'importe quel iPhone, dans la carte d'aperçu comme dans une
+vignette de 72 px. C'est ce qui remplace les anciennes hauteurs fixes par décor, qui étaient
+dérivées de la largeur d'écran alors que l'horizon dérive de la hauteur.
+
+Repères : dans un **ciel**, `y = f.h` EST la ligne d'horizon ; dans un **sol**, `y = 0` l'est.
+Les épaisseurs de trait restent en unités d'art (2,4 à 3,4) ; les positions s'ancrent en
+fractions de `f.w` / `f.h`.
+
+### 2. La profondeur se joue sur le contour, pas sur la couleur
+
+Un plan lointain **perd son trait d'encre** et se mélange vers `sky.bottom` (`haze()`, qui
+s'appuie sur `mix()` dans `dimArt.ts`). Tant que toutes les formes portent le même contour noir,
+elles sont à la même distance — c'est le levier le plus rentable du système, avant tout dégradé.
+
+Chaque décor livre quatre plans : `sky.back` (dégradé, astre, silhouettes lointaines),
+`sky.mid` (l'élément héros), `sky.front` (cadrage de premier plan, collé à l'horizon) et
+`ground`. Les deux premiers dérivent lentement en parallaxe ; le plan avant reste fixe, puisque
+c'est lui qui touche l'horizon.
+
+### 3. Le sol est un plan, pas une texture
+
+- `groundRows(H, n, p)` — ordonnées des lignes transversales, comprimées vers l'horizon.
+- `convergingColumns(fg, m, spread)` / `xAtDepth(fg, xNear, y)` — fuyantes vers un point de fuite
+  **relevé au-dessus de l'horizon** (`VP_LIFT`). Une convergence exacte ferait un tunnel sur une
+  bande qui ne fait que 40 % de la hauteur.
+- `depthScale(y, H)` — taille d'un motif selon sa profondeur.
+
+### Règles dures
+
+- **Pas de `<filter>`.** Ils parsent des deux côtés, mais react-native-svg et resvg ne les rendent
+  pas pareil : l'app et les PNG de l'App Store divergeraient. Les halos se font au dégradé radial
+  à stop externe transparent (`radGlow`).
+- **Tous les ids de `<defs>` sont namespacés** par le `scope` de la scène (`home`, `preview`,
+  `thumb`…). Deux scènes coexistent dès qu'on ouvre l'aperçu de la boutique.
+- **Ne pas laisser de géométrie très loin hors d'une zone de clip** : resvg 2.6 plante
+  (`geom.rs:27`) quand un groupe clippé n'a aucun contenu dans son clip.
+
+### Boucle de travail
+
+```
+npm run render:scenes                                   # 9 décors × 4 formats + planches-contact
+npm run render:scenes -- --only=neon --guides           # un décor, avec les repères de mise en page
+```
+
+Sortie dans `scripts/scene-png/` (ignoré par git). Le script et l'app appellent le **même**
+compositeur (`src/art/sceneCompose.ts`) : les aperçus ne peuvent pas mentir. `_contact--*.png`
+est l'image à regarder pour juger « ces décors font-ils famille ? ».

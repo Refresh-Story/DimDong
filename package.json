@@ -50,11 +50,13 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild -p ios",
     "submit:ios": "eas build --platform ios --profile production --auto-submit",
+    "eas:update":"eas update --channel production",
     "lint": "expo lint",
     "test": "tsx scripts/test-economy.ts",
     "render:store-assets": "tsx scripts/render-store-assets.mjs",
     "render:store-screenshots": "tsx scripts/render-store-screenshots.mjs",
-    "check:store-copy": "node scripts/check-store-copy.mjs"
+    "check:store-copy": "node scripts/check-store-copy.mjs",
+    "render:scenes": "tsx scripts/render-scenes.mjs"
   },
   "private": true
 }

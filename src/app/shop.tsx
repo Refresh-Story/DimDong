@@ -7,9 +7,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
+import { ItemPreviewModal } from '@/components/ItemPreviewModal';
 import { GemBadge } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { CATEGORY_LABELS, CATEGORY_ORDER, Item } from '@/data/items';
+import { beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 const RARITY_LABEL: Record<Item['rarity'], string> = {
@@ -24,6 +26,7 @@ export default function ShopScreen() {
   const { player, catalog, level, buyItem, grantItem } = useGame();
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Item | null>(null);
 
   const secretTaps = useRef(0);
   const secretTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,10 +60,16 @@ export default function ShopScreen() {
     Animated.spring(toastScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
   }, [toast, toastScale]);
 
+  function openPreview(item: Item) {
+    Haptics.selectionAsync().catch(() => {});
+    setPreview(item);
+  }
+
   async function handleBuy(item: Item) {
     setBusy(item.id);
     const res = await buyItem(item);
     setBusy(null);
+    setPreview(null);
     if (res === 'ok') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       flash(`${item.name} acheté !`);
@@ -106,7 +115,11 @@ export default function ShopScreen() {
                           <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                         </Pressable>
                       ) : (
-                        <View style={styles.preview}>
+                        <Pressable
+                          style={styles.preview}
+                          onPress={() => openPreview(item)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Voir ${item.name} en grand`}>
                           {item.category === 'decor' ? (
                             <DecorView item={item} size={62} />
                           ) : item.category === 'background' ? (
@@ -114,7 +127,7 @@ export default function ShopScreen() {
                           ) : (
                             <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
                           )}
-                        </View>
+                        </Pressable>
                       )}
                       <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                       <Text style={[styles.rarity, legendary && styles.rarityLegendary]}>
@@ -126,12 +139,14 @@ export default function ShopScreen() {
                         </View>
                       ) : (
                         <Pressable
-                          disabled={busy === item.id || !canAfford}
-                          onPress={() => handleBuy(item)}
+                          disabled={busy === item.id}
+                          onPress={() => openPreview(item)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${item.name}, ${item.price} gemmes — voir l'aperçu`}
                           style={({ pressed }) => [
                             styles.buy,
                             { backgroundColor: canAfford ? Palette.primary : Palette.locked },
-                            pressed && canAfford && { transform: [{ scale: 0.96 }] },
+                            pressed && { transform: [{ scale: 0.96 }] },
                           ]}>
                           <View style={styles.gemSmall} />
                           <Text style={styles.buyText}>{item.price}</Text>
@@ -145,6 +160,21 @@ export default function ShopScreen() {
           );
         })}
       </ScrollView>
+
+      <ItemPreviewModal
+        item={preview}
+        catalog={catalog}
+        equipped={player.equipped}
+        placedDecor={player.placedDecor}
+        emotion={player.emotion}
+        level={level}
+        belt={beltForPlayer(player.name, level, player.selectedBelt)}
+        gems={player.gems}
+        owned={!!preview && player.ownedItems.includes(preview.id)}
+        busy={!!preview && busy === preview.id}
+        onCancel={() => setPreview(null)}
+        onConfirm={handleBuy}
+      />
 
       {toast && (
         <Animated.View style={[styles.toast, { transform: [{ scale: toastScale }] }]}>

@@ -52,3 +52,5 @@ serviceAccountKey.json
 secrets/
 # config Firebase iOS : non versionnée (ré-incluse pour EAS via .easignore)
 GoogleService-Info.plist
+# PNG de décors rendus localement par scripts/render-scenes.mjs (régénérables)
+scripts/scene-png/

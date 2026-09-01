@@ -10,6 +10,7 @@ import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
 import { sceneGeom, type SceneGeom as SceneGeomT } from '@/art/sceneGeom';
 import { Item, ItemCategory, getItemById } from '@/data/items';
+import { equipMap } from '@/game/economy';
 import type { Belt } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
@@ -162,8 +163,10 @@ export function ItemPreviewModal({
   const isBackground = item.category === 'background';
   const isDecor = item.category === 'decor';
 
-  // On rejoue la scène du joueur en n'y injectant que l'objet convoité.
-  const previewEquipped = isBackground || isDecor ? equipped : { ...equipped, [item.category]: item.id };
+  // On rejoue la scène du joueur en n'y injectant que l'objet convoité, via le même
+  // réducteur que l'équipement réel : l'aperçu ne peut plus montrer une tenue que
+  // l'achat ne donnera pas (un chapeau par-dessus le kimono, par exemple).
+  const previewEquipped = isBackground || isDecor ? equipped : equipMap(equipped, item);
   const previewBackground = isBackground
     ? item.background
     : getItemById(catalog, equipped.background)?.background;

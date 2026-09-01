@@ -23,6 +23,7 @@ import {
   buy as buyOp,
   equip as equipOp,
   grant as grantOp,
+  migrateEquipped,
   selectBelt as selectBeltOp,
   setEmotion as setEmotionOp,
   setName as setNameOp,
@@ -79,7 +80,8 @@ function sanitize(data: any): PlayerState {
   return {
     ...DEFAULT_PLAYER,
     ...data,
-    equipped: data?.equipped ?? {},
+    // Les profils enregistrés avant le regroupement des objets sont remis à jour ici.
+    equipped: migrateEquipped(data?.equipped, FALLBACK_CATALOG),
     ownedItems: Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])])),
     placedDecor: data?.placedDecor ?? [],
     emotion: isEmotion(data?.emotion) ? data.emotion : DEFAULT_PLAYER.emotion,

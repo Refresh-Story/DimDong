@@ -1,5 +1,5 @@
 import type { Emotion } from '@/art/dimArt';
-import { Item, ItemCategory, KIMONO_ID } from '@/data/items';
+import { Item, ItemCategory, KIMONO_ID, getItemById } from '@/data/items';
 import { GEMS_PER_BRUSH, STARTING_GEMS, availableBelts, levelFromXp } from '@/game/rules';
 
 export type PlayerState = {
@@ -82,23 +82,78 @@ export function brush(p: PlayerState, todayKey: string): { player: PlayerState; 
   return { player, result: { gained: GEMS_PER_BRUSH } };
 }
 
-export function equip(p: PlayerState, item: Item): PlayerState {
+// Une catégorie = un emplacement : équiper un objet remplace celui qui l'occupait.
+// Isolé du PlayerState pour que l'aperçu de la boutique rejoue exactement la même
+// règle que l'équipement réel, au lieu de la réécrire à la main.
+export function equipMap(equipped: PlayerState['equipped'], item: Item): PlayerState['equipped'] {
   if (item.category === 'kimono') {
-    const equipped: PlayerState['equipped'] = {};
-    if (p.equipped.color) equipped.color = p.equipped.color;
-    if (p.equipped.background) equipped.background = p.equipped.background;
-    equipped.kimono = item.id;
-    return { ...p, equipped };
+    const next: PlayerState['equipped'] = {};
+    if (equipped.color) next.color = equipped.color;
+    if (equipped.background) next.background = equipped.background;
+    next.kimono = item.id;
+    return next;
   }
-  const equipped = { ...p.equipped, [item.category]: item.id };
-  if (item.category !== 'color' && item.category !== 'background') delete equipped.kimono;
-  return { ...p, equipped };
+  const next = { ...equipped, [item.category]: item.id };
+  if (item.category !== 'color' && item.category !== 'background') delete next.kimono;
+  return next;
+}
+
+export function equip(p: PlayerState, item: Item): PlayerState {
+  return { ...p, equipped: equipMap(p.equipped, item) };
 }
 
 export function unequip(p: PlayerState, category: ItemCategory): PlayerState {
   const equipped = { ...p.equipped };
   delete equipped[category];
   return { ...p, equipped };
+}
+
+// Les sauvegardes d'avant le regroupement indexent `equipped` par les anciennes
+// catégories ('hat', 'hair', 'accessory', 'outfit'). On ne traduit pas les clés : on
+// relit la catégorie de chaque objet dans le catalogue. C'est la seule façon de
+// trancher 'accessory', qui mélangeait le cou et le dos — et ça reste juste après
+// n'importe quel regroupement futur.
+//
+// L'ordre de résolution évite de dépendre de l'ordre des clés du JSON, qui peut
+// varier d'une sauvegarde à l'autre pour un même contenu.
+const EQUIP_RESOLUTION_ORDER = [
+  'kimono',
+  'color',
+  'background',
+  'glasses',
+  'shoes',
+  // Chapeau avant mèche : quand les deux étaient portés, c'est le chapeau qu'on
+  // voyait (z 40 > 30), et c'est le plus cher des deux. On garde donc le chapeau.
+  'hat',
+  'head',
+  'hair',
+  'neck',
+  'back',
+  'accessory',
+  'outfit',
+];
+
+function resolutionRank(key: string): number {
+  const i = EQUIP_RESOLUTION_ORDER.indexOf(key);
+  return i === -1 ? EQUIP_RESOLUTION_ORDER.length : i;
+}
+
+// Rejouée à chaque chargement, donc idempotente : un objet n'appartient qu'à une
+// catégorie, et les clés déjà migrées figurent dans l'ordre de résolution.
+export function migrateEquipped(raw: unknown, catalog: Item[]): PlayerState['equipped'] {
+  const out: PlayerState['equipped'] = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  const stored = raw as Record<string, unknown>;
+  for (const key of Object.keys(stored).sort((a, b) => resolutionRank(a) - resolutionRank(b))) {
+    const id = stored[key];
+    if (typeof id !== 'string') continue;
+    const item = getItemById(catalog, id);
+    // Objet retiré du catalogue, ou décoration (multi-sélection via placedDecor).
+    if (!item || item.category === 'decor') continue;
+    if (out[item.category]) continue; // premier servi selon l'ordre de résolution
+    out[item.category] = id;
+  }
+  return out;
 }
 
 export function toggleDecor(p: PlayerState, item: Item): PlayerState {

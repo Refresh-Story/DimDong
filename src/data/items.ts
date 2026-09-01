@@ -1,15 +1,17 @@
 
 import type { BackgroundKind } from '@/data/backgrounds';
 
+// Une catégorie = un emplacement sur le dim : un seul objet porté à la fois.
+// Deux objets qui se chevauchent (une casquette et une mèche) partagent donc
+// forcément la même catégorie, et les sections de la boutique les montrent ensemble.
 export type ItemCategory =
   | 'kimono'
   | 'color'
-  | 'hair'
-  | 'hat'
+  | 'head'
   | 'glasses'
-  | 'outfit'
+  | 'neck'
+  | 'back'
   | 'shoes'
-  | 'accessory'
   | 'background'
   | 'decor';
 
@@ -48,11 +50,14 @@ export type Item = {
   background?: BackgroundKind;
 };
 
+// Ordre d'empilement dans le cadre 200×260. Le corps est à 8 : en dessous, l'objet
+// passe derrière le dim. `hair` et `hat` sont deux hauteurs de la même catégorie
+// `head` — elles ne coexistent jamais, mais chaque dessin garde sa place.
 export const Z = {
-  cape: 5,
-  outfit: 10,
+  back: 5,
+  kimono: 10,
   shoes: 15,
-  accessory: 20,
+  neck: 20,
   hair: 30,
   hat: 40,
   glasses: 50,
@@ -61,12 +66,11 @@ export const Z = {
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   kimono: 'Kimono',
   color: 'Couleurs',
-  hair: 'Cheveux',
-  hat: 'Chapeaux',
+  head: 'Tête',
   glasses: 'Lunettes',
-  outfit: 'Tenues',
+  neck: 'Cou',
+  back: 'Dos',
   shoes: 'Chaussures',
-  accessory: 'Accessoires',
   background: 'Décors de fond',
   decor: 'Décorations',
 };
@@ -74,11 +78,10 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
 export const CATEGORY_ORDER: ItemCategory[] = [
   'kimono',
   'color',
-  'hat',
+  'head',
   'glasses',
-  'hair',
-  'accessory',
-  'outfit',
+  'neck',
+  'back',
   'shoes',
   'background',
   'decor',
@@ -87,18 +90,17 @@ export const CATEGORY_ORDER: ItemCategory[] = [
 export const WEARABLE_CATEGORIES: ItemCategory[] = [
   'kimono',
   'color',
-  'hat',
+  'head',
   'glasses',
-  'hair',
-  'accessory',
-  'outfit',
+  'neck',
+  'back',
   'shoes',
 ];
 
 export const KIMONO_ID = 'kimono_judo';
 
 export const FALLBACK_CATALOG: Item[] = [
-  { id: KIMONO_ID, name: 'Kimono de judo', category: 'kimono', price: 0, rarity: 'rare', zIndex: Z.outfit, color: '#F4F1EA', draw: 'kimono' },
+  { id: KIMONO_ID, name: 'Kimono de judo', category: 'kimono', price: 0, rarity: 'rare', zIndex: Z.kimono, color: '#F4F1EA', draw: 'kimono' },
 
   { id: 'color_pink', name: 'Pâte rose', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#F2A9C0' },
   { id: 'color_matcha', name: 'Pâte matcha', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#A9C46C' },
@@ -107,23 +109,24 @@ export const FALLBACK_CATALOG: Item[] = [
   { id: 'color_gold', name: 'Pâte dorée', category: 'color', price: 120, rarity: 'epic', zIndex: 0, color: '#E8C75A' },
   { id: 'color_rainbow', name: 'Pâte Rainbow', category: 'color', price: 500, rarity: 'legendary', zIndex: 0, color: '#B58CFF', rainbow: true },
 
-  { id: 'cap_red', name: 'Casquette rouge', category: 'hat', price: 20, rarity: 'common', zIndex: Z.hat, color: '#E2574C', draw: 'cap' },
-  { id: 'cap_blue', name: 'Casquette bleue', category: 'hat', price: 20, rarity: 'common', zIndex: Z.hat, color: '#3D7BE0', draw: 'cap' },
-  { id: 'beanie_purple', name: 'Bonnet violet', category: 'hat', price: 40, rarity: 'common', zIndex: Z.hat, color: '#9B7BE0', draw: 'beanie' },
-  { id: 'crown_gold', name: 'Couronne dorée', category: 'hat', price: 120, rarity: 'epic', zIndex: Z.hat, color: '#F4B740', draw: 'crown' },
+  // Tête : chapeaux et mèches couvrent le même crâne, un seul à la fois.
+  { id: 'cap_red', name: 'Casquette rouge', category: 'head', price: 20, rarity: 'common', zIndex: Z.hat, color: '#E2574C', draw: 'cap' },
+  { id: 'cap_blue', name: 'Casquette bleue', category: 'head', price: 20, rarity: 'common', zIndex: Z.hat, color: '#3D7BE0', draw: 'cap' },
+  { id: 'beanie_purple', name: 'Bonnet violet', category: 'head', price: 40, rarity: 'common', zIndex: Z.hat, color: '#9B7BE0', draw: 'beanie' },
+  { id: 'crown_gold', name: 'Couronne dorée', category: 'head', price: 120, rarity: 'epic', zIndex: Z.hat, color: '#F4B740', draw: 'crown' },
+  { id: 'hair_purple', name: 'Mèche violette', category: 'head', price: 20, rarity: 'common', zIndex: Z.hair, color: '#B07BE0', draw: 'tuft' },
+  { id: 'hair_orange', name: 'Mèche orange', category: 'head', price: 20, rarity: 'common', zIndex: Z.hair, color: '#F19A3E', draw: 'tuft' },
 
   { id: 'glasses_nerd', name: 'Lunettes rondes', category: 'glasses', price: 20, rarity: 'common', zIndex: Z.glasses, color: '#2E3A1F', draw: 'glasses' },
   { id: 'sunglasses_cool', name: 'Lunettes de soleil', category: 'glasses', price: 60, rarity: 'rare', zIndex: Z.glasses, color: '#222222', draw: 'sunglasses' },
 
-  { id: 'bowtie_pink', name: 'Nœud papillon', category: 'accessory', price: 20, rarity: 'common', zIndex: Z.accessory, color: '#ED93B1', draw: 'bowtie' },
-  { id: 'scarf_teal', name: 'Écharpe', category: 'accessory', price: 60, rarity: 'rare', zIndex: Z.accessory, color: '#1D9E75', draw: 'scarf' },
-  { id: 'cape_hero', name: 'Cape de héros', category: 'accessory', price: 100, rarity: 'epic', zIndex: 5, color: '#E24B4A', draw: 'cape' },
-  { id: 'katana_duo', name: 'Katanas croisés', category: 'accessory', price: 160, rarity: 'epic', zIndex: 5, color: '#8A2E3C', draw: 'katanas' },
+  { id: 'bowtie_pink', name: 'Nœud papillon', category: 'neck', price: 20, rarity: 'common', zIndex: Z.neck, color: '#ED93B1', draw: 'bowtie' },
+  { id: 'scarf_teal', name: 'Écharpe', category: 'neck', price: 60, rarity: 'rare', zIndex: Z.neck, color: '#1D9E75', draw: 'scarf' },
+
+  { id: 'cape_hero', name: 'Cape de héros', category: 'back', price: 100, rarity: 'epic', zIndex: Z.back, color: '#E24B4A', draw: 'cape' },
+  { id: 'katana_duo', name: 'Katanas croisés', category: 'back', price: 160, rarity: 'epic', zIndex: Z.back, color: '#8A2E3C', draw: 'katanas' },
 
   { id: 'sneakers_white', name: 'Baskets', category: 'shoes', price: 20, rarity: 'common', zIndex: Z.shoes, color: '#3a4660', draw: 'sneakers' },
-
-  { id: 'hair_purple', name: 'Mèche violette', category: 'hair', price: 20, rarity: 'common', zIndex: Z.hair, color: '#B07BE0', draw: 'tuft' },
-  { id: 'hair_orange', name: 'Mèche orange', category: 'hair', price: 20, rarity: 'common', zIndex: Z.hair, color: '#F19A3E', draw: 'tuft' },
 
   { id: 'bg_bamboo', name: 'Forêt de bambous', category: 'background', price: 80, rarity: 'common', zIndex: 0, color: '#6FB23E', background: 'bamboo' },
   { id: 'bg_dojo', name: 'Dojo', category: 'background', price: 100, rarity: 'common', zIndex: 0, color: '#B7C68B', background: 'dojo' },

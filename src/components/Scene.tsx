@@ -56,7 +56,7 @@ function SkyLayer({
     : undefined;
   return (
     <Animated.View
-      style={[{ position: 'absolute', left: 0, top: 0, width: g.w, height: g.skyH }, style]}
+      style={[{ position: 'absolute', left: 0, top: g.top, width: g.w, height: g.skyH }, style]}
       pointerEvents="none">
       <SvgXml xml={xml} width={g.w} height={g.skyH} />
     </Animated.View>
@@ -100,6 +100,7 @@ export function Scene({
   geom,
   scope = 'home',
   stage,
+  topReserve = 0,
 }: {
   children?: React.ReactNode;
   decor?: Item[];
@@ -110,15 +111,29 @@ export function Scene({
   scope?: string;
   /** Contenu posé sur la ligne d'horizon — le personnage. */
   stage?: React.ReactNode;
+  /**
+   * Hauteur cédée au HUD en haut de l'écran. Le ciel démarre sous cette bande au lieu d'être
+   * recouvert par la barre de progression ; l'horizon, le sol et le personnage ne bougent pas.
+   */
+  topReserve?: number;
 }) {
   const cfg = getBackground(background);
-  const g = useSceneLayout(geom);
+  const g = useSceneLayout(geom, topReserve);
   const drift = useDrift();
   const layers = useMemo(() => sceneLayers(cfg, g, { scope }), [cfg, g, scope]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <View style={[StyleSheet.absoluteFill, { backgroundColor: cfg.paper }]} />
+
+      {/* Bande cédée au HUD : peinte de la couleur qu'a le ciel à son y = 0, sinon la carte de
+          progression flotterait sur un aplat de papier qui jure avec le décor (matsuri, neon). */}
+      {g.top > 0 ? (
+        <View
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: g.top, backgroundColor: layers.cap }}
+          pointerEvents="none"
+        />
+      ) : null}
 
       <SkyLayer xml={layers.back} g={g} drift={drift} amp={DRIFT.back} />
       <SkyLayer xml={layers.mid} g={g} drift={drift} amp={DRIFT.mid} />

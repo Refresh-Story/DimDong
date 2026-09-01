@@ -95,7 +95,7 @@ function FallingParticle({ index, geom: g, color, petal }: { index: number; geom
 
   const drift = (frac(index, 37) - 0.5) * 70;
   const opacity = t.interpolate({ inputRange: [0, 0.08, 0.85, 1], outputRange: [0, 0.85, 0.6, 0] });
-  const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, g.horizonY - 20] });
+  const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, g.skyH - 20] });
   const translateX = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, drift, drift * 0.4] });
   const rotate = t.interpolate({ inputRange: [0, 1], outputRange: ['0deg', petal ? '180deg' : '90deg'] });
 
@@ -105,7 +105,9 @@ function FallingParticle({ index, geom: g, color, petal }: { index: number; geom
       pointerEvents="none"
       style={{
         position: 'absolute',
-        top: -20,
+        // Les particules tombent dans la bande de ciel : elles partent sous la réserve du HUD,
+        // sinon elles semblent sortir de la barre de progression.
+        top: g.top - 20,
         left: (0.06 + frac(index, 29) * 0.88) * g.w,
         width: petal ? size * 1.5 : size,
         height: size,
@@ -181,7 +183,7 @@ function TwinkleParticle({ index, geom: g, color }: { index: number; geom: Scene
       pointerEvents="none"
       style={{
         position: 'absolute',
-        top: 30 + frac(index, 43) * g.skyH * 0.6,
+        top: g.top + 30 + frac(index, 43) * g.skyH * 0.6,
         left: (0.05 + frac(index, 23) * 0.9) * g.w,
         width: size,
         height: size,

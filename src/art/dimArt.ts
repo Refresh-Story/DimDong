@@ -730,14 +730,6 @@ export function animalInner(kind: string, c: string, opts: { blink?: boolean } =
     }
     case 'panda': {
       const patch = '#2F2F3A';
-      const pandaEyes = opts.blink
-        ? `<path d="M35.5 43 q5 4 10 0 M54.5 43 q5 4 10 0" stroke="#FFFFFF" stroke-width="2.8" fill="none" stroke-linecap="round"/>`
-        : `<circle cx="41" cy="43" r="5.2" fill="#FFFFFF"/>` +
-          `<circle cx="41.7" cy="43.7" r="2.7" fill="${INK}"/>` +
-          `<circle cx="40" cy="42" r="1.3" fill="#FFFFFF"/>` +
-          `<circle cx="59" cy="43" r="5.2" fill="#FFFFFF"/>` +
-          `<circle cx="59.7" cy="43.7" r="2.7" fill="${INK}"/>` +
-          `<circle cx="58" cy="42" r="1.3" fill="#FFFFFF"/>`;
       return (
         shadow +
         body() +
@@ -755,10 +747,8 @@ export function animalInner(kind: string, c: string, opts: { blink?: boolean } =
         `<circle cx="71" cy="17" r="3.5" fill="${lighten(patch, 0.18)}"/>` +
         head() +
         shine +
-        // lunettes penchées, yeux dedans
-        `<g transform="rotate(-16 41 43)"><ellipse cx="41" cy="43" rx="8.5" ry="11" fill="${patch}"/></g>` +
-        `<g transform="rotate(16 59 43)"><ellipse cx="59" cy="43" rx="8.5" ry="11" fill="${patch}"/></g>` +
-        pandaEyes +
+        // yeux du dim posés sur la tête blanche, sans lunettes
+        eyes(41, 59, 42.5) +
         `<path d="M47.5 53 L52.5 53 L50 56 Z" fill="${INK}"/>` +
         smile(50, 57.5)
       );

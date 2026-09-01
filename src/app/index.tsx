@@ -107,6 +107,7 @@ export default function HomeScreen() {
   const placedDecor = catalog.filter((i) => player.placedDecor.includes(i.id));
   const isRainbow = !!catalog.find((i) => i.id === player.equipped.color)?.rainbow;
   const background = getItemById(catalog, player.equipped.background)?.background;
+  const companion = getItemById(catalog, player.equipped.animal);
   // La taille du dim suit la hauteur de ciel disponible : il ne peut plus percuter le HUD
   // ni le bouton de brossage sur un petit écran.
   const geom = sceneGeom(win.width, win.height);
@@ -117,6 +118,7 @@ export default function HomeScreen() {
       <Scene
         decor={placedDecor}
         background={background}
+        companion={companion}
         topReserve={topReserve}
         stage={
           <Animated.View

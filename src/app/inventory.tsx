@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimalView } from '@/components/AnimalView';
 import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
@@ -116,7 +117,9 @@ export default function InventoryScreen() {
                         pressed && { transform: [{ scale: 0.96 }] },
                       ]}>
                       <View style={styles.preview}>
-                        {isDecor ? (
+                        {cat === 'animal' ? (
+                          <AnimalView item={item} size={60} />
+                        ) : isDecor ? (
                           <DecorView item={item} size={56} />
                         ) : isBackground ? (
                           <BackgroundThumb item={item} size={64} />

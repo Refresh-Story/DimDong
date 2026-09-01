@@ -591,6 +591,223 @@ export function decorDoc(kind: string, color: string): string {
   return svg(DECOR_FRAME.w, DECOR_FRAME.h, '', decorInner(kind, color));
 }
 
+export const ANIMAL_FRAME = { w: 100, h: 100 };
+
+// Compagnons chibi dans le langage du dim : silhouettes dodues et symétriques,
+// grands yeux brillants et sourire de la mascotte, sans accessoires — l'identité
+// de chaque animal passe par ses propres attributs (oreilles, rayures, taches,
+// queue). Le pelage vient de `Item.color`, le reste se dérive avec darken/lighten.
+// `blink` remplace les yeux par des paupières fermées : même géométrie, seul le
+// sous-bloc des yeux change, pour un clignement par simple échange de document.
+export function animalInner(kind: string, c: string, opts: { blink?: boolean } = {}): string {
+  const dark = darken(c, 0.3);
+  const pale = lighten(c, 0.35);
+  const shadow = `<ellipse cx="50" cy="94" rx="26" ry="5" fill="${INK}" opacity="0.12"/>`;
+  // Grands yeux du style dim (encre + double éclat), ou paupières fermées.
+  const eyes = (lx = 40, rx = 60, y = 42) =>
+    opts.blink
+      ? `<path d="M${lx - 6} ${y} q6 4 12 0 M${rx - 6} ${y} q6 4 12 0" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : `<ellipse cx="${lx}" cy="${y}" rx="6" ry="7.5" fill="${INK}"/>` +
+        `<circle cx="${lx - 2}" cy="${y - 3}" r="2.4" fill="#FFFFFF"/>` +
+        `<circle cx="${lx + 2}" cy="${y + 2.8}" r="1.2" fill="#FFFFFF" opacity="0.85"/>` +
+        `<ellipse cx="${rx}" cy="${y}" rx="6" ry="7.5" fill="${INK}"/>` +
+        `<circle cx="${rx - 2}" cy="${y - 3}" r="2.4" fill="#FFFFFF"/>` +
+        `<circle cx="${rx + 2}" cy="${y + 2.8}" r="1.2" fill="#FFFFFF" opacity="0.85"/>`;
+  // Sourire du dim, avec petite langue.
+  const smile = (cx = 50, y = 52) =>
+    `<path d="M${cx - 7} ${y} Q${cx} ${y + 9} ${cx + 7} ${y} Q${cx} ${y + 4.5} ${cx - 7} ${y} Z" fill="${INK}"/>` +
+    `<path d="M${cx - 2.5} ${y + 3.2} Q${cx} ${y + 6} ${cx + 2.5} ${y + 3.2} Z" fill="#F08AA8"/>`;
+  const shine = `<ellipse cx="38" cy="26" rx="8" ry="4.5" fill="#FFFFFF" opacity="0.28"/>`;
+  // Queue avec contour : un trait d'encre plus large sous le trait de pelage.
+  const tail = (d: string, w = 6, color = c) =>
+    `<path d="${d}" stroke="${INK}" stroke-width="${w + 4.5}" fill="none" stroke-linecap="round"/>` +
+    `<path d="${d}" stroke="${color}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+  const body = (rx = 20, ry = 16, fill = c) =>
+    `<ellipse cx="50" cy="75" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${INK}" stroke-width="3"/>`;
+  // Ombre cel au bas du corps.
+  const bodyShade = (fill = dark) =>
+    `<path d="M33 80 Q50 91 67 80 Q63 88.5 50 89.5 Q37 88.5 33 80 Z" fill="${fill}" opacity="0.25"/>`;
+  // Petits bras posés sur le ventre, symétriques.
+  const arms = (fill = c) =>
+    `<g transform="rotate(20 34 73)"><ellipse cx="34" cy="73" rx="5.5" ry="9" fill="${fill}" stroke="${INK}" stroke-width="2.5"/></g>` +
+    `<g transform="rotate(-20 66 73)"><ellipse cx="66" cy="73" rx="5.5" ry="9" fill="${fill}" stroke="${INK}" stroke-width="2.5"/></g>`;
+  const foot = (x: number, fill = c) =>
+    `<ellipse cx="${x}" cy="90" rx="7.5" ry="4.8" fill="${fill}" stroke="${INK}" stroke-width="2.5"/>` +
+    `<path d="M${x - 2} 87.5 L${x - 2} 91 M${x + 2} 87.5 L${x + 2} 91" stroke="${INK}" stroke-width="1.4" opacity="0.5" stroke-linecap="round"/>`;
+  const head = (fill = c) =>
+    `<ellipse cx="50" cy="40" rx="27" ry="25" fill="${fill}" stroke="${INK}" stroke-width="3.5"/>`;
+
+  switch (kind) {
+    case 'cat':
+      return (
+        shadow +
+        tail('M66 84 Q88 80 88 62 Q88 50 78 51') +
+        `<circle cx="78" cy="51" r="4.5" fill="${pale}" stroke="${INK}" stroke-width="2.2"/>` +
+        body() +
+        `<ellipse cx="50" cy="78" rx="10" ry="8" fill="${pale}"/>` +
+        bodyShade() +
+        arms() +
+        foot(40, pale) +
+        foot(60, pale) +
+        // oreilles pointues, intérieur rose
+        `<path d="M26 30 Q25 8 35 5 Q44 11 46 20 Z" fill="${c}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M74 30 Q75 8 65 5 Q56 11 54 20 Z" fill="${c}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M31 24 Q31 12 36 10 Q41 15 42 20 Z" fill="#F0B7C3"/>` +
+        `<path d="M69 24 Q69 12 64 10 Q59 15 58 20 Z" fill="#F0B7C3"/>` +
+        head() +
+        shine +
+        // rayures du front, effilées
+        `<path d="M42 17 Q43 22 42 26 L45.5 26 Q45.5 20 45 17 Z" fill="${dark}"/>` +
+        `<path d="M52 16 Q52.5 21 52 26 L55.5 26 Q56 20 55 16 Z" fill="${dark}"/>` +
+        `<path d="M61 18 Q62 22 61.5 26 L65 25 Q65 21 64 17 Z" fill="${dark}"/>` +
+        // moustaches
+        `<path d="M17 44 L29 46 M17 51 L29 50 M83 44 L71 46 M83 51 L71 50" stroke="${INK}" stroke-width="1.5" stroke-linecap="round" opacity="0.75"/>` +
+        eyes() +
+        `<path d="M47.5 49.5 L52.5 49.5 L50 52.5 Z" fill="#E8828F" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>` +
+        smile(50, 54)
+      );
+    case 'dog': {
+      const ear = darken(c, 0.2);
+      return (
+        shadow +
+        tail('M32 78 Q22 71 24 60', 6) +
+        `<circle cx="24" cy="60" r="4" fill="${pale}" stroke="${INK}" stroke-width="2.2"/>` +
+        body() +
+        `<ellipse cx="50" cy="78" rx="11" ry="8.5" fill="${pale}"/>` +
+        bodyShade() +
+        arms() +
+        foot(40, pale) +
+        foot(60, pale) +
+        head() +
+        // oreilles tombantes, bout clair
+        `<path d="M30 18 Q17 20 17 38 Q17 49 26 46 Q33 38 36 21 Z" fill="${ear}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M70 18 Q83 20 83 38 Q83 49 74 46 Q67 38 64 21 Z" fill="${ear}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M19 40 Q19 47 25 45 Q27 42 28 38 Q23 36 19 40 Z" fill="${pale}" opacity="0.8"/>` +
+        `<path d="M81 40 Q81 47 75 45 Q73 42 72 38 Q77 36 81 40 Z" fill="${pale}" opacity="0.8"/>` +
+        shine +
+        // tache sur l'œil + sourcils clairs
+        `<ellipse cx="60" cy="39" rx="8.5" ry="10.5" fill="${darken(c, 0.14)}"/>` +
+        `<circle cx="38" cy="28" r="2.6" fill="${pale}"/>` +
+        `<circle cx="62" cy="28" r="2.6" fill="${pale}"/>` +
+        eyes(40, 60, 41) +
+        // museau clair, truffe brillante, sourire du dim + langue
+        `<ellipse cx="50" cy="53" rx="12" ry="8" fill="${pale}" stroke="${INK}" stroke-width="2.5"/>` +
+        `<ellipse cx="50" cy="49" rx="4.8" ry="3.8" fill="${INK}"/>` +
+        `<circle cx="48.6" cy="47.9" r="1.1" fill="#FFFFFF" opacity="0.8"/>` +
+        `<path d="M44 53.5 Q50 59.5 56 53.5 Q50 56.5 44 53.5 Z" fill="${INK}"/>` +
+        `<path d="M50 56 Q53.5 62.5 57.5 59 Q57 54.5 52.5 55 Z" fill="#F08AA8" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>` +
+        `<path d="M54.2 56.5 L54.2 59.5" stroke="${darken('#F08AA8', 0.25)}" stroke-width="1.2" stroke-linecap="round"/>`
+      );
+    }
+    case 'monkey': {
+      const face = lighten(c, 0.42);
+      return (
+        shadow +
+        tail('M32 80 Q13 76 13 61 Q13 49 23 51 Q30 53 26 59', 5) +
+        body() +
+        `<ellipse cx="50" cy="76" rx="12" ry="9.5" fill="${face}"/>` +
+        bodyShade() +
+        arms() +
+        foot(40, pale) +
+        foot(60, pale) +
+        // oreilles rondes
+        `<circle cx="23" cy="37" r="8.5" fill="${c}" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="23" cy="37" r="4" fill="${face}"/>` +
+        `<circle cx="77" cy="37" r="8.5" fill="${c}" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="77" cy="37" r="4" fill="${face}"/>` +
+        head() +
+        // houppette à trois poils
+        `<path d="M45 16 Q41 8 36 9 M50 15 Q50 6 50 5 M55 16 Q59 8 64 9" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>` +
+        shine +
+        // face en cœur
+        `<ellipse cx="50" cy="46" rx="17" ry="13.5" fill="${face}" stroke="${INK}" stroke-width="2.5"/>` +
+        `<path d="M44 34.5 Q50 40 56 34.5 Q53 32 50 32 Q47 32 44 34.5 Z" fill="${c}"/>` +
+        eyes(42, 58, 43) +
+        `<circle cx="47.5" cy="50.5" r="1.3" fill="${INK}"/>` +
+        `<circle cx="52.5" cy="50.5" r="1.3" fill="${INK}"/>` +
+        smile(50, 53.5)
+      );
+    }
+    case 'panda': {
+      const patch = '#2F2F3A';
+      const pandaEyes = opts.blink
+        ? `<path d="M35.5 43 q5 4 10 0 M54.5 43 q5 4 10 0" stroke="#FFFFFF" stroke-width="2.8" fill="none" stroke-linecap="round"/>`
+        : `<circle cx="41" cy="43" r="5.2" fill="#FFFFFF"/>` +
+          `<circle cx="41.7" cy="43.7" r="2.7" fill="${INK}"/>` +
+          `<circle cx="40" cy="42" r="1.3" fill="#FFFFFF"/>` +
+          `<circle cx="59" cy="43" r="5.2" fill="#FFFFFF"/>` +
+          `<circle cx="59.7" cy="43.7" r="2.7" fill="${INK}"/>` +
+          `<circle cx="58" cy="42" r="1.3" fill="#FFFFFF"/>`;
+      return (
+        shadow +
+        body() +
+        // épaules noires qui enlacent le ventre
+        `<path d="M31 65 Q50 58 69 65 L67 79 Q50 72 33 79 Z" fill="${patch}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+        `<path d="M33 80 Q50 91 67 80 Q63 88.5 50 89.5 Q37 88.5 33 80 Z" fill="${darken(c, 0.14)}" opacity="0.5"/>` +
+        `<g transform="rotate(20 34 73)"><ellipse cx="34" cy="73" rx="5.5" ry="9" fill="${patch}" stroke="${INK}" stroke-width="2.5"/></g>` +
+        `<g transform="rotate(-20 66 73)"><ellipse cx="66" cy="73" rx="5.5" ry="9" fill="${patch}" stroke="${INK}" stroke-width="2.5"/></g>` +
+        foot(40, patch) +
+        foot(60, patch) +
+        // oreilles rondes noires
+        `<circle cx="27" cy="19" r="9.5" fill="${patch}" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="25" cy="17" r="3.5" fill="${lighten(patch, 0.18)}"/>` +
+        `<circle cx="73" cy="19" r="9.5" fill="${patch}" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="71" cy="17" r="3.5" fill="${lighten(patch, 0.18)}"/>` +
+        head() +
+        shine +
+        // lunettes penchées, yeux dedans
+        `<g transform="rotate(-16 41 43)"><ellipse cx="41" cy="43" rx="8.5" ry="11" fill="${patch}"/></g>` +
+        `<g transform="rotate(16 59 43)"><ellipse cx="59" cy="43" rx="8.5" ry="11" fill="${patch}"/></g>` +
+        pandaEyes +
+        `<path d="M47.5 53 L52.5 53 L50 56 Z" fill="${INK}"/>` +
+        smile(50, 57.5)
+      );
+    }
+    case 'tiger': {
+      const stripe = darken(c, 0.45);
+      const belly = '#FFF6E8';
+      return (
+        shadow +
+        tail('M66 84 Q88 78 88 60 Q88 49 78 50') +
+        `<path d="M84 74 L90 71 M86 66 L92 62" stroke="${stripe}" stroke-width="3.2" stroke-linecap="round"/>` +
+        `<circle cx="78" cy="50" r="4.5" fill="${belly}" stroke="${INK}" stroke-width="2.2"/>` +
+        body(21, 16) +
+        `<ellipse cx="50" cy="77" rx="12" ry="10" fill="${belly}"/>` +
+        `<path d="M31 68 Q29 75 31 82 M69 68 Q71 75 69 82" stroke="${stripe}" stroke-width="3.2" fill="none" stroke-linecap="round"/>` +
+        arms() +
+        foot(40, belly) +
+        foot(60, belly) +
+        // oreilles rondes, intérieur clair
+        `<circle cx="28" cy="17" r="9" fill="${c}" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="28" cy="17" r="4" fill="${belly}"/>` +
+        `<circle cx="72" cy="17" r="9" fill="${c}" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="72" cy="17" r="4" fill="${belly}"/>` +
+        head() +
+        shine +
+        // rayures effilées : couronne + joues
+        `<path d="M40 17 Q41.5 22 41 27 L45 27 Q45 21 44 16.5 Z" fill="${stripe}"/>` +
+        `<path d="M48.5 16 Q49 21 48.5 27 L52.5 27 Q53 21 52.5 16 Z" fill="${stripe}"/>` +
+        `<path d="M57 16.5 Q58 21 57.5 27 L61.5 26.5 Q61.5 21 60.5 16 Z" fill="${stripe}"/>` +
+        `<path d="M25 35 Q30 36.5 33 38 L32 41.5 Q28 40 24 38.5 Z" fill="${stripe}"/>` +
+        `<path d="M75 35 Q70 36.5 67 38 L68 41.5 Q72 40 76 38.5 Z" fill="${stripe}"/>` +
+        eyes() +
+        // museau clair, truffe, sourire du dim et mini-crocs
+        `<ellipse cx="50" cy="53.5" rx="10.5" ry="7" fill="${belly}" stroke="${INK}" stroke-width="2.5"/>` +
+        `<path d="M47 50 L53 50 L50 53 Z" fill="#E8828F" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>` +
+        `<path d="M43.5 54.5 Q50 60.5 56.5 54.5 Q50 57.5 43.5 54.5 Z" fill="${INK}"/>` +
+        `<path d="M44.5 55.5 L46 59.5 L47.7 56.3 Z" fill="#FFFFFF" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>` +
+        `<path d="M52.3 56.3 L54 59.5 L55.5 55.5 Z" fill="#FFFFFF" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>`
+      );
+    }
+    default:
+      return '';
+  }
+}
+
+export function animalDoc(kind: string, color: string, opts?: { blink?: boolean }): string {
+  return svg(ANIMAL_FRAME.w, ANIMAL_FRAME.h, '', animalInner(kind, color, opts));
+}
+
 export const BRUSH_FRAME = { w: 120, h: 64 };
 
 // Brosse à dents de l'écran de brossage : tête à gauche (poils vers le haut,

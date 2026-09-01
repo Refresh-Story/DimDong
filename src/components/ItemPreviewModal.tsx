@@ -72,19 +72,21 @@ function ScenePreview({
   height,
   background,
   decor,
+  companion,
   spotlight,
   children,
 }: {
   height: number;
   background?: string;
   decor: Item[];
+  companion?: Item;
   spotlight?: Item | null;
   children?: React.ReactNode;
 }) {
   const g = useMemo(() => sceneGeom(STAGE_W, height), [height]);
   return (
     <View style={[styles.stage, { height }]}>
-      <Scene geom={g} scope="preview" background={background} decor={decor} stage={children}>
+      <Scene geom={g} scope="preview" background={background} decor={decor} companion={companion} stage={children}>
         {spotlight && (
           <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: g.groundY, zIndex: 1 }} pointerEvents="none">
             <DecorSpotlight item={spotlight} geom={g} />
@@ -172,6 +174,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
 
   const isBackground = item.category === 'background';
   const isDecor = item.category === 'decor';
+  const isAnimal = item.category === 'animal';
 
   // On rejoue la scène du joueur en n'y injectant que l'objet convoité, via le même
   // réducteur que l'équipement réel : l'aperçu ne peut plus montrer une tenue que
@@ -181,13 +184,16 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
     ? item.background
     : getItemById(catalog, equipped.background)?.background;
   const previewDecor = catalog.filter((i) => placedDecor.includes(i.id) && i.id !== item.id);
+  // Le compagnon de l'aperçu suit le même réducteur : l'animal convoité pour sa
+  // fiche, sinon celui déjà appelé — la scène de la carte reste fidèle à la vraie.
+  const previewCompanion = getItemById(catalog, previewEquipped.animal);
 
   const isRainbow = !!getItemById(catalog, previewEquipped.color)?.rainbow;
   const missing = Math.max(0, item.price - gems);
   const canAfford = missing === 0;
 
-  // Face à une décoration, le dim s'écarte du côté opposé pour ne pas la masquer.
-  const dimX = isDecor ? ((item.x ?? 0.5) < 0.5 ? 0.68 : 0.32) : 0.5;
+  // Face à une décoration ou à un compagnon, le dim s'écarte du côté opposé.
+  const dimX = isDecor || isAnimal ? ((item.x ?? 0.5) < 0.5 ? 0.68 : 0.32) : 0.5;
 
   const verbs = actionVerbs(item.category);
   const inStock = props.mode === 'inventory';
@@ -199,7 +205,11 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
       ? inStock
         ? 'Voilà où il se pose dans ta scène.'
         : 'Voilà où il se posera dans ta scène.'
-      : 'Voilà ton dim-sum avec cet objet.';
+      : isAnimal
+        ? inStock
+          ? 'Voilà ton compagnon dans ta scène.'
+          : 'Voilà ton futur compagnon dans ta scène.'
+        : 'Voilà ton dim-sum avec cet objet.';
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onCancel}>
@@ -216,6 +226,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
             height={stageH}
             background={previewBackground}
             decor={previewDecor}
+            companion={previewCompanion}
             spotlight={isDecor ? item : null}>
             {/* L'aura se cale sur le coin haut-gauche de son parent : on l'enferme avec le dim. */}
             <View style={{ left: (dimX - 0.5) * STAGE_W, marginBottom: -dimSize * 0.13 }}>

@@ -24,6 +24,7 @@ import {
   brush as brushOp,
   buy as buyOp,
   equip as equipOp,
+  migrateEquipped,
   selectBelt as selectBeltOp,
   sell as sellOp,
   setEmotion as setEmotionOp,
@@ -84,7 +85,8 @@ function sanitize(data: any): PlayerState {
   return {
     ...DEFAULT_PLAYER,
     ...data,
-    equipped: data?.equipped ?? {},
+    // Les profils enregistrés avant le regroupement des objets sont remis à jour ici.
+    equipped: migrateEquipped(data?.equipped, FALLBACK_CATALOG),
     ownedItems,
     placedDecor: data?.placedDecor ?? [],
     // Migration : les sauvegardes d'avant la revente n'ont pas le drapeau. Posséder déjà

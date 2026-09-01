@@ -4,7 +4,7 @@ const assert = {
   },
 };
 
-import { FALLBACK_CATALOG, actionVerbs, getItemById } from '@/data/items';
+import { CATEGORY_LABELS, CATEGORY_ORDER, FALLBACK_CATALOG, actionVerbs, getItemById } from '@/data/items';
 import {
   DEFAULT_PLAYER,
   brush,
@@ -12,6 +12,7 @@ import {
   canSell,
   equip,
   grant,
+  migrateEquipped,
   selectBelt,
   sell,
   setEmotion,
@@ -92,7 +93,7 @@ check('achat puis revente : solde de départ retrouvé (30)', sr.player.gems ===
 check('l’objet quitte l’inventaire', !sr.player.ownedItems.includes('cap_red'));
 
 sr = sell(equip(v, cap), cap);
-check('revendre un objet équipé le déséquipe', sr.player.equipped.hat === undefined);
+check('revendre un objet équipé le déséquipe', sr.player.equipped.head === undefined);
 
 sr = sell(equip(equip(buy(v, glasses).player, cap), glasses), cap);
 check('revendre n’affecte pas les autres emplacements', sr.player.equipped.glasses === 'glasses_nerd');
@@ -147,7 +148,7 @@ check('acheter un objet ordinaire ne consomme pas le secret', buy({ ...DEFAULT_P
 console.log('--- Verbes d’action ---');
 check('décoration → Placer / Retirer', actionVerbs('decor').on === 'Placer' && actionVerbs('decor').off === 'Retirer');
 check('décor de fond → Activer / Désactiver', actionVerbs('background').on === 'Activer' && actionVerbs('background').off === 'Désactiver');
-check('objet porté → Équiper / Retirer', actionVerbs('hat').on === 'Équiper' && actionVerbs('kimono').off === 'Retirer');
+check('objet porté → Équiper / Retirer', actionVerbs('head').on === 'Équiper' && actionVerbs('kimono').off === 'Retirer');
 
 console.log('--- Brossage (récompense à chaque brossage, sans plafond) ---');
 const today = dayKey(new Date());
@@ -168,14 +169,82 @@ check('nouveau jour → récompensé aussi', b.result.gained === 10 && b.player.
 
 console.log('--- Équipement / décor ---');
 let e = equip({ ...DEFAULT_PLAYER }, cap);
-check('équiper la casquette', e.equipped.hat === 'cap_red');
-e = unequip(e, 'hat');
-check('déséquiper la casquette', e.equipped.hat === undefined);
+check('équiper la casquette', e.equipped.head === 'cap_red');
+e = unequip(e, 'head');
+check('déséquiper la casquette', e.equipped.head === undefined);
 const bonsai = item('decor_bonsai');
 let d = toggleDecor({ ...DEFAULT_PLAYER }, bonsai);
 check('placer le bonsaï', d.placedDecor.includes('decor_bonsai'));
 d = toggleDecor(d, bonsai);
 check('retirer le bonsaï', !d.placedDecor.includes('decor_bonsai'));
+
+console.log('--- Regroupement par emplacement (pas de superposition) ---');
+const crown = item('crown_gold');
+const tuft = item('hair_purple');
+const bowtie = item('bowtie_pink');
+const scarf = item('scarf_teal');
+const cape = item('cape_hero');
+const katanas = item('katana_duo');
+
+check('chapeaux et mèches partagent l’emplacement « Tête »', [cap, crown, tuft].every((i) => i.category === 'head'));
+let h = equip(equip({ ...DEFAULT_PLAYER }, cap), tuft);
+check('la mèche remplace la casquette (un seul objet sur la tête)', h.equipped.head === 'hair_purple');
+h = equip(h, crown);
+check('la couronne remplace la mèche', h.equipped.head === 'crown_gold');
+check('rien d’autre n’a été porté au passage', Object.keys(h.equipped).join(',') === 'head');
+
+let a = equip(equip({ ...DEFAULT_PLAYER }, bowtie), scarf);
+check('l’écharpe remplace le nœud papillon (emplacement « Cou »)', a.equipped.neck === 'scarf_teal');
+a = equip(a, cape);
+check('la cape se porte en plus (emplacement « Dos »)', a.equipped.neck === 'scarf_teal' && a.equipped.back === 'cape_hero');
+a = equip(a, katanas);
+check('les katanas remplacent la cape', a.equipped.back === 'katana_duo' && a.equipped.neck === 'scarf_teal');
+
+check(
+  'chaque emplacement du catalogue a au moins un objet',
+  CATEGORY_ORDER.every((c) => FALLBACK_CATALOG.some((i) => i.category === c))
+);
+check(
+  'chaque objet a un emplacement affichable',
+  FALLBACK_CATALOG.every((i) => CATEGORY_ORDER.includes(i.category) && !!CATEGORY_LABELS[i.category])
+);
+
+console.log('--- Migration des anciennes sauvegardes ---');
+const migrate = (raw: unknown) => migrateEquipped(raw, FALLBACK_CATALOG);
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+check('chapeau + mèche → le chapeau est conservé', same(migrate({ hat: 'cap_red', hair: 'hair_purple' }), { head: 'cap_red' }));
+check(
+  "l'ordre des clés du JSON ne change rien",
+  same(migrate({ hair: 'hair_purple', hat: 'cap_red' }), { head: 'cap_red' })
+);
+check('mèche seule → conservée', same(migrate({ hair: 'hair_orange' }), { head: 'hair_orange' }));
+check("l'ancienne catégorie « accessory » se scinde : la cape va au dos", same(migrate({ accessory: 'cape_hero' }), { back: 'cape_hero' }));
+check("… et le nœud papillon au cou", same(migrate({ accessory: 'bowtie_pink' }), { neck: 'bowtie_pink' }));
+check(
+  'kimono, pâte et décor de fond sont conservés tels quels',
+  same(migrate({ kimono: 'kimono_judo', color: 'color_gold', background: 'bg_dojo' }), {
+    kimono: 'kimono_judo',
+    color: 'color_gold',
+    background: 'bg_dojo',
+  })
+);
+check('objet disparu du catalogue → ignoré', same(migrate({ hat: 'cap_disparue' }), {}));
+check('décoration rangée par erreur dans equipped → ignorée', same(migrate({ decor: 'decor_bonsai' }), {}));
+check(
+  'entrée illisible → équipement vide',
+  [undefined, null, [], 'nawak', 42, { hat: 7 }].every((raw) => same(migrate(raw), {}))
+);
+const migrated = migrate({ hat: 'cap_red', hair: 'hair_purple', accessory: 'cape_hero', color: 'color_gold' });
+check('migration rejouée → résultat identique (idempotente)', same(migrate(migrated), migrated));
+check(
+  'une sauvegarde déjà migrée traverse sans dommage',
+  same(migrate({ head: 'crown_gold', neck: 'scarf_teal', back: 'katana_duo' }), {
+    head: 'crown_gold',
+    neck: 'scarf_teal',
+    back: 'katana_duo',
+  })
+);
 
 console.log('--- Décors de fond ---');
 const backgrounds = FALLBACK_CATALOG.filter((i) => i.category === 'background');
@@ -201,9 +270,11 @@ check('activer un décor ne retire pas le kimono', f.equipped.kimono === 'kimono
 f = equip(equip({ ...DEFAULT_PLAYER }, bgBamboo), kimono);
 check('équiper le kimono ne retire pas le décor', f.equipped.background === 'bg_bamboo' && f.equipped.kimono === 'kimono_judo');
 f = equip(equip({ ...DEFAULT_PLAYER }, cap), bgBamboo);
-check('activer un décor ne touche pas au chapeau', f.equipped.hat === 'cap_red' && f.equipped.background === 'bg_bamboo');
-f = equip({ ...DEFAULT_PLAYER, equipped: { hat: 'cap_red', background: 'bg_bamboo' } }, kimono);
-check('le kimono retire bien le chapeau mais garde le décor', f.equipped.hat === undefined && f.equipped.background === 'bg_bamboo');
+check('activer un décor ne touche pas au chapeau', f.equipped.head === 'cap_red' && f.equipped.background === 'bg_bamboo');
+f = equip({ ...DEFAULT_PLAYER, equipped: { head: 'cap_red', background: 'bg_bamboo' } }, kimono);
+check('le kimono retire bien le chapeau mais garde le décor', f.equipped.head === undefined && f.equipped.background === 'bg_bamboo');
+f = equip({ ...DEFAULT_PLAYER, equipped: { kimono: 'kimono_judo' } }, cape);
+check('porter la cape retire le kimono', f.equipped.back === 'cape_hero' && f.equipped.kimono === undefined);
 
 console.log('--- Ceintures (une tous les 3 niveaux) ---');
 check('niveaux 1 à 3 → Blanche', [1, 2, 3].every((l) => beltForLevel(l).label === 'Blanche'));

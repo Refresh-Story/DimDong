@@ -331,6 +331,7 @@ export function kimonoInner(jacket: string, belt: string, id = 'k', beltAccent?:
   const clip = `kc_${id}`;
   const under = darken(jacket, 0.12); // pan du dessous, un ton plus foncé
   const beltShade = darken(belt, 0.25);
+  const stitch = darken(jacket, 0.3); // surpiqûres du col
   const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
   // Segments alternés (façon kōhaku), pointes des pans et liseré du nœud dans la
   // couleur d'accent : la ceinture bicolore des grands maîtres.
@@ -356,9 +357,12 @@ export function kimonoInner(jacket: string, belt: string, id = 'k', beltAccent?:
     `<path d="M140 186 L100 201 L110 201 L130 186 Z" fill="${under}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
     `<path d="M60 186 L100 201 L90 201 L70 186 Z" fill="${jacket}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
     `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<path d="M24 191 L58 191 M64 192 L96 203" stroke="${stitch}" stroke-width="1.8" stroke-dasharray="4 3" opacity="0.8" fill="none"/>` +
+    `<path d="M142 191 L176 191 M104 203 L136 192" stroke="${stitch}" stroke-width="1.8" stroke-dasharray="4 3" opacity="0.8" fill="none"/>` +
     `<path d="M100 218 L114 250" stroke="${INK}" stroke-width="3" fill="none" opacity="0.4"/>` +
     `<rect x="12" y="200" width="176" height="18" fill="${belt}" stroke="${INK}" stroke-width="4"/>` +
     accentBand +
+    `<path d="M14 204 L186 204" stroke="${lighten(belt, 0.3)}" stroke-width="1.8" opacity="0.6"/>` +
     `<path d="M14 209 L186 209" stroke="${beltShade}" stroke-width="2" opacity="0.5"/>` +
     `<path d="M14 214 L186 214" stroke="${beltShade}" stroke-width="2.5" opacity="0.4" stroke-linecap="round"/>` +
     `<path d="M92 213 Q78 228 62 237 L70 248 Q88 236 102 221 Z" fill="${belt}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
@@ -379,22 +383,30 @@ export function kimonoDoc(jacket: string, belt: string, id?: string, beltAccent?
   return kimonoInner(jacket, belt, id, beltAccent);
 }
 
-// Tenue de ninja : veste croisée sombre, ceinture et hachimaki rouges fixes —
-// contrairement au kimono, elle ignore la ceinture de progression.
+// Tenue de ninja : cagoule intégrale façon 🥷 — seule une fenêtre laisse voir
+// les yeux ; la bouche est masquée, l'émotion passe par le regard. Ceinture et
+// hachimaki rouges fixes : contrairement au kimono, la tenue ignore la ceinture
+// de progression.
 export function ninjaInner(cloth: string, id = 'n'): string {
   const clip = `nj_${id}`;
-  const under = darken(cloth, 0.18);
   const band = '#C62828';
   const bandShade = darken(band, 0.25);
   const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
-  const jacket =
+  // Fenêtre des yeux : assez haute pour les yeux écarquillés (peur), bornée pour
+  // cacher joues et bouche.
+  const slit = 'M58 132 Q100 122 142 132 L142 166 Q100 178 58 166 Z';
+  const hood =
+    // dôme hors clip : il englobe le monticule de pâte, la silhouette est 100 % couverte
+    `<path d="M74 92 Q72 50 100 48 Q128 50 126 92 Z" fill="${cloth}" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
     `<g clip-path="url(#${clip})">` +
-    `<path d="M182 186 L140 186 L100 201 L100 250 L182 250 Z" fill="${under}"/>` +
-    `<path d="M18 186 L60 186 L100 201 L114 250 L18 250 Z" fill="${cloth}"/>` +
-    `<path d="M140 186 L100 201 L110 201 L130 186 Z" fill="${under}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
-    `<path d="M60 186 L100 201 L90 201 L70 186 Z" fill="${cloth}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
-    `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
-    `<path d="M100 218 L114 250" stroke="${INK}" stroke-width="3" fill="none" opacity="0.4"/>` +
+    `<path d="${BODY_PATH} ${slit}" fill="${cloth}" fill-rule="evenodd"/>` +
+    `<g stroke="${darken(cloth, 0.35)}" stroke-width="2.5" fill="none" opacity="0.8" stroke-linecap="round">` +
+    `<path d="M60 196 Q100 210 140 196"/>` +
+    `<path d="M40 90 Q60 74 88 68"/>` +
+    `<path d="M160 90 Q140 74 112 68"/>` +
+    `</g>` +
+    `<ellipse cx="60" cy="105" rx="13" ry="18" fill="#FFFFFF" opacity="0.14"/>` +
+    `<path d="${slit}" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
     `<rect x="12" y="200" width="176" height="18" fill="${band}" stroke="${INK}" stroke-width="4"/>` +
     `<path d="M14 209 L186 209" stroke="${bandShade}" stroke-width="2" opacity="0.5"/>` +
     `<path d="M14 214 L186 214" stroke="${bandShade}" stroke-width="2.5" opacity="0.4" stroke-linecap="round"/>` +
@@ -404,32 +416,34 @@ export function ninjaInner(cloth: string, id = 'n'): string {
     `<path d="M145 197 L149 205 L157 209 L149 213 L145 221 L141 213 L133 209 L141 205 Z" fill="#DCE3EC" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
     `<circle cx="145" cy="209" r="2.5" fill="${INK}"/>` +
     `</g>` +
-    `</g>`;
-  // Bandeau sur le haut du front : sous le monticule (y≈82) et au-dessus des
-  // sourcils (y≥114 selon l'émotion), pour ne jamais couvrir le visage.
+    `</g>` +
+    // contour du corps par-dessus la cagoule pour garder la silhouette nette
+    `<g clip-path="url(#${clip})"><path d="${BODY_PATH}" fill="none" stroke="${INK}" stroke-width="6"/></g>`;
+  // Hachimaki posé juste au-dessus de la fenêtre des yeux, nœud flottant à droite.
   const hachimaki =
     `<g clip-path="url(#${clip})">` +
-    `<path d="M20 96 Q100 84 180 96 L180 116 Q100 104 20 116 Z" fill="${band}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
-    `<path d="M30 104 Q100 93 170 104" stroke="${lighten(band, 0.25)}" stroke-width="2.5" fill="none" opacity="0.7"/>` +
+    `<path d="M20 102 Q100 90 180 102 L180 124 Q100 112 20 124 Z" fill="${band}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<path d="M30 111 Q100 100 170 111" stroke="${lighten(band, 0.25)}" stroke-width="2.5" fill="none" opacity="0.7"/>` +
     `</g>` +
-    `<circle cx="163" cy="103" r="7" fill="${band}" stroke="${INK}" stroke-width="3"/>` +
-    `<path d="M168 106 Q182 112 186 126 Q176 124 170 114 Z" fill="${band}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
-    `<path d="M166 110 Q172 124 168 138 Q160 128 162 114 Z" fill="${bandShade}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
-  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, jacket + hachimaki);
+    `<circle cx="163" cy="110" r="7" fill="${band}" stroke="${INK}" stroke-width="3"/>` +
+    `<path d="M168 113 Q182 119 186 133 Q176 131 170 121 Z" fill="${band}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M166 117 Q172 131 168 145 Q160 135 162 121 Z" fill="${bandShade}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, hood + hachimaki);
 }
 
 export function ninjaDoc(cloth: string, id?: string): string {
   return ninjaInner(cloth, id);
 }
 
-// Armure de samouraï : plastron croisé, obi rivé d'or, jupe de plaques (kusazuri)
-// et épaulières (sode) qui débordent de la silhouette. Design fixe, sans ceinture
-// de progression.
+// Armure de samouraï : kabuto à crête dorée, plastron croisé, obi rivé d'or,
+// jupe de plaques (kusazuri) et épaulières (sode) qui débordent de la
+// silhouette. Design fixe, sans ceinture de progression.
 export function samuraiInner(armor: string, id = 's'): string {
   const clip = `sm_${id}`;
   const dark = darken(armor, 0.2);
   const deep = darken(armor, 0.35);
   const gold = '#C8A23E';
+  const goldHi = lighten(gold, 0.25);
   const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
 
   // Jupe : cinq plaques trapézoïdales alternées, laçage or horizontal.
@@ -471,7 +485,36 @@ export function samuraiInner(armor: string, id = 's'): string {
     `</g>` +
     `</g>`;
 
-  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, torso + sode(false) + sode(true));
+  // Garde-nuque (shikoro) : deux lamelles qui s'évasent de chaque côté du casque.
+  const shikoro = (mirrored: boolean) =>
+    (mirrored ? `<g transform="translate(200,0) scale(-1,1)">` : `<g>`) +
+    `<path d="M156 96 Q178 98 184 112 L172 118 Q160 108 152 106 Z" fill="${armor}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<path d="M158 108 Q180 112 184 126 L170 130 Q160 120 152 116 Z" fill="${dark}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<path d="M166 104 L176 110 M166 116 L174 121" stroke="${gold}" stroke-width="2" opacity="0.8"/>` +
+    `</g>`;
+
+  // Kabuto : bol strié qui remplace le monticule de pâte, bandeau riveté et
+  // crête dorée (maedate). Le bord bas reste au-dessus des sourcils (y≥114).
+  const kabuto =
+    `<path d="M40 104 Q34 52 100 46 Q166 52 160 104 Z" fill="${armor}" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
+    `<g stroke="${darken(armor, 0.3)}" stroke-width="2.5" fill="none" opacity="0.7" stroke-linecap="round">` +
+    `<path d="M70 54 Q62 76 60 100"/>` +
+    `<path d="M100 47 L100 100"/>` +
+    `<path d="M130 54 Q138 76 140 100"/>` +
+    `</g>` +
+    `<ellipse cx="72" cy="66" rx="12" ry="7" fill="#FFFFFF" opacity="0.25"/>` +
+    `<path d="M40 104 Q100 92 160 104 L160 112 Q100 100 40 112 Z" fill="${deep}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<circle cx="60" cy="103" r="2.2" fill="${gold}"/>` +
+    `<circle cx="80" cy="99" r="2.2" fill="${gold}"/>` +
+    `<circle cx="100" cy="98" r="2.2" fill="${gold}"/>` +
+    `<circle cx="120" cy="99" r="2.2" fill="${gold}"/>` +
+    `<circle cx="140" cy="103" r="2.2" fill="${gold}"/>` +
+    `<path d="M78 46 Q76 24 92 18 Q86 32 90 42 Z" fill="${gold}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M122 46 Q124 24 108 18 Q114 32 110 42 Z" fill="${gold}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    `<circle cx="100" cy="38" r="9" fill="${goldHi}" stroke="${INK}" stroke-width="3.5"/>` +
+    `<circle cx="100" cy="38" r="3" fill="${INK}"/>`;
+
+  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, torso + sode(false) + sode(true) + shikoro(false) + shikoro(true) + kabuto);
 }
 
 export function samuraiDoc(armor: string, id?: string): string {

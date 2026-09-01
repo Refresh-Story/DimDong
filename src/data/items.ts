@@ -29,7 +29,9 @@ export type DrawKind =
   | 'cape'
   | 'katanas'
   | 'tuft'
-  | 'kimono';
+  | 'kimono'
+  | 'ninja'
+  | 'samurai';
 
 export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern';
 
@@ -64,7 +66,7 @@ export const Z = {
 } as const;
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  kimono: 'Kimono',
+  kimono: 'Tenues',
   color: 'Couleurs',
   head: 'Tête',
   glasses: 'Lunettes',
@@ -112,7 +114,10 @@ export function actionVerbs(category: ItemCategory): { on: string; off: string; 
 }
 
 export const FALLBACK_CATALOG: Item[] = [
+  // Seul le kimono porte la ceinture de progression ; les autres tenues ont leur design fixe.
   { id: KIMONO_ID, name: 'Kimono de judo', category: 'kimono', price: 0, rarity: 'rare', zIndex: Z.kimono, color: '#F4F1EA', draw: 'kimono' },
+  { id: 'outfit_ninja', name: 'Tenue de ninja', category: 'kimono', price: 300, rarity: 'epic', zIndex: Z.kimono, color: '#2B2B36', draw: 'ninja' },
+  { id: 'outfit_samurai', name: 'Armure de samouraï', category: 'kimono', price: 450, rarity: 'legendary', zIndex: Z.kimono, color: '#8A2E3C', draw: 'samurai' },
 
   { id: 'color_pink', name: 'Pâte rose', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#F2A9C0' },
   { id: 'color_matcha', name: 'Pâte matcha', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#A9C46C' },

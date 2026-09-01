@@ -3,7 +3,7 @@ import React, { useId, useMemo } from 'react';
 import { View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { accessoryDoc, bodyDoc, kimonoDoc, DEFAULT_EMOTION, DRAW_FRAME, Emotion } from '@/art/dimArt';
+import { accessoryDoc, bodyDoc, kimonoDoc, ninjaDoc, samuraiDoc, DEFAULT_EMOTION, DRAW_FRAME, Emotion } from '@/art/dimArt';
 import { DEFAULT_DOUGH, Item, ItemCategory, getItemById } from '@/data/items';
 import { Belt, beltForLevel } from '@/game/rules';
 
@@ -43,10 +43,18 @@ export function DimAvatar({ size = 200, equipped, catalog, level = 1, emotion = 
     else out.push({ key: 'body', z: BODY_Z, xml: bodyDoc(dough, { rainbow: isRainbow, id: uid, emotion }) });
 
     if (kimonoItem) {
+      // Seul le kimono affiche la ceinture de progression ; les autres tenues
+      // (ninja, samouraï…) ont leur design fixe et ignorent `belt`.
+      const outfitXml =
+        kimonoItem.draw === 'ninja'
+          ? ninjaDoc(kimonoItem.color, uid)
+          : kimonoItem.draw === 'samurai'
+            ? samuraiDoc(kimonoItem.color, uid)
+            : kimonoDoc(kimonoItem.color, beltColor, uid, beltAccent);
       out.push({
         key: kimonoItem.id,
         z: kimonoItem.zIndex ?? 10,
-        xml: kimonoDoc(kimonoItem.color, beltColor, uid, beltAccent),
+        xml: outfitXml,
       });
       for (const cat of Object.keys(equipped) as ItemCategory[]) {
         if (cat === 'color' || cat === 'kimono') continue;

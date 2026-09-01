@@ -379,6 +379,105 @@ export function kimonoDoc(jacket: string, belt: string, id?: string, beltAccent?
   return kimonoInner(jacket, belt, id, beltAccent);
 }
 
+// Tenue de ninja : veste croisée sombre, ceinture et hachimaki rouges fixes —
+// contrairement au kimono, elle ignore la ceinture de progression.
+export function ninjaInner(cloth: string, id = 'n'): string {
+  const clip = `nj_${id}`;
+  const under = darken(cloth, 0.18);
+  const band = '#C62828';
+  const bandShade = darken(band, 0.25);
+  const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
+  const jacket =
+    `<g clip-path="url(#${clip})">` +
+    `<path d="M182 186 L140 186 L100 201 L100 250 L182 250 Z" fill="${under}"/>` +
+    `<path d="M18 186 L60 186 L100 201 L114 250 L18 250 Z" fill="${cloth}"/>` +
+    `<path d="M140 186 L100 201 L110 201 L130 186 Z" fill="${under}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    `<path d="M60 186 L100 201 L90 201 L70 186 Z" fill="${cloth}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<path d="M100 218 L114 250" stroke="${INK}" stroke-width="3" fill="none" opacity="0.4"/>` +
+    `<rect x="12" y="200" width="176" height="18" fill="${band}" stroke="${INK}" stroke-width="4"/>` +
+    `<path d="M14 209 L186 209" stroke="${bandShade}" stroke-width="2" opacity="0.5"/>` +
+    `<path d="M14 214 L186 214" stroke="${bandShade}" stroke-width="2.5" opacity="0.4" stroke-linecap="round"/>` +
+    `<path d="M89 197 Q100 191 111 197 Q119 205 113 216 Q100 223 87 216 Q81 205 89 197 Z" fill="${band}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+    `<path d="M96 200 Q94 207 97 214 M104 200 Q106 207 103 214" stroke="${bandShade}" stroke-width="2.2" fill="none" opacity="0.7" stroke-linecap="round"/>` +
+    `<g transform="rotate(20 145 209)">` +
+    `<path d="M145 197 L149 205 L157 209 L149 213 L145 221 L141 213 L133 209 L141 205 Z" fill="#DCE3EC" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    `<circle cx="145" cy="209" r="2.5" fill="${INK}"/>` +
+    `</g>` +
+    `</g>`;
+  // Bandeau sur le haut du front : sous le monticule (y≈82) et au-dessus des
+  // sourcils (y≥114 selon l'émotion), pour ne jamais couvrir le visage.
+  const hachimaki =
+    `<g clip-path="url(#${clip})">` +
+    `<path d="M20 96 Q100 84 180 96 L180 116 Q100 104 20 116 Z" fill="${band}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+    `<path d="M30 104 Q100 93 170 104" stroke="${lighten(band, 0.25)}" stroke-width="2.5" fill="none" opacity="0.7"/>` +
+    `</g>` +
+    `<circle cx="163" cy="103" r="7" fill="${band}" stroke="${INK}" stroke-width="3"/>` +
+    `<path d="M168 106 Q182 112 186 126 Q176 124 170 114 Z" fill="${band}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M166 110 Q172 124 168 138 Q160 128 162 114 Z" fill="${bandShade}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, jacket + hachimaki);
+}
+
+export function ninjaDoc(cloth: string, id?: string): string {
+  return ninjaInner(cloth, id);
+}
+
+// Armure de samouraï : plastron croisé, obi rivé d'or, jupe de plaques (kusazuri)
+// et épaulières (sode) qui débordent de la silhouette. Design fixe, sans ceinture
+// de progression.
+export function samuraiInner(armor: string, id = 's'): string {
+  const clip = `sm_${id}`;
+  const dark = darken(armor, 0.2);
+  const deep = darken(armor, 0.35);
+  const gold = '#C8A23E';
+  const defs = `<clipPath id="${clip}"><path d="${BODY_PATH}"/></clipPath>`;
+
+  // Jupe : cinq plaques trapézoïdales alternées, laçage or horizontal.
+  let plates = '';
+  const edges = [18, 51, 84, 117, 150, 183];
+  for (let i = 0; i < 5; i++) {
+    plates +=
+      `<path d="M${edges[i]} 216 L${edges[i + 1]} 216 L${edges[i + 1] + 4} 250 L${edges[i] - 4} 250 Z"` +
+      ` fill="${i % 2 ? dark : armor}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  }
+
+  const torso =
+    `<g clip-path="url(#${clip})">` +
+    `<path d="M182 186 L140 186 L100 201 L100 250 L182 250 Z" fill="${dark}"/>` +
+    `<path d="M18 186 L60 186 L100 201 L114 250 L18 250 Z" fill="${armor}"/>` +
+    `<path d="M140 186 L100 201 L110 201 L130 186 Z" fill="${dark}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    `<path d="M60 186 L100 201 L90 201 L70 186 Z" fill="${armor}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+    `<path d="M18 186 L60 186 L100 201 L140 186 L182 186" stroke="${INK}" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` +
+    plates +
+    `<path d="M20 226 L180 226 M22 236 L178 236" stroke="${gold}" stroke-width="2" opacity="0.7"/>` +
+    `<rect x="12" y="200" width="176" height="18" fill="${deep}" stroke="${INK}" stroke-width="4"/>` +
+    `<circle cx="44" cy="209" r="2.5" fill="${gold}"/>` +
+    `<circle cx="72" cy="209" r="2.5" fill="${gold}"/>` +
+    `<circle cx="128" cy="209" r="2.5" fill="${gold}"/>` +
+    `<circle cx="156" cy="209" r="2.5" fill="${gold}"/>` +
+    `<circle cx="100" cy="209" r="7" fill="${gold}" stroke="${INK}" stroke-width="3"/>` +
+    `<circle cx="100" cy="209" r="2.5" fill="${INK}"/>` +
+    `</g>`;
+
+  // Épaulières hors clip : trois bandes arrondies posées sur chaque épaule.
+  const sode = (mirrored: boolean) =>
+    (mirrored ? `<g transform="translate(200,0) scale(-1,1)">` : `<g>`) +
+    `<g transform="rotate(22 166 168)">` +
+    `<rect x="146" y="148" width="44" height="15" rx="7" fill="${armor}" stroke="${INK}" stroke-width="3.5"/>` +
+    `<ellipse cx="158" cy="154" rx="9" ry="4" fill="#FFFFFF" opacity="0.22"/>` +
+    `<rect x="149" y="162" width="40" height="14" rx="7" fill="${dark}" stroke="${INK}" stroke-width="3.5"/>` +
+    `<rect x="152" y="175" width="36" height="13" rx="6.5" fill="${armor}" stroke="${INK}" stroke-width="3.5"/>` +
+    `<path d="M156 155 L178 155 M158 169 L180 169 M160 181 L178 181" stroke="${gold}" stroke-width="2" opacity="0.8"/>` +
+    `</g>` +
+    `</g>`;
+
+  return svg(DRAW_FRAME.w, DRAW_FRAME.h, defs, torso + sode(false) + sode(true));
+}
+
+export function samuraiDoc(armor: string, id?: string): string {
+  return samuraiInner(armor, id);
+}
+
 export function decorInner(kind: string, c: string): string {
   const d = darken(c, 0.24);
   const shadow = '<ellipse cx="50" cy="114" rx="30" ry="6" fill="#16161D" opacity="0.12"/>';

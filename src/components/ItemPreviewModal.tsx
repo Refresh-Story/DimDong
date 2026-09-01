@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { DECOR_FRAME, type Emotion } from '@/art/dimArt';
+import { BeltPicker, type BeltPickerProps } from '@/components/BeltPicker';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
@@ -20,11 +21,12 @@ const CARD_W = Math.min(SCREEN_W - Spacing.lg * 2, 420);
 const STAGE_W = CARD_W - Spacing.lg * 2;
 // Hauteur du titre, de la rareté, de la légende, des boutons et des marges de la carte.
 // L'inventaire empile une rangée de boutons de plus : sans ça la carte déborde sur petit écran.
-const CARD_CHROME = { shop: 215, inventory: 275 } as const;
+// La fiche du kimono ajoute encore le sélecteur de ceintures, d'où sa propre clé.
+const CARD_CHROME = { shop: 215, inventory: 275, inventoryBelt: 360 } as const;
 
 /** Le plus grand cadre que laisse le reste de la carte, en gardant un format lisible. */
-function stageHeight(insetV: number, mode: Mode) {
-  return Math.max(200, Math.min(SCREEN_H - insetV - Spacing.xl * 2 - CARD_CHROME[mode], STAGE_W * 1.25));
+function stageHeight(insetV: number, chrome: keyof typeof CARD_CHROME) {
+  return Math.max(200, Math.min(SCREEN_H - insetV - Spacing.xl * 2 - CARD_CHROME[chrome], STAGE_W * 1.25));
 }
 
 const RARITY_LABEL: Record<Item['rarity'], string> = {
@@ -34,8 +36,6 @@ const RARITY_LABEL: Record<Item['rarity'], string> = {
   legendary: 'Légendaire',
 };
 
-type Mode = 'shop' | 'inventory';
-
 /** Ce que la carte propose une fois l'objet mis en scène : l'acheter, ou en disposer. */
 type ModeProps =
   | { mode: 'shop'; owned: boolean; onBuy: (item: Item) => void }
@@ -44,6 +44,8 @@ type ModeProps =
       /** Objet actuellement équipé / actif / placé. */
       active: boolean;
       sellable: boolean;
+      /** Sélecteur de ceinture, fourni uniquement pour la fiche du kimono. */
+      beltPicker?: BeltPickerProps;
       onToggle: (item: Item) => void;
       onSell: (item: Item) => void;
     };
@@ -150,7 +152,8 @@ function DecorSpotlight({ item, geom: g }: { item: Item; geom: SceneGeomT }) {
 export function ItemPreviewModal(props: ItemPreviewModalProps) {
   const { item, catalog, equipped, placedDecor, emotion, level, belt, gems, busy, onCancel } = props;
   const insets = useSafeAreaInsets();
-  const stageH = stageHeight(insets.top + insets.bottom, props.mode);
+  const chrome = props.mode === 'inventory' && props.beltPicker ? 'inventoryBelt' : props.mode;
+  const stageH = stageHeight(insets.top + insets.bottom, chrome);
   // Même proportion que sur l'accueil, bornée par la hauteur de ciel du cadre.
   const dimSize = Math.min(STAGE_W * 0.56, stageH * 0.42);
 
@@ -306,8 +309,12 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                   {props.active ? verbs.off : verbs.on}
                 </Text>
               </Pressable>
-              {!props.sellable && (
-                <Text style={styles.caption}>Cadeau de bienvenue : impossible à revendre.</Text>
+              {props.beltPicker ? (
+                <BeltPicker {...props.beltPicker} />
+              ) : (
+                !props.sellable && (
+                  <Text style={styles.caption}>Cadeau de bienvenue : impossible à revendre.</Text>
+                )
               )}
               <View style={styles.actions}>
                 <Pressable

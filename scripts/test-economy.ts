@@ -4,7 +4,7 @@ const assert = {
   },
 };
 
-import { CATEGORY_LABELS, CATEGORY_ORDER, FALLBACK_CATALOG, actionVerbs, getItemById } from '@/data/items';
+import { CATEGORY_LABELS, CATEGORY_ORDER, FALLBACK_CATALOG, Z, actionVerbs, getItemById } from '@/data/items';
 import {
   DEFAULT_PLAYER,
   brush,
@@ -245,6 +245,39 @@ check(
     back: 'katana_duo',
   })
 );
+
+console.log('--- Tenues ---');
+const ninja = item('outfit_ninja');
+const samurai = item('outfit_samurai');
+const outfits = FALLBACK_CATALOG.filter((i) => i.category === 'kimono');
+check('3 tenues au catalogue (kimono, ninja, samouraï)', outfits.length === 3);
+check('la section s’appelle « Tenues »', CATEGORY_LABELS.kimono === 'Tenues');
+check('ninja : 300 gemmes, épique, dessin ninja', ninja.price === 300 && ninja.rarity === 'epic' && ninja.draw === 'ninja');
+check('samouraï : 450 gemmes, légendaire, dessin samurai', samurai.price === 450 && samurai.rarity === 'legendary' && samurai.draw === 'samurai');
+check('le kimono garde son dessin (la ceinture en dépend)', kimonoItem.draw === 'kimono');
+check('les trois tenues partagent le même plan (Z.kimono)', outfits.every((i) => i.zIndex === Z.kimono));
+check('les tenues achetées sont revendables, pas le kimono offert', canSell(ninja) && canSell(samurai) && !canSell(kimonoItem));
+
+let t = buy({ ...DEFAULT_PLAYER, gems: 300 }, ninja);
+check('achat du ninja (300) → ok, solde 0', t.status === 'ok' && t.player.gems === 0 && t.player.ownedItems.includes('outfit_ninja'));
+let tp = equip(t.player, ninja);
+check('équiper le ninja occupe l’emplacement tenue', tp.equipped.kimono === 'outfit_ninja');
+const ts = sell(tp, ninja);
+check(
+  'revendre le ninja rend 300 et vide l’emplacement',
+  ts.status === 'ok' && ts.player.gems === 300 && ts.player.equipped.kimono === undefined && !ts.player.ownedItems.includes('outfit_ninja')
+);
+
+tp = equip({ ...DEFAULT_PLAYER, equipped: { head: 'cap_red', color: 'color_gold', background: 'bg_bamboo' } }, ninja);
+check(
+  'le ninja retire le chapeau mais garde pâte et décor de fond',
+  tp.equipped.head === undefined && tp.equipped.color === 'color_gold' && tp.equipped.background === 'bg_bamboo' && tp.equipped.kimono === 'outfit_ninja'
+);
+tp = equip(tp, item('kimono_judo'));
+check('le kimono remplace le ninja (une seule tenue portée)', tp.equipped.kimono === 'kimono_judo');
+tp = equip({ ...DEFAULT_PLAYER, equipped: { kimono: 'outfit_samurai' } }, cape);
+check('porter la cape retire la tenue samouraï', tp.equipped.kimono === undefined && tp.equipped.back === 'cape_hero');
+check('migration : la clé legacy « outfit » retrouve l’emplacement tenue', same(migrate({ outfit: 'outfit_ninja' }), { kimono: 'outfit_ninja' }));
 
 console.log('--- Décors de fond ---');
 const backgrounds = FALLBACK_CATALOG.filter((i) => i.category === 'background');

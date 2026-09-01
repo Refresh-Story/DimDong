@@ -10,9 +10,9 @@ import { DimAvatar } from '@/components/DimAvatar';
 import { ItemPreviewModal } from '@/components/ItemPreviewModal';
 import { GemBadge, Toast, useToast } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
-import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory, actionVerbs } from '@/data/items';
+import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory, KIMONO_ID, actionVerbs } from '@/data/items';
 import { canSell } from '@/game/economy';
-import { availableBelts, beltForPlayer } from '@/game/rules';
+import { BELTS, SENSEI_BELT, availableBelts, beltForPlayer, isSenseiName } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function InventoryScreen() {
@@ -126,34 +126,12 @@ export default function InventoryScreen() {
                       </View>
                       <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                       <Text style={[styles.status, isOn && { color: Palette.primaryDark }]}>
-                        {isOn ? actionVerbs(cat).state : 'Toucher pour voir'}
+                        {/* La ceinture se choisit dans la fiche du kimono : la tuile l'annonce. */}
+                        {isOn ? actionVerbs(cat).state : item.id === KIMONO_ID ? `Ceinture ${belt.label}` : 'Toucher pour voir'}
                       </Text>
                     </Pressable>
                   );
                 })}
-                {cat === 'kimono' && (
-                  <View style={styles.beltPanel}>
-                    {belts.map((b) => {
-                      const isOn = b.label === belt.label;
-                      return (
-                        <Pressable
-                          key={b.label}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Ceinture ${b.label}`}
-                          accessibilityState={{ selected: isOn }}
-                          onPress={() => pickBelt(b.label)}
-                          style={({ pressed }) => [
-                            styles.beltDot,
-                            { backgroundColor: b.color },
-                            isOn && styles.beltDotOn,
-                            pressed && { transform: [{ scale: 0.9 }] },
-                          ]}>
-                          {b.accent && <View style={[styles.beltDotAccent, { backgroundColor: b.accent }]} />}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
               </View>
             </View>
           );
@@ -173,6 +151,17 @@ export default function InventoryScreen() {
         gems={player.gems}
         active={!!preview && isActive(preview)}
         sellable={!!preview && canSell(preview)}
+        beltPicker={
+          preview?.id === KIMONO_ID
+            ? {
+                allBelts: isSenseiName(player.name) ? [...BELTS, SENSEI_BELT] : BELTS,
+                earnedLabels: belts.map((b) => b.label),
+                currentLabel: belt.label,
+                selected: player.selectedBelt,
+                onPick: pickBelt,
+              }
+            : undefined
+        }
         busy={!!preview && busy === preview.id}
         onCancel={() => setPreview(null)}
         onToggle={toggle}
@@ -210,25 +199,4 @@ const styles = StyleSheet.create({
   preview: { height: 88, justifyContent: 'center', alignItems: 'center' },
   itemName: { fontSize: 15, fontFamily: Fonts.bodyBold, color: Palette.ink },
   status: { fontSize: 12, fontFamily: Fonts.body, color: Palette.inkSoft },
-  beltPanel: {
-    flex: 1,
-    minWidth: 120,
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignContent: 'center',
-  },
-  beltDot: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 2.5,
-    borderColor: Palette.outline,
-    overflow: 'hidden',
-  },
-  beltDotOn: { borderWidth: 4, borderColor: Palette.primaryDark, transform: [{ scale: 1.15 }] },
-  beltDotAccent: { position: 'absolute', left: 0, right: 0, top: 10, height: 10 },
 });

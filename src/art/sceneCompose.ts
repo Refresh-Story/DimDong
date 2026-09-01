@@ -103,7 +103,7 @@ function ambientBody(cfg: BackgroundConfig, g: SceneGeom, t: number): string {
         const size = 9 + (i % 3) * 3;
         const drift = (frac(i, 37) - 0.5) * 70;
         const x = (0.06 + frac(i, 29) * 0.88) * g.w + drift * (tt < 0.5 ? tt * 2 : 1);
-        const y = -20 + tt * (g.horizonY - 20);
+        const y = g.top - 20 + tt * (g.skyH - 20);
         const rw = a.shape === 'petal' ? size * 1.5 : size;
         out += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rw / 2).toFixed(1)}" ry="${(size / 2).toFixed(1)}" fill="${a.color}" opacity="0.75" stroke="${INK}" stroke-width="1.5" transform="rotate(${(tt * 180).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
       }
@@ -123,7 +123,7 @@ function ambientBody(cfg: BackgroundConfig, g: SceneGeom, t: number): string {
       for (let i = 0; i < 8; i++) {
         const tt = (t + i / 8) % 1;
         const size = 5 + (i % 3) * 2;
-        out += `<circle cx="${((0.05 + frac(i, 23) * 0.9) * g.w).toFixed(1)}" cy="${(30 + frac(i, 43) * g.skyH * 0.6).toFixed(1)}" r="${((size / 2) * (0.7 + tt * 0.5)).toFixed(1)}" fill="${a.color}" opacity="${(0.15 + tt * 0.8).toFixed(2)}"/>`;
+        out += `<circle cx="${((0.05 + frac(i, 23) * 0.9) * g.w).toFixed(1)}" cy="${(g.top + 30 + frac(i, 43) * g.skyH * 0.6).toFixed(1)}" r="${((size / 2) * (0.7 + tt * 0.5)).toFixed(1)}" fill="${a.color}" opacity="${(0.15 + tt * 0.8).toFixed(2)}"/>`;
       }
       return out;
     }
@@ -133,10 +133,10 @@ function ambientBody(cfg: BackgroundConfig, g: SceneGeom, t: number): string {
 function guideBody(g: SceneGeom): string {
   return (
     [0.22, 0.58, 0.88]
-      .map(
-        (f) =>
-          `<line x1="0" y1="${(g.skyH * f).toFixed(1)}" x2="${g.w}" y2="${(g.skyH * f).toFixed(1)}" stroke="#2E6BE6" stroke-width="1" stroke-dasharray="6 6" opacity="0.7"/>`
-      )
+      .map((f) => {
+        const y = (g.top + g.skyH * f).toFixed(1);
+        return `<line x1="0" y1="${y}" x2="${g.w}" y2="${y}" stroke="#2E6BE6" stroke-width="1" stroke-dasharray="6 6" opacity="0.7"/>`;
+      })
       .join('') +
     `<line x1="0" y1="${g.horizonY}" x2="${g.w}" y2="${g.horizonY}" stroke="#FF00A0" stroke-width="1.5"/>` +
     `<line x1="0" y1="${g.groundY}" x2="${g.w}" y2="${g.groundY}" stroke="#FF00A0" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>`
@@ -162,6 +162,8 @@ export function sceneLayers(cfg: BackgroundConfig, g: SceneGeom, opts: ComposeOp
   return {
     skyFrame: sf,
     groundFrame: gf,
+    /** Couleur de la bande réservée au HUD, au-dessus du ciel. */
+    cap: sky.cap ?? cfg.sky.top,
     back: doc(sf, sky.defs, sky.back),
     mid: doc(sf, sky.defs, sky.mid),
     front: doc(sf, sky.defs, sky.front),
@@ -183,7 +185,10 @@ export function composeSceneSvg(cfg: BackgroundConfig, g: SceneGeom, opts: Compo
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.w} ${g.h}" width="${g.w}" height="${g.h}">` +
     `<defs>${sky.defs}${ground.defs}${ht.defs}</defs>` +
     `<rect x="0" y="0" width="${g.w}" height="${g.h}" fill="${cfg.paper}"/>` +
-    `<g transform="scale(${s})">${sky.back}${sky.mid}${sky.front}</g>` +
+    (g.top > 0
+      ? `<rect x="0" y="0" width="${g.w}" height="${g.top.toFixed(1)}" fill="${sky.cap ?? cfg.sky.top}"/>`
+      : '') +
+    `<g transform="translate(0,${g.top.toFixed(1)}) scale(${s})">${sky.back}${sky.mid}${sky.front}</g>` +
     (opts.ambientPhase == null ? '' : ambientBody(cfg, g, opts.ambientPhase)) +
     `<g transform="translate(0,${g.horizonY}) scale(${s})">${ground.body}</g>` +
     `<rect x="0" y="${g.horizonY}" width="${g.w}" height="3" fill="${INK}"/>` +

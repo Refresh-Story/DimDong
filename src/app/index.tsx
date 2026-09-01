@@ -15,7 +15,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
@@ -28,11 +28,20 @@ import { sceneGeom } from '@/art/sceneGeom';
 import { beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
+/** Hauteur de la carte de progression : médaillon de 46 + 2×12 de padding + 2×3 de bordure. */
+const TOP_ROW_H = 46 + Spacing.md * 2 + 6;
+
 export default function HomeScreen() {
   const { ready, player, catalog, level, progress, activeProfileId, clearActiveProfile, setName, setEmotion } =
     useGame();
   const win = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // Hauteur mesurée de la carte de progression. L'estimation initiale évite que le ciel
+  // s'affiche pleine hauteur pendant une frame ; `onLayout` la corrige si la taille de police
+  // système fait grandir la carte.
+  const [hudH, setHudH] = useState(TOP_ROW_H);
 
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState('');
@@ -75,10 +84,17 @@ export default function HomeScreen() {
     ]).start();
   }, [hasProfile, enterScale, enterFlash]);
 
+  // Bande rendue au décor : encoche + carte de progression + son ombre portée. Le ciel démarre
+  // en dessous, sinon la barre masque l'élément signature de chaque fond (lune, Fuji, lanterne).
+  // Arrondi : `insets.top` peut être fractionnaire, et une réserve qui bouge d'un dixième de px
+  // change la géométrie, donc régénère et re-parse les trois SVG de ciel pour rien.
+  const topReserve = Math.round(insets.top + hudH + Spacing.sm);
+
   if (!ready) {
     return (
       <View style={styles.loading}>
-        <Scene />
+        {/* Même réserve qu'une fois chargé : le ciel ne saute pas au moment où le HUD arrive. */}
+        <Scene topReserve={topReserve} />
         <ActivityIndicator size="large" color={Palette.primaryDark} />
       </View>
     );
@@ -101,6 +117,7 @@ export default function HomeScreen() {
       <Scene
         decor={placedDecor}
         background={background}
+        topReserve={topReserve}
         stage={
           <Animated.View
             style={{ marginBottom: -dimSize * 0.12, transform: [{ translateY: bob }, { scale: enterScale }] }}>
@@ -130,7 +147,12 @@ export default function HomeScreen() {
         }
       />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.topRow}>
+        <View
+          style={styles.topRow}
+          onLayout={(e) => {
+            const h = Math.round(e.nativeEvent.layout.height);
+            if (h !== hudH) setHudH(h);
+          }}>
           <Pressable
             onPress={() => {
               Haptics.selectionAsync().catch(() => {});

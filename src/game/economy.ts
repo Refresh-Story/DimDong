@@ -1,5 +1,5 @@
 import type { Emotion } from '@/art/dimArt';
-import { Item, ItemCategory, KIMONO_ID, getItemById } from '@/data/items';
+import { Item, ItemCategory, KIMONO_ID, getItemById, isSecretItem } from '@/data/items';
 import { GEMS_PER_BRUSH, STARTING_GEMS, availableBelts, levelFromXp } from '@/game/rules';
 
 export type PlayerState = {
@@ -16,6 +16,8 @@ export type PlayerState = {
   emotion: Emotion;
   // Label d'une ceinture de BELTS ; null = ceinture du niveau courant.
   selectedBelt: string | null;
+  // Le secret de la boutique ne se joue qu'une fois par profil, à vie.
+  secretUsed: boolean;
 };
 
 export const DEFAULT_PLAYER: PlayerState = {
@@ -31,6 +33,7 @@ export const DEFAULT_PLAYER: PlayerState = {
   onboarded: false,
   emotion: 'joy',
   selectedBelt: null,
+  secretUsed: false,
 };
 
 export type BrushResult = {
@@ -38,6 +41,8 @@ export type BrushResult = {
 };
 
 export type BuyStatus = 'ok' | 'owned' | 'insufficient';
+export type SellStatus = 'ok' | 'not-owned' | 'protected';
+export type SecretStatus = 'ok' | 'used' | 'owned';
 
 export function setName(p: PlayerState, name: string): PlayerState {
   return { ...p, name: name.trim() || 'Dim', onboarded: true };
@@ -63,9 +68,48 @@ export function buy(p: PlayerState, item: Item): { player: PlayerState; status: 
   if (p.ownedItems.includes(item.id)) return { player: p, status: 'owned' };
   if (p.gems < item.price) return { player: p, status: 'insufficient' };
   return {
-    player: { ...p, gems: p.gems - item.price, ownedItems: [...p.ownedItems, item.id] },
+    player: {
+      ...p,
+      gems: p.gems - item.price,
+      ownedItems: [...p.ownedItems, item.id],
+      // Obtenir l'objet secret, offert ou acheté, ferme définitivement le secret :
+      // sans ça, l'acheter puis le revendre (opération neutre) rouvrirait le cadeau.
+      secretUsed: p.secretUsed || isSecretItem(item),
+    },
     status: 'ok',
   };
+}
+
+// Le kimono offert — et tout objet gratuit — n'est pas revendable : sanitize() le
+// réinjecte à chaque chargement, la vente n'aurait aucun effet durable.
+export function canSell(item: Item): boolean {
+  return item.id !== KIMONO_ID && item.price > 0;
+}
+
+// Revendre rend le prix du catalogue et libère l'objet de tous les emplacements :
+// un id resté dans `equipped` continuerait d'être dessiné par DimAvatar.
+export function sell(p: PlayerState, item: Item): { player: PlayerState; status: SellStatus } {
+  if (!canSell(item)) return { player: p, status: 'protected' };
+  if (!p.ownedItems.includes(item.id)) return { player: p, status: 'not-owned' };
+  const equipped = { ...p.equipped };
+  if (equipped[item.category] === item.id) delete equipped[item.category];
+  return {
+    player: {
+      ...p,
+      gems: p.gems + item.price,
+      ownedItems: p.ownedItems.filter((id) => id !== item.id),
+      placedDecor: p.placedDecor.filter((id) => id !== item.id),
+      equipped,
+    },
+    status: 'ok',
+  };
+}
+
+// Le secret de la boutique : une seule exécution par profil, quoi qu'il arrive ensuite.
+export function unlockSecret(p: PlayerState, item: Item): { player: PlayerState; status: SecretStatus } {
+  if (p.secretUsed) return { player: p, status: 'used' };
+  if (p.ownedItems.includes(item.id)) return { player: p, status: 'owned' };
+  return { player: { ...grant(p, item), secretUsed: true }, status: 'ok' };
 }
 
 // Chaque brossage est récompensé : aucun plafond journalier.

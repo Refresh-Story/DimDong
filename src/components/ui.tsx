@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
@@ -38,6 +38,43 @@ export function GemBadge({
       ]}>
       <View style={[styles.gem, big && { width: 22, height: 22 }]} />
       <Text style={[styles.gemText, big && { fontSize: 26 }]}>{count}</Text>
+    </Animated.View>
+  );
+}
+
+/**
+ * Message éclair au bas de l'écran. `flash` remplace le message en cours : deux actions
+ * rapprochées ne se superposent pas, la dernière gagne et repousse la disparition.
+ */
+export function useToast(): { toast: string | null; flash: (msg: string) => void } {
+  const [toast, setToast] = useState<string | null>(null);
+  const hide = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (hide.current) clearTimeout(hide.current);
+  }, []);
+
+  const flash = useCallback((msg: string) => {
+    setToast(msg);
+    if (hide.current) clearTimeout(hide.current);
+    hide.current = setTimeout(() => setToast(null), 1800);
+  }, []);
+
+  return { toast, flash };
+}
+
+export function Toast({ message }: { message: string | null }) {
+  const scale = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!message) return;
+    scale.setValue(0.6);
+    Animated.spring(scale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
+  }, [message, scale]);
+
+  if (!message) return null;
+  return (
+    <Animated.View style={[styles.toast, { transform: [{ scale }] }]}>
+      <Text style={styles.toastText}>{message}</Text>
     </Animated.View>
   );
 }
@@ -225,4 +262,17 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     ...Shadow.card,
   },
+
+  toast: {
+    position: 'absolute',
+    bottom: Spacing.xxl,
+    alignSelf: 'center',
+    backgroundColor: Palette.ink,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.pill,
+    borderWidth: 2.5,
+    borderColor: Palette.outline,
+  },
+  toastText: { color: Palette.white, fontFamily: Fonts.bodyBold },
 });

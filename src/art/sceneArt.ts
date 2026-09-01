@@ -21,7 +21,13 @@ import type { SceneKind, ScenePalette } from '@/data/backgrounds';
 
 const INK = '#16161D';
 
-export type SkyParts = { defs: string; back: string; mid: string; front: string };
+/**
+ * `cap` : couleur réellement peinte en y = 0 du cadre de ciel. Elle sert à remplir la bande
+ * réservée au HUD au-dessus du ciel (cf. `SceneGeom.top`) sans laisser de couture. Par défaut
+ * c'est `p.sky.top`, le premier arrêt du dégradé de fond — seuls les ciels qui repeignent tout
+ * leur haut la renseignent.
+ */
+export type SkyParts = { defs: string; back: string; mid: string; front: string; cap?: string };
 export type GroundParts = { defs: string; body: string };
 
 // ---------------------------------------------------------------------------
@@ -673,7 +679,8 @@ function dojoSky(p: ScenePalette, f: ArtFrame, ns: string): SkyParts {
 
   // Plafond à solives, en perspective : le haut du cadre n'est plus une bande vide.
   const ceilH = yWall - 20 * k;
-  let ceiling = `<rect x="0" y="0" width="${f.w}" height="${ceilH.toFixed(1)}" fill="${mix(beamDark, p.sky.top, 0.45)}"/>`;
+  const ceilingC = mix(beamDark, p.sky.top, 0.45);
+  let ceiling = `<rect x="0" y="0" width="${f.w}" height="${ceilH.toFixed(1)}" fill="${ceilingC}"/>`;
   for (let i = 0; i <= 6; i++) {
     const xNear = (i / 6) * f.w * 2.1 - f.w * 0.55;
     ceiling += `<path d="M${(f.w / 2 + (xNear - f.w / 2) * 0.12).toFixed(1)} ${ceilH.toFixed(1)} L${xNear.toFixed(1)} 0 Z" stroke="${darken(beamDark, 0.2)}" stroke-width="${(7 * k).toFixed(1)}" fill="none" opacity="0.55"/>`;
@@ -738,7 +745,8 @@ function dojoSky(p: ScenePalette, f: ArtFrame, ns: string): SkyParts {
     `<path d="M-44 58 Q0 44 44 54 L44 62 Q0 52 -44 66 Z" fill="${lighten(beam, 0.1)}" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/></g>`;
 
   const defs = linGrad(`${ns}_sky`, p.sky.top, p.sky.bottom) + radGlow(`${ns}_bl`, '#FFF6DF', 0.55);
-  return { defs, back, mid, front };
+  // Le plafond couvre tout le haut du cadre : c'est lui, et non le dégradé, qui donne le ton.
+  return { defs, back, mid, front, cap: ceilingC };
 }
 
 function sushiSky(p: ScenePalette, f: ArtFrame, ns: string): SkyParts {

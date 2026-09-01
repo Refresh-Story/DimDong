@@ -3,13 +3,14 @@
 //
 //   npm run render:scenes
 //   npm run render:scenes -- --only=bamboo,neon --guides --no-ambient
+//   npm run render:scenes -- --top=131   (géométrie réelle de l'accueil : encoche + HUD réservés)
 //
 // Sortie : scripts/scene-png/  (ignoré par git, régénérable)
 import { mkdir, writeFile } from 'node:fs/promises';
 import { Resvg } from '@resvg/resvg-js';
 
 import { composeSceneSvg } from '../src/art/sceneCompose.ts';
-import { sceneGeom } from '../src/art/sceneGeom.ts';
+import { FLOOR_RATIO, sceneGeom } from '../src/art/sceneGeom.ts';
 import { BACKGROUNDS, DEFAULT_BACKGROUND } from '../src/data/backgrounds.ts';
 
 const OUT_DIR = new URL('./scene-png/', import.meta.url);
@@ -35,6 +36,9 @@ const opt = (name) => {
 const only = opt('only')?.split(',').map((s) => s.trim());
 const sizeFilter = opt('size');
 const guides = flag('guides');
+// Réserve du HUD, en px : `--top=131` reproduit la géométrie de l'accueil sur un 390×844
+// (47 d'encoche + 76 de carte + 8). Par défaut 0, donc les planches habituelles sont inchangées.
+const topReserve = Number(opt('top') ?? 0);
 const ambientPhase = flag('no-ambient') ? null : Number(opt('ambient-phase') ?? 0.45);
 
 function png(svg, w, h, scale) {
@@ -49,7 +53,7 @@ async function main() {
   let count = 0;
 
   for (const size of sizes) {
-    const g = sceneGeom(size.w, size.h);
+    const g = sceneGeom(size.w, size.h, FLOOR_RATIO, topReserve);
     const tiles = [];
 
     for (const [key, cfg] of scenes) {

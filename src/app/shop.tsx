@@ -1,14 +1,14 @@
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { ItemPreviewModal } from '@/components/ItemPreviewModal';
-import { GemBadge } from '@/components/ui';
+import { GemBadge, Toast, useToast } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
 import { CATEGORY_LABELS, CATEGORY_ORDER, Item } from '@/data/items';
 import { beltForPlayer } from '@/game/rules';
@@ -23,10 +23,10 @@ const RARITY_LABEL: Record<Item['rarity'], string> = {
 
 export default function ShopScreen() {
   const router = useRouter();
-  const { player, catalog, level, buyItem, grantItem } = useGame();
+  const { player, catalog, level, buyItem, unlockSecretItem } = useGame();
   const [busy, setBusy] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [preview, setPreview] = useState<Item | null>(null);
+  const { toast, flash } = useToast();
 
   const secretTaps = useRef(0);
   const secretTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,8 +34,14 @@ export default function ShopScreen() {
     if (secretTimer.current) clearTimeout(secretTimer.current);
   }, []);
 
-  function secretTap(it: Item) {
-    if (!it.rainbow || player.ownedItems.includes(it.id)) return;
+  // Le secret ne se joue qu'une fois par profil : ensuite la tuile redevient une tuile
+  // ordinaire, sinon l'objet resterait inachetable après une revente.
+  function canSecretTap(it: Item) {
+    return !!it.rainbow && !player.secretUsed && !player.ownedItems.includes(it.id);
+  }
+
+  async function secretTap(it: Item) {
+    if (!canSecretTap(it)) return;
     Haptics.selectionAsync().catch(() => {});
     secretTaps.current += 1;
     if (secretTimer.current) clearTimeout(secretTimer.current);
@@ -45,20 +51,13 @@ export default function ShopScreen() {
     if (secretTaps.current >= 10) {
       secretTaps.current = 0;
       if (secretTimer.current) clearTimeout(secretTimer.current);
-      grantItem(it);
+      if ((await unlockSecretItem(it)) !== 'ok') return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       flash('Secret débloqué ! Rainbow offert !');
     }
   }
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
-
-  const toastScale = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!toast) return;
-    toastScale.setValue(0.6);
-    Animated.spring(toastScale, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }).start();
-  }, [toast, toastScale]);
 
   function openPreview(item: Item) {
     Haptics.selectionAsync().catch(() => {});
@@ -79,11 +78,6 @@ export default function ShopScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
       flash('Pas assez de gemmes');
     }
-  }
-
-  function flash(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 1800);
   }
 
   return (
@@ -110,25 +104,19 @@ export default function ShopScreen() {
                   const legendary = item.rarity === 'legendary';
                   return (
                     <View key={item.id} style={[styles.card, legendary && styles.cardLegendary]}>
-                      {item.rainbow ? (
-                        <Pressable style={styles.preview} onPress={() => secretTap(item)}>
+                      <Pressable
+                        style={styles.preview}
+                        onPress={() => (canSecretTap(item) ? secretTap(item) : openPreview(item))}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Voir ${item.name} en grand`}>
+                        {item.category === 'decor' ? (
+                          <DecorView item={item} size={62} />
+                        ) : item.category === 'background' ? (
+                          <BackgroundThumb item={item} size={72} />
+                        ) : (
                           <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
-                        </Pressable>
-                      ) : (
-                        <Pressable
-                          style={styles.preview}
-                          onPress={() => openPreview(item)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Voir ${item.name} en grand`}>
-                          {item.category === 'decor' ? (
-                            <DecorView item={item} size={62} />
-                          ) : item.category === 'background' ? (
-                            <BackgroundThumb item={item} size={72} />
-                          ) : (
-                            <DimAvatar size={72} equipped={{ [item.category]: item.id }} catalog={catalog} level={level} />
-                          )}
-                        </Pressable>
-                      )}
+                        )}
+                      </Pressable>
                       <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                       <Text style={[styles.rarity, legendary && styles.rarityLegendary]}>
                         {legendary ? '★ ' : ''}{RARITY_LABEL[item.rarity]}
@@ -162,6 +150,7 @@ export default function ShopScreen() {
       </ScrollView>
 
       <ItemPreviewModal
+        mode="shop"
         item={preview}
         catalog={catalog}
         equipped={player.equipped}
@@ -173,14 +162,10 @@ export default function ShopScreen() {
         owned={!!preview && player.ownedItems.includes(preview.id)}
         busy={!!preview && busy === preview.id}
         onCancel={() => setPreview(null)}
-        onConfirm={handleBuy}
+        onBuy={handleBuy}
       />
 
-      {toast && (
-        <Animated.View style={[styles.toast, { transform: [{ scale: toastScale }] }]}>
-          <Text style={styles.toastText}>{toast}</Text>
-        </Animated.View>
-      )}
+      <Toast message={toast} />
     </SafeAreaView>
   );
 }
@@ -224,16 +209,4 @@ const styles = StyleSheet.create({
   buyText: { color: Palette.white, fontSize: 18, fontFamily: Fonts.digits, letterSpacing: 0.5 },
   owned: { backgroundColor: Palette.cardSoft },
   ownedText: { color: Palette.ink, fontFamily: Fonts.bodyBold },
-  toast: {
-    position: 'absolute',
-    bottom: Spacing.xxl,
-    alignSelf: 'center',
-    backgroundColor: Palette.ink,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: Radius.pill,
-    borderWidth: 2.5,
-    borderColor: Palette.outline,
-  },
-  toastText: { color: Palette.white, fontFamily: Fonts.bodyBold },
 });

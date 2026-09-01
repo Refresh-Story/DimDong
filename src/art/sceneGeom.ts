@@ -6,7 +6,8 @@
  * dériveraient et on jugerait la qualité des décors sur un mensonge.
  *
  * Repères, valables partout :
- *   - Ciel  : y = 0 en haut de l'écran,  y = frame.h EST la ligne d'horizon.
+ *   - Ciel  : y = 0 en haut de la BANDE de ciel (donc sous la réserve `top`, cf. `sceneGeom`),
+ *             y = frame.h EST la ligne d'horizon.
  *   - Sol   : y = 0 EST la ligne d'horizon, y = frame.h est le bas de l'écran (au plus près).
  */
 
@@ -24,9 +25,11 @@ export type SceneGeom = {
   w: number;
   /** Hauteur de la boîte de scène, en px appareil. */
   h: number;
+  /** Hauteur réservée en haut de la boîte (HUD) : le ciel commence à cette ordonnée. */
+  top: number;
   /** Distance du haut de la boîte à la ligne d'horizon, en px. */
   horizonY: number;
-  /** Hauteur de la bande de ciel (= horizonY). */
+  /** Hauteur de la bande de ciel (= horizonY - top). */
   skyH: number;
   /** Hauteur de la bande de sol. */
   floorH: number;
@@ -40,13 +43,21 @@ export type SceneGeom = {
   floorRatio: number;
 };
 
-export function sceneGeom(w: number, h: number, floorRatio = FLOOR_RATIO): SceneGeom {
+/**
+ * `topReserve` : bande du haut de l'écran que la scène cède au HUD. Elle est prise **sur le
+ * seul ciel** — l'horizon, le sol et les décorations restent exactement où ils étaient, seule
+ * la bande de ciel raccourcit et son art se recompose dans le nouveau cadre (cf. `artFrame`).
+ * Bornée à la moitié du ciel : un petit écran ne peut pas produire une bande dégénérée.
+ */
+export function sceneGeom(w: number, h: number, floorRatio = FLOOR_RATIO, topReserve = 0): SceneGeom {
   const horizonY = Math.round(h * (1 - floorRatio) * 10) / 10;
+  const top = Math.max(0, Math.min(topReserve, horizonY * 0.5));
   return {
     w,
     h,
+    top,
     horizonY,
-    skyH: horizonY,
+    skyH: horizonY - top,
     floorH: h - horizonY,
     groundY: horizonY + PLANT_DEPTH,
     u: w / SCENE_W,

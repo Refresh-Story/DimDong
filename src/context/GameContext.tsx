@@ -12,23 +12,26 @@ import { AppState } from 'react-native';
 
 import type { Emotion } from '@/art/dimArt';
 import { isEmotion } from '@/data/emotions';
-import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID } from '@/data/items';
+import { FALLBACK_CATALOG, Item, ItemCategory, KIMONO_ID, isSecretItem } from '@/data/items';
 import { BELTS, SENSEI_BELT, dayKey, levelFromXp, levelProgress } from '@/game/rules';
 import {
   BrushResult,
   BuyStatus,
   DEFAULT_PLAYER,
   PlayerState,
+  SecretStatus,
+  SellStatus,
   brush as brushOp,
   buy as buyOp,
   equip as equipOp,
-  grant as grantOp,
   migrateEquipped,
   selectBelt as selectBeltOp,
+  sell as sellOp,
   setEmotion as setEmotionOp,
   setName as setNameOp,
   toggleDecor as toggleDecorOp,
   unequip as unequipOp,
+  unlockSecret as unlockSecretOp,
 } from '@/game/economy';
 import {
   EMPTY_PROFILES,
@@ -67,8 +70,9 @@ type GameContextValue = {
   setEmotion: (emotion: Emotion) => Promise<void>;
   selectBelt: (label: string | null) => Promise<void>;
   brushCompleted: () => Promise<BrushResult>;
-  buyItem: (item: Item) => Promise<'ok' | 'owned' | 'insufficient'>;
-  grantItem: (item: Item) => Promise<void>;
+  buyItem: (item: Item) => Promise<BuyStatus>;
+  sellItem: (item: Item) => Promise<SellStatus>;
+  unlockSecretItem: (item: Item) => Promise<SecretStatus>;
   equipItem: (item: Item) => Promise<void>;
   unequipCategory: (category: ItemCategory) => Promise<void>;
   toggleDecor: (item: Item) => Promise<void>;
@@ -77,13 +81,20 @@ type GameContextValue = {
 const GameContext = createContext<GameContextValue | null>(null);
 
 function sanitize(data: any): PlayerState {
+  const ownedItems: string[] = Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])]));
   return {
     ...DEFAULT_PLAYER,
     ...data,
     // Les profils enregistrés avant le regroupement des objets sont remis à jour ici.
     equipped: migrateEquipped(data?.equipped, FALLBACK_CATALOG),
-    ownedItems: Array.from(new Set([KIMONO_ID, ...(data?.ownedItems ?? [])])),
+    ownedItems,
     placedDecor: data?.placedDecor ?? [],
+    // Migration : les sauvegardes d'avant la revente n'ont pas le drapeau. Posséder déjà
+    // l'objet secret vaut « secret consommé » — impossible d'y distinguer un achat d'un
+    // cadeau, et le laisser ouvert permettrait de revendre puis de le reprendre gratuitement.
+    secretUsed:
+      data?.secretUsed === true ||
+      FALLBACK_CATALOG.some((i) => isSecretItem(i) && ownedItems.includes(i.id)),
     emotion: isEmotion(data?.emotion) ? data.emotion : DEFAULT_PLAYER.emotion,
     selectedBelt: [...BELTS, SENSEI_BELT].some((b) => b.label === data?.selectedBelt)
       ? data.selectedBelt
@@ -278,9 +289,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [commit, currentPlayer]
   );
 
-  const grantItem = useCallback(
-    async (item: Item) => {
-      commit(grantOp(currentPlayer(), item));
+  const sellItem = useCallback(
+    async (item: Item): Promise<SellStatus> => {
+      const { player, status } = sellOp(currentPlayer(), item);
+      if (status === 'ok') commit(player);
+      return status;
+    },
+    [commit, currentPlayer]
+  );
+
+  // Seule porte vers le cadeau du secret : elle se referme définitivement après un usage.
+  const unlockSecretItem = useCallback(
+    async (item: Item): Promise<SecretStatus> => {
+      const { player, status } = unlockSecretOp(currentPlayer(), item);
+      if (status === 'ok') commit(player);
+      return status;
     },
     [commit, currentPlayer]
   );
@@ -326,12 +349,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       selectBelt,
       brushCompleted,
       buyItem,
-      grantItem,
+      sellItem,
+      unlockSecretItem,
       equipItem,
       unequipCategory,
       toggleDecor,
     }),
-    [ready, player, catalog, profilesState, activeProfileId, createProfile, selectProfile, clearActiveProfile, deleteProfile, setName, setEmotion, selectBelt, brushCompleted, buyItem, grantItem, equipItem, unequipCategory, toggleDecor]
+    [ready, player, catalog, profilesState, activeProfileId, createProfile, selectProfile, clearActiveProfile, deleteProfile, setName, setEmotion, selectBelt, brushCompleted, buyItem, sellItem, unlockSecretItem, equipItem, unequipCategory, toggleDecor]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

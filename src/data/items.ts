@@ -99,6 +99,18 @@ export const WEARABLE_CATEGORIES: ItemCategory[] = [
 
 export const KIMONO_ID = 'kimono_judo';
 
+// Le seul objet que le secret de la boutique peut offrir : l'obtenir consomme le secret.
+export function isSecretItem(item: Item): boolean {
+  return item.rainbow === true;
+}
+
+// Verbes selon la nature de l'objet : source unique pour la grille et la fiche.
+export function actionVerbs(category: ItemCategory): { on: string; off: string; state: string } {
+  if (category === 'decor') return { on: 'Placer', off: 'Retirer', state: 'Placé ✓' };
+  if (category === 'background') return { on: 'Activer', off: 'Désactiver', state: 'Actif ✓' };
+  return { on: 'Équiper', off: 'Retirer', state: 'Équipé ✓' };
+}
+
 export const FALLBACK_CATALOG: Item[] = [
   { id: KIMONO_ID, name: 'Kimono de judo', category: 'kimono', price: 0, rarity: 'rare', zIndex: Z.kimono, color: '#F4F1EA', draw: 'kimono' },
 

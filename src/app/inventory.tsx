@@ -1,19 +1,26 @@
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
+import { ItemPreviewModal } from '@/components/ItemPreviewModal';
+import { GemBadge, Toast, useToast } from '@/components/ui';
 import { useGame } from '@/context/GameContext';
-import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory } from '@/data/items';
+import { CATEGORY_LABELS, CATEGORY_ORDER, Item, ItemCategory, actionVerbs } from '@/data/items';
+import { canSell } from '@/game/economy';
 import { availableBelts, beltForPlayer } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
 export default function InventoryScreen() {
   const router = useRouter();
-  const { player, catalog, level, equipItem, unequipCategory, toggleDecor, selectBelt } = useGame();
+  const { player, catalog, level, equipItem, unequipCategory, toggleDecor, selectBelt, sellItem } = useGame();
+  const [preview, setPreview] = useState<Item | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const { toast, flash } = useToast();
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -21,6 +28,18 @@ export default function InventoryScreen() {
 
   const belt = beltForPlayer(player.name, level, player.selectedBelt);
   const belts = availableBelts(player.name, level);
+
+  /** Un objet est « en service » s'il est équipé, actif ou posé dans la scène. */
+  function isActive(item: Item) {
+    return item.category === 'decor'
+      ? player.placedDecor.includes(item.id)
+      : player.equipped[item.category] === item.id;
+  }
+
+  function openPreview(item: Item) {
+    Haptics.selectionAsync().catch(() => {});
+    setPreview(item);
+  }
 
   function toggle(item: Item) {
     Haptics.selectionAsync().catch(() => {});
@@ -30,6 +49,21 @@ export default function InventoryScreen() {
       unequipCategory(item.category);
     } else {
       equipItem(item);
+    }
+    setPreview(null);
+  }
+
+  async function handleSell(item: Item) {
+    setBusy(item.id);
+    const res = await sellItem(item);
+    setBusy(null);
+    setPreview(null);
+    if (res === 'ok') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      flash(`${item.name} revendu — +${item.price} gemmes`);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      flash('Cet objet ne peut pas être revendu.');
     }
   }
 
@@ -45,7 +79,7 @@ export default function InventoryScreen() {
           <Text style={styles.backText}>‹</Text>
         </Pressable>
         <Text style={styles.title}>Mes objets</Text>
-        <View style={{ width: 40 }} />
+        <GemBadge count={player.gems} />
       </View>
 
       <View style={styles.stage}>
@@ -64,17 +98,18 @@ export default function InventoryScreen() {
           if (!items.length) return null;
           const isDecor = cat === 'decor';
           const isBackground = cat === 'background';
-          const equippedId = player.equipped[cat];
           return (
             <View key={cat} style={{ marginBottom: Spacing.lg }}>
               <Text style={styles.section}>{CATEGORY_LABELS[cat]}</Text>
               <View style={styles.grid}>
                 {items.map((item) => {
-                  const isOn = isDecor ? player.placedDecor.includes(item.id) : equippedId === item.id;
+                  const isOn = isActive(item);
                   return (
                     <Pressable
                       key={item.id}
-                      onPress={() => toggle(item)}
+                      onPress={() => openPreview(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${item.name} — voir la fiche`}
                       style={({ pressed }) => [
                         styles.card,
                         isOn && styles.cardOn,
@@ -91,9 +126,7 @@ export default function InventoryScreen() {
                       </View>
                       <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                       <Text style={[styles.status, isOn && { color: Palette.primaryDark }]}>
-                        {isOn
-                          ? isDecor ? 'Placé ✓' : isBackground ? 'Actif ✓' : 'Équipé ✓'
-                          : isDecor ? 'Toucher pour placer' : isBackground ? 'Toucher pour activer' : 'Toucher pour mettre'}
+                        {isOn ? actionVerbs(cat).state : 'Toucher pour voir'}
                       </Text>
                     </Pressable>
                   );
@@ -127,6 +160,26 @@ export default function InventoryScreen() {
         })}
 
       </ScrollView>
+
+      <ItemPreviewModal
+        mode="inventory"
+        item={preview}
+        catalog={catalog}
+        equipped={player.equipped}
+        placedDecor={player.placedDecor}
+        emotion={player.emotion}
+        level={level}
+        belt={belt}
+        gems={player.gems}
+        active={!!preview && isActive(preview)}
+        sellable={!!preview && canSell(preview)}
+        busy={!!preview && busy === preview.id}
+        onCancel={() => setPreview(null)}
+        onToggle={toggle}
+        onSell={handleSell}
+      />
+
+      <Toast message={toast} />
     </SafeAreaView>
   );
 }
@@ -136,7 +189,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.md },
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: Palette.white, borderWidth: 2.5, borderColor: Palette.outline, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
   backText: { fontSize: 28, fontWeight: '800', color: Palette.ink, marginTop: -4 },
-  title: { flex: 1, fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1, textAlign: 'center' },
+  // Même en-tête que la Boutique : retour / titre / solde.
+  title: { flex: 1, fontSize: 30, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 1 },
   stage: { alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.md, height: 200 },
   empty: { fontSize: 16, fontFamily: Fonts.body, color: Palette.inkSoft, textAlign: 'center', padding: Spacing.xl, lineHeight: 24 },
   section: { fontSize: 20, fontFamily: Fonts.display, color: Palette.ink, letterSpacing: 0.5, marginBottom: Spacing.sm },

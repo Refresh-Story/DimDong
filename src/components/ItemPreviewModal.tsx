@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -9,7 +9,7 @@ import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
 import { Scene } from '@/components/Scene';
 import { sceneGeom, type SceneGeom as SceneGeomT } from '@/art/sceneGeom';
-import { Item, ItemCategory, getItemById } from '@/data/items';
+import { Item, ItemCategory, actionVerbs, getItemById } from '@/data/items';
 import type { Belt } from '@/game/rules';
 import { Fonts, Palette, Radius, Shadow, Spacing } from '@/theme';
 
@@ -18,11 +18,12 @@ const SCREEN_H = Dimensions.get('window').height;
 const CARD_W = Math.min(SCREEN_W - Spacing.lg * 2, 420);
 const STAGE_W = CARD_W - Spacing.lg * 2;
 // Hauteur du titre, de la rareté, de la légende, des boutons et des marges de la carte.
-const CARD_CHROME = 215;
+// L'inventaire empile une rangée de boutons de plus : sans ça la carte déborde sur petit écran.
+const CARD_CHROME = { shop: 215, inventory: 275 } as const;
 
 /** Le plus grand cadre que laisse le reste de la carte, en gardant un format lisible. */
-function stageHeight(insetV: number) {
-  return Math.max(230, Math.min(SCREEN_H - insetV - Spacing.xl * 2 - CARD_CHROME, STAGE_W * 1.25));
+function stageHeight(insetV: number, mode: Mode) {
+  return Math.max(200, Math.min(SCREEN_H - insetV - Spacing.xl * 2 - CARD_CHROME[mode], STAGE_W * 1.25));
 }
 
 const RARITY_LABEL: Record<Item['rarity'], string> = {
@@ -31,6 +32,33 @@ const RARITY_LABEL: Record<Item['rarity'], string> = {
   epic: 'Épique',
   legendary: 'Légendaire',
 };
+
+type Mode = 'shop' | 'inventory';
+
+/** Ce que la carte propose une fois l'objet mis en scène : l'acheter, ou en disposer. */
+type ModeProps =
+  | { mode: 'shop'; owned: boolean; onBuy: (item: Item) => void }
+  | {
+      mode: 'inventory';
+      /** Objet actuellement équipé / actif / placé. */
+      active: boolean;
+      sellable: boolean;
+      onToggle: (item: Item) => void;
+      onSell: (item: Item) => void;
+    };
+
+type ItemPreviewModalProps = {
+  item: Item | null;
+  catalog: Item[];
+  equipped: Partial<Record<ItemCategory, string>>;
+  placedDecor: string[];
+  emotion: Emotion;
+  level: number;
+  belt: Belt;
+  gems: number;
+  busy: boolean;
+  onCancel: () => void;
+} & ModeProps;
 
 /**
  * La scène est rendue à la taille réelle de la carte : l'art étant généré pour sa boîte,
@@ -118,41 +146,20 @@ function DecorSpotlight({ item, geom: g }: { item: Item; geom: SceneGeomT }) {
   );
 }
 
-export function ItemPreviewModal({
-  item,
-  catalog,
-  equipped,
-  placedDecor,
-  emotion,
-  level,
-  belt,
-  gems,
-  owned,
-  busy,
-  onCancel,
-  onConfirm,
-}: {
-  item: Item | null;
-  catalog: Item[];
-  equipped: Partial<Record<ItemCategory, string>>;
-  placedDecor: string[];
-  emotion: Emotion;
-  level: number;
-  belt: Belt;
-  gems: number;
-  owned: boolean;
-  busy: boolean;
-  onCancel: () => void;
-  onConfirm: (item: Item) => void;
-}) {
+export function ItemPreviewModal(props: ItemPreviewModalProps) {
+  const { item, catalog, equipped, placedDecor, emotion, level, belt, gems, busy, onCancel } = props;
   const insets = useSafeAreaInsets();
-  const stageH = stageHeight(insets.top + insets.bottom);
+  const stageH = stageHeight(insets.top + insets.bottom, props.mode);
   // Même proportion que sur l'accueil, bornée par la hauteur de ciel du cadre.
   const dimSize = Math.min(STAGE_W * 0.56, stageH * 0.42);
+
+  // La revente se confirme en deux temps : un enfant ne doit pas s'en séparer d'un doigt distrait.
+  const [confirmingSale, setConfirmingSale] = useState(false);
 
   const pop = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!item) return;
+    setConfirmingSale(false);
     pop.setValue(0.85);
     Animated.spring(pop, { toValue: 1, friction: 6, tension: 150, useNativeDriver: true }).start();
   }, [item, pop]);
@@ -176,10 +183,16 @@ export function ItemPreviewModal({
   // Face à une décoration, le dim s'écarte du côté opposé pour ne pas la masquer.
   const dimX = isDecor ? ((item.x ?? 0.5) < 0.5 ? 0.68 : 0.32) : 0.5;
 
+  const verbs = actionVerbs(item.category);
+  const inStock = props.mode === 'inventory';
   const caption = isBackground
-    ? 'Voilà à quoi ressemblera ta scène.'
+    ? inStock
+      ? 'Voilà à quoi ressemble ta scène avec ce décor.'
+      : 'Voilà à quoi ressemblera ta scène.'
     : isDecor
-      ? 'Voilà où il se posera dans ta scène.'
+      ? inStock
+        ? 'Voilà où il se pose dans ta scène.'
+        : 'Voilà où il se posera dans ta scène.'
       : 'Voilà ton dim-sum avec cet objet.';
 
   return (
@@ -214,37 +227,107 @@ export function ItemPreviewModal({
 
           <Text style={styles.caption}>{caption}</Text>
 
-          {owned ? (
-            <Pressable
-              onPress={onCancel}
-              style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
-              <Text style={styles.actionGhostText}>{"Tu l'as déjà — fermer"}</Text>
-            </Pressable>
+          {props.mode === 'shop' ? (
+            props.owned ? (
+              <Pressable
+                onPress={onCancel}
+                style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
+                <Text style={styles.actionGhostText}>{"Tu l'as déjà — fermer"}</Text>
+              </Pressable>
+            ) : (
+              <>
+                {!canAfford && (
+                  <Text style={styles.missing}>Il te manque {missing} gemmes.</Text>
+                )}
+                <View style={styles.actions}>
+                  <Pressable
+                    onPress={onCancel}
+                    style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
+                    <Text style={styles.actionGhostText}>Annuler</Text>
+                  </Pressable>
+                  <Pressable
+                    disabled={!canAfford || busy}
+                    onPress={() => props.onBuy(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Acheter ${item.name} pour ${item.price} gemmes`}
+                    style={({ pressed }) => [
+                      styles.action,
+                      { backgroundColor: canAfford ? Palette.primary : Palette.locked },
+                      pressed && canAfford && styles.actionPressed,
+                    ]}>
+                    <Text style={styles.actionText}>Acheter</Text>
+                    <View style={styles.gem} />
+                    <Text style={styles.actionPrice}>{item.price}</Text>
+                  </Pressable>
+                </View>
+              </>
+            )
+          ) : confirmingSale ? (
+            <>
+              <Text style={styles.missing}>
+                Tu ne l&apos;auras plus. On te rend {item.price} gemmes — tu en auras {gems + item.price}.
+              </Text>
+              <View style={styles.actions}>
+                <Pressable
+                  onPress={() => setConfirmingSale(false)}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
+                  <Text style={styles.actionGhostText}>Non, je garde</Text>
+                </Pressable>
+                <Pressable
+                  disabled={busy}
+                  onPress={() => props.onSell(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Confirmer la revente de ${item.name} pour ${item.price} gemmes`}
+                  style={({ pressed }) => [
+                    styles.action,
+                    { backgroundColor: Palette.danger },
+                    pressed && styles.actionPressed,
+                  ]}>
+                  <Text style={styles.actionText}>Oui, revendre</Text>
+                </Pressable>
+              </View>
+            </>
           ) : (
             <>
-              {!canAfford && (
-                <Text style={styles.missing}>Il te manque {missing} gemmes.</Text>
+              <Pressable
+                onPress={() => props.onToggle(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`${props.active ? verbs.off : verbs.on} ${item.name}`}
+                style={({ pressed }) => [
+                  styles.action,
+                  props.active ? styles.actionGhost : { backgroundColor: Palette.primary },
+                  pressed && styles.actionPressed,
+                ]}>
+                <Text style={props.active ? styles.actionGhostText : styles.actionText}>
+                  {props.active ? verbs.off : verbs.on}
+                </Text>
+              </Pressable>
+              {!props.sellable && (
+                <Text style={styles.caption}>Cadeau de bienvenue : impossible à revendre.</Text>
               )}
               <View style={styles.actions}>
                 <Pressable
                   onPress={onCancel}
                   style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
-                  <Text style={styles.actionGhostText}>Annuler</Text>
+                  <Text style={styles.actionGhostText}>Fermer</Text>
                 </Pressable>
-                <Pressable
-                  disabled={!canAfford || busy}
-                  onPress={() => onConfirm(item)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Acheter ${item.name} pour ${item.price} gemmes`}
-                  style={({ pressed }) => [
-                    styles.action,
-                    { backgroundColor: canAfford ? Palette.primary : Palette.locked },
-                    pressed && canAfford && styles.actionPressed,
-                  ]}>
-                  <Text style={styles.actionText}>Acheter</Text>
-                  <View style={styles.gem} />
-                  <Text style={styles.actionPrice}>{item.price}</Text>
-                </Pressable>
+                {props.sellable && (
+                  <Pressable
+                    onPress={() => setConfirmingSale(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Revendre ${item.name} pour ${item.price} gemmes`}
+                    style={({ pressed }) => [
+                      styles.action,
+                      // Le rouge est réservé à la confirmation : ici l'action rapporte des gemmes.
+                      { backgroundColor: Palette.gemDark },
+                      pressed && styles.actionPressed,
+                    ]}>
+                    <Text style={styles.actionText}>Revendre</Text>
+                    <View style={styles.gem} />
+                    <Text style={styles.actionPrice}>{item.price}</Text>
+                  </Pressable>
+                )}
               </View>
             </>
           )}

@@ -4,8 +4,21 @@ const assert = {
   },
 };
 
-import { FALLBACK_CATALOG, getItemById } from '@/data/items';
-import { DEFAULT_PLAYER, brush, buy, equip, grant, selectBelt, setEmotion, toggleDecor, unequip } from '@/game/economy';
+import { FALLBACK_CATALOG, actionVerbs, getItemById } from '@/data/items';
+import {
+  DEFAULT_PLAYER,
+  brush,
+  buy,
+  canSell,
+  equip,
+  grant,
+  selectBelt,
+  sell,
+  setEmotion,
+  toggleDecor,
+  unequip,
+  unlockSecret,
+} from '@/game/economy';
 import {
   EMPTY_PROFILES,
   MAX_PROFILES,
@@ -62,6 +75,79 @@ const g = grant({ ...DEFAULT_PLAYER }, rainbow);
 check('grant : Rainbow obtenue sans payer (gemmes inchangées)', g.gems === 30 && g.ownedItems.includes('color_rainbow'));
 const g2 = grant(g, rainbow);
 check('grant : pas de doublon si déjà possédée', g2.ownedItems.filter((id) => id === 'color_rainbow').length === 1);
+
+console.log('--- Revente ---');
+const glasses = item('glasses_nerd'); // 20 gemmes
+const bonsaiItem = item('decor_bonsai');
+const bgItem = item('bg_bamboo'); // 80 gemmes
+const kimonoItem = item('kimono_judo'); // offert, 0 gemme
+
+check('le kimono offert n’est pas revendable', !canSell(kimonoItem));
+check('un objet payant est revendable', canSell(cap) && canSell(rainbow));
+
+let v = buy({ ...DEFAULT_PLAYER }, cap).player; // 30 → 10 gemmes
+let sr = sell(v, cap);
+check("revente d’un objet possédé → 'ok'", sr.status === 'ok');
+check('achat puis revente : solde de départ retrouvé (30)', sr.player.gems === 30);
+check('l’objet quitte l’inventaire', !sr.player.ownedItems.includes('cap_red'));
+
+sr = sell(equip(v, cap), cap);
+check('revendre un objet équipé le déséquipe', sr.player.equipped.hat === undefined);
+
+sr = sell(equip(equip(buy(v, glasses).player, cap), glasses), cap);
+check('revendre n’affecte pas les autres emplacements', sr.player.equipped.glasses === 'glasses_nerd');
+
+sr = sell(toggleDecor(buy({ ...DEFAULT_PLAYER, gems: 100 }, bonsaiItem).player, bonsaiItem), bonsaiItem);
+check('revendre une décoration la retire de la scène', !sr.player.placedDecor.includes('decor_bonsai'));
+
+sr = sell(equip(buy({ ...DEFAULT_PLAYER, gems: 100 }, bgItem).player, bgItem), bgItem);
+check('revendre le décor de fond actif le désactive', sr.player.equipped.background === undefined);
+
+const noCap = { ...DEFAULT_PLAYER };
+sr = sell(noCap, cap);
+check("revendre un objet non possédé → 'not-owned'", sr.status === 'not-owned');
+check('refus → joueur inchangé (aucune écriture)', sr.player === noCap);
+
+const withKimono = { ...DEFAULT_PLAYER };
+sr = sell(withKimono, kimonoItem);
+check("revendre le kimono offert → 'protected'", sr.status === 'protected');
+check('kimono : solde inchangé et objet conservé', sr.player === withKimono);
+
+console.log('--- Secret : une seule fois par profil ---');
+check('un profil neuf n’a pas encore joué le secret', DEFAULT_PLAYER.secretUsed === false);
+
+let sec = unlockSecret({ ...DEFAULT_PLAYER }, rainbow);
+check("secret sur profil neuf → 'ok'", sec.status === 'ok');
+check('Rainbow offerte sans dépenser de gemmes', sec.player.gems === 30 && sec.player.ownedItems.includes('color_rainbow'));
+check('le secret est consommé', sec.player.secretUsed === true);
+
+const secOnce = sec.player;
+sec = unlockSecret(secOnce, rainbow);
+check("second appel → 'used'", sec.status === 'used');
+check('refus → joueur inchangé', sec.player === secOnce);
+
+// La faille que la revente ouvrirait : offert → revendu (+500) → à nouveau offert.
+const soldGift = sell(secOnce, rainbow);
+check('la Rainbow offerte se revend 500 (30 → 530)', soldGift.status === 'ok' && soldGift.player.gems === 530);
+check("revendre ne rouvre pas le secret → 'used'", unlockSecret(soldGift.player, rainbow).status === 'used');
+
+// L'autre faille : achetée 500 → revendue 500 (neutre) → le secret l'offrirait gratuitement.
+const bought = buy({ ...DEFAULT_PLAYER, gems: 500 }, rainbow).player;
+check('acheter la Rainbow consomme aussi le secret', bought.secretUsed === true);
+const boughtThenSold = sell(bought, rainbow);
+check('achat puis revente : opération neutre (0 → 500)', boughtThenSold.player.gems === 500);
+check("achat puis revente ne rend pas le secret → 'used'", unlockSecret(boughtThenSold.player, rainbow).status === 'used');
+
+check(
+  "secret sur un joueur qui possède déjà la Rainbow sans le drapeau → 'owned'",
+  unlockSecret(grant({ ...DEFAULT_PLAYER }, rainbow), rainbow).status === 'owned'
+);
+check('acheter un objet ordinaire ne consomme pas le secret', buy({ ...DEFAULT_PLAYER }, cap).player.secretUsed === false);
+
+console.log('--- Verbes d’action ---');
+check('décoration → Placer / Retirer', actionVerbs('decor').on === 'Placer' && actionVerbs('decor').off === 'Retirer');
+check('décor de fond → Activer / Désactiver', actionVerbs('background').on === 'Activer' && actionVerbs('background').off === 'Désactiver');
+check('objet porté → Équiper / Retirer', actionVerbs('hat').on === 'Équiper' && actionVerbs('kimono').off === 'Retirer');
 
 console.log('--- Brossage (récompense à chaque brossage, sans plafond) ---');
 const today = dayKey(new Date());

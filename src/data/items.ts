@@ -6,6 +6,7 @@ import type { BackgroundKind } from '@/data/backgrounds';
 // forcément la même catégorie, et les sections de la boutique les montrent ensemble.
 export type ItemCategory =
   | 'kimono'
+  | 'animal'
   | 'color'
   | 'head'
   | 'glasses'
@@ -29,9 +30,13 @@ export type DrawKind =
   | 'cape'
   | 'katanas'
   | 'tuft'
-  | 'kimono';
+  | 'kimono'
+  | 'ninja'
+  | 'samurai';
 
 export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern';
+
+export type AnimalKind = 'cat' | 'dog' | 'monkey' | 'panda' | 'tiger';
 
 export type Item = {
   id: string;
@@ -45,6 +50,7 @@ export type Item = {
   image?: string;
   draw?: DrawKind;
   decor?: DecorKind;
+  animal?: AnimalKind;
   x?: number;
   w?: number;
   background?: BackgroundKind;
@@ -64,7 +70,8 @@ export const Z = {
 } as const;
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  kimono: 'Kimono',
+  kimono: 'Tenues',
+  animal: 'Animaux',
   color: 'Couleurs',
   head: 'Tête',
   glasses: 'Lunettes',
@@ -77,6 +84,7 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
 
 export const CATEGORY_ORDER: ItemCategory[] = [
   'kimono',
+  'animal',
   'color',
   'head',
   'glasses',
@@ -106,13 +114,25 @@ export function isSecretItem(item: Item): boolean {
 
 // Verbes selon la nature de l'objet : source unique pour la grille et la fiche.
 export function actionVerbs(category: ItemCategory): { on: string; off: string; state: string } {
+  if (category === 'animal') return { on: 'Appeler', off: 'Retirer', state: 'Avec toi ✓' };
   if (category === 'decor') return { on: 'Placer', off: 'Retirer', state: 'Placé ✓' };
   if (category === 'background') return { on: 'Activer', off: 'Désactiver', state: 'Actif ✓' };
   return { on: 'Équiper', off: 'Retirer', state: 'Équipé ✓' };
 }
 
 export const FALLBACK_CATALOG: Item[] = [
+  // Seul le kimono porte la ceinture de progression ; les autres tenues ont leur design fixe.
   { id: KIMONO_ID, name: 'Kimono de judo', category: 'kimono', price: 0, rarity: 'rare', zIndex: Z.kimono, color: '#F4F1EA', draw: 'kimono' },
+  { id: 'outfit_ninja', name: 'Tenue de ninja', category: 'kimono', price: 300, rarity: 'epic', zIndex: Z.kimono, color: '#2B2B36', draw: 'ninja' },
+  { id: 'outfit_samurai', name: 'Armure de samouraï', category: 'kimono', price: 450, rarity: 'legendary', zIndex: Z.kimono, color: '#8A2E3C', draw: 'samurai' },
+
+  // Compagnons : un seul à la fois (slot `equipped.animal`), posé au sol dans la
+  // scène à la position `x` ; `w` en unités d'art (cadre 390).
+  { id: 'animal_cat', name: 'Chat', category: 'animal', price: 80, rarity: 'common', zIndex: 0, color: '#F0A35E', animal: 'cat', x: 0.72, w: 58 },
+  { id: 'animal_dog', name: 'Chien', category: 'animal', price: 80, rarity: 'common', zIndex: 0, color: '#C89066', animal: 'dog', x: 0.28, w: 62 },
+  { id: 'animal_monkey', name: 'Singe', category: 'animal', price: 150, rarity: 'rare', zIndex: 0, color: '#A9744F', animal: 'monkey', x: 0.74, w: 60 },
+  { id: 'animal_panda', name: 'Panda', category: 'animal', price: 200, rarity: 'epic', zIndex: 0, color: '#F4F1EA', animal: 'panda', x: 0.26, w: 68 },
+  { id: 'animal_tiger', name: 'Tigre', category: 'animal', price: 300, rarity: 'legendary', zIndex: 0, color: '#F19A3E', animal: 'tiger', x: 0.72, w: 70 },
 
   { id: 'color_pink', name: 'Pâte rose', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#F2A9C0' },
   { id: 'color_matcha', name: 'Pâte matcha', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#A9C46C' },

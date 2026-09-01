@@ -57,6 +57,8 @@ function speedBody(cfg: BackgroundConfig, g: SceneGeom): string {
   return `<g transform="translate(${left.toFixed(1)},${top.toFixed(1)})" opacity="${(cfg.speed.opacity * 0.5).toFixed(3)}">${lines}</g>`;
 }
 
+// Les compagnons (`equipped.animal`) ne sont volontairement pas rasterisés ici :
+// élément animé de la scène vivante, absent des captures store.
 function decorBody(g: SceneGeom, ns: string, decor: NonNullable<ComposeOpts['decor']>): string {
   return decor
     .filter((it) => it.decor)

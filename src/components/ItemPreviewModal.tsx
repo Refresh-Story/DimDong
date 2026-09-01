@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { DECOR_FRAME, type Emotion } from '@/art/dimArt';
+import { BeltPicker, type BeltPickerProps } from '@/components/BeltPicker';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
 import { RainbowAura } from '@/components/RainbowAura';
@@ -20,11 +21,12 @@ const CARD_W = Math.min(SCREEN_W - Spacing.lg * 2, 420);
 const STAGE_W = CARD_W - Spacing.lg * 2;
 // Hauteur du titre, de la rareté, de la légende, des boutons et des marges de la carte.
 // L'inventaire empile une rangée de boutons de plus : sans ça la carte déborde sur petit écran.
-const CARD_CHROME = { shop: 215, inventory: 275 } as const;
+// La fiche du kimono ajoute encore le sélecteur de ceintures, d'où sa propre clé.
+const CARD_CHROME = { shop: 215, inventory: 275, inventoryBelt: 360 } as const;
 
 /** Le plus grand cadre que laisse le reste de la carte, en gardant un format lisible. */
-function stageHeight(insetV: number, mode: Mode) {
-  return Math.max(200, Math.min(SCREEN_H - insetV - Spacing.xl * 2 - CARD_CHROME[mode], STAGE_W * 1.25));
+function stageHeight(insetV: number, chrome: keyof typeof CARD_CHROME) {
+  return Math.max(200, Math.min(SCREEN_H - insetV - Spacing.xl * 2 - CARD_CHROME[chrome], STAGE_W * 1.25));
 }
 
 const RARITY_LABEL: Record<Item['rarity'], string> = {
@@ -34,8 +36,6 @@ const RARITY_LABEL: Record<Item['rarity'], string> = {
   legendary: 'Légendaire',
 };
 
-type Mode = 'shop' | 'inventory';
-
 /** Ce que la carte propose une fois l'objet mis en scène : l'acheter, ou en disposer. */
 type ModeProps =
   | { mode: 'shop'; owned: boolean; onBuy: (item: Item) => void }
@@ -44,6 +44,8 @@ type ModeProps =
       /** Objet actuellement équipé / actif / placé. */
       active: boolean;
       sellable: boolean;
+      /** Sélecteur de ceinture, fourni uniquement pour la fiche du kimono. */
+      beltPicker?: BeltPickerProps;
       onToggle: (item: Item) => void;
       onSell: (item: Item) => void;
     };
@@ -70,19 +72,21 @@ function ScenePreview({
   height,
   background,
   decor,
+  companion,
   spotlight,
   children,
 }: {
   height: number;
   background?: string;
   decor: Item[];
+  companion?: Item;
   spotlight?: Item | null;
   children?: React.ReactNode;
 }) {
   const g = useMemo(() => sceneGeom(STAGE_W, height), [height]);
   return (
     <View style={[styles.stage, { height }]}>
-      <Scene geom={g} scope="preview" background={background} decor={decor} stage={children}>
+      <Scene geom={g} scope="preview" background={background} decor={decor} companion={companion} stage={children}>
         {spotlight && (
           <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: g.groundY, zIndex: 1 }} pointerEvents="none">
             <DecorSpotlight item={spotlight} geom={g} />
@@ -150,7 +154,8 @@ function DecorSpotlight({ item, geom: g }: { item: Item; geom: SceneGeomT }) {
 export function ItemPreviewModal(props: ItemPreviewModalProps) {
   const { item, catalog, equipped, placedDecor, emotion, level, belt, gems, busy, onCancel } = props;
   const insets = useSafeAreaInsets();
-  const stageH = stageHeight(insets.top + insets.bottom, props.mode);
+  const chrome = props.mode === 'inventory' && props.beltPicker ? 'inventoryBelt' : props.mode;
+  const stageH = stageHeight(insets.top + insets.bottom, chrome);
   // Même proportion que sur l'accueil, bornée par la hauteur de ciel du cadre.
   const dimSize = Math.min(STAGE_W * 0.56, stageH * 0.42);
 
@@ -169,6 +174,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
 
   const isBackground = item.category === 'background';
   const isDecor = item.category === 'decor';
+  const isAnimal = item.category === 'animal';
 
   // On rejoue la scène du joueur en n'y injectant que l'objet convoité, via le même
   // réducteur que l'équipement réel : l'aperçu ne peut plus montrer une tenue que
@@ -178,13 +184,16 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
     ? item.background
     : getItemById(catalog, equipped.background)?.background;
   const previewDecor = catalog.filter((i) => placedDecor.includes(i.id) && i.id !== item.id);
+  // Le compagnon de l'aperçu suit le même réducteur : l'animal convoité pour sa
+  // fiche, sinon celui déjà appelé — la scène de la carte reste fidèle à la vraie.
+  const previewCompanion = getItemById(catalog, previewEquipped.animal);
 
   const isRainbow = !!getItemById(catalog, previewEquipped.color)?.rainbow;
   const missing = Math.max(0, item.price - gems);
   const canAfford = missing === 0;
 
-  // Face à une décoration, le dim s'écarte du côté opposé pour ne pas la masquer.
-  const dimX = isDecor ? ((item.x ?? 0.5) < 0.5 ? 0.68 : 0.32) : 0.5;
+  // Face à une décoration ou à un compagnon, le dim s'écarte du côté opposé.
+  const dimX = isDecor || isAnimal ? ((item.x ?? 0.5) < 0.5 ? 0.68 : 0.32) : 0.5;
 
   const verbs = actionVerbs(item.category);
   const inStock = props.mode === 'inventory';
@@ -196,7 +205,11 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
       ? inStock
         ? 'Voilà où il se pose dans ta scène.'
         : 'Voilà où il se posera dans ta scène.'
-      : 'Voilà ton dim-sum avec cet objet.';
+      : isAnimal
+        ? inStock
+          ? 'Voilà ton compagnon dans ta scène.'
+          : 'Voilà ton futur compagnon dans ta scène.'
+        : 'Voilà ton dim-sum avec cet objet.';
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onCancel}>
@@ -213,6 +226,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
             height={stageH}
             background={previewBackground}
             decor={previewDecor}
+            companion={previewCompanion}
             spotlight={isDecor ? item : null}>
             {/* L'aura se cale sur le coin haut-gauche de son parent : on l'enferme avec le dim. */}
             <View style={{ left: (dimX - 0.5) * STAGE_W, marginBottom: -dimSize * 0.13 }}>
@@ -306,8 +320,12 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                   {props.active ? verbs.off : verbs.on}
                 </Text>
               </Pressable>
-              {!props.sellable && (
-                <Text style={styles.caption}>Cadeau de bienvenue : impossible à revendre.</Text>
+              {props.beltPicker ? (
+                <BeltPicker {...props.beltPicker} />
+              ) : (
+                !props.sellable && (
+                  <Text style={styles.caption}>Cadeau de bienvenue : impossible à revendre.</Text>
+                )
               )}
               <View style={styles.actions}>
                 <Pressable

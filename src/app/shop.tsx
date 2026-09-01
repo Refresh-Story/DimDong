@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimalView } from '@/components/AnimalView';
 import { BackgroundThumb } from '@/components/BackgroundThumb';
 import { DecorView } from '@/components/Decor';
 import { DimAvatar } from '@/components/DimAvatar';
@@ -109,7 +110,9 @@ export default function ShopScreen() {
                         onPress={() => (canSecretTap(item) ? secretTap(item) : openPreview(item))}
                         accessibilityRole="button"
                         accessibilityLabel={`Voir ${item.name} en grand`}>
-                        {item.category === 'decor' ? (
+                        {item.category === 'animal' ? (
+                          <AnimalView item={item} size={68} />
+                        ) : item.category === 'decor' ? (
                           <DecorView item={item} size={62} />
                         ) : item.category === 'background' ? (
                           <BackgroundThumb item={item} size={72} />

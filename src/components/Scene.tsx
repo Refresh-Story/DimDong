@@ -5,6 +5,7 @@ import Svg, { Circle, Defs, Line, Pattern, Rect, SvgXml } from 'react-native-svg
 import { sceneLayers } from '@/art/sceneCompose';
 import type { SceneGeom } from '@/art/sceneGeom';
 import { speedLinePaths } from '@/art/sceneGeom';
+import { AnimalView } from '@/components/AnimalView';
 import { DecorView } from '@/components/Decor';
 import { Ambient } from '@/components/scene/Ambient';
 import { useSceneLayout } from '@/components/scene/useSceneLayout';
@@ -100,6 +101,7 @@ export function Scene({
   geom,
   scope = 'home',
   stage,
+  companion,
   topReserve = 0,
 }: {
   children?: React.ReactNode;
@@ -111,6 +113,8 @@ export function Scene({
   scope?: string;
   /** Contenu posé sur la ligne d'horizon — le personnage. */
   stage?: React.ReactNode;
+  /** Compagnon posé au sol, devant le personnage (animé). */
+  companion?: Item;
   /**
    * Hauteur cédée au HUD en haut de l'écran. Le ciel démarre sous cette bande au lieu d'être
    * recouvert par la barre de progression ; l'horizon, le sol et le personnage ne bougent pas.
@@ -184,6 +188,34 @@ export function Scene({
           {stage}
         </View>
       ) : null}
+
+      {/* Compagnon : devant le personnage — son petit format à ses pieds se lit
+          « à côté de lui », et la large silhouette du dim ne le masque jamais. */}
+      {companion?.animal
+        ? (() => {
+            const w = (companion.w ?? 60) * g.u;
+            return (
+              <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: g.groundY }} pointerEvents="none">
+                <View
+                  style={{ position: 'absolute', bottom: 0, left: (companion.x ?? 0.7) * g.w - w / 2, alignItems: 'center' }}>
+                  <AnimalView item={companion} size={w} animated />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: -w * 0.05,
+                      width: w * 0.84,
+                      height: w * 0.22,
+                      borderRadius: w * 0.42,
+                      backgroundColor: Palette.ink,
+                      opacity: 0.18,
+                      zIndex: -1,
+                    }}
+                  />
+                </View>
+              </View>
+            );
+          })()
+        : null}
 
       <SceneSpeedLines g={g} color={cfg.speed.color} opacity={cfg.speed.opacity} />
       <Halftone opacity={cfg.halftone.opacity} dot={cfg.halftone.dot} g={g} />

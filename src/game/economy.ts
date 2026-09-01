@@ -134,11 +134,15 @@ export function equipMap(equipped: PlayerState['equipped'], item: Item): PlayerS
     const next: PlayerState['equipped'] = {};
     if (equipped.color) next.color = equipped.color;
     if (equipped.background) next.background = equipped.background;
+    if (equipped.animal) next.animal = equipped.animal;
     next.kimono = item.id;
     return next;
   }
   const next = { ...equipped, [item.category]: item.id };
-  if (item.category !== 'color' && item.category !== 'background') delete next.kimono;
+  // Le compagnon n'est pas porté : l'appeler ne retire pas la tenue, et inversement.
+  if (item.category !== 'color' && item.category !== 'background' && item.category !== 'animal') {
+    delete next.kimono;
+  }
   return next;
 }
 
@@ -164,6 +168,7 @@ const EQUIP_RESOLUTION_ORDER = [
   'kimono',
   'color',
   'background',
+  'animal',
   'glasses',
   'shoes',
   // Chapeau avant mèche : quand les deux étaient portés, c'est le chapeau qu'on

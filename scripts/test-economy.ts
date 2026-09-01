@@ -4,7 +4,7 @@ const assert = {
   },
 };
 
-import { CATEGORY_LABELS, CATEGORY_ORDER, FALLBACK_CATALOG, actionVerbs, getItemById } from '@/data/items';
+import { CATEGORY_LABELS, CATEGORY_ORDER, FALLBACK_CATALOG, Z, actionVerbs, getItemById } from '@/data/items';
 import {
   DEFAULT_PLAYER,
   brush,
@@ -245,6 +245,82 @@ check(
     back: 'katana_duo',
   })
 );
+
+console.log('--- Tenues ---');
+const ninja = item('outfit_ninja');
+const samurai = item('outfit_samurai');
+const outfits = FALLBACK_CATALOG.filter((i) => i.category === 'kimono');
+check('3 tenues au catalogue (kimono, ninja, samouraï)', outfits.length === 3);
+check('la section s’appelle « Tenues »', CATEGORY_LABELS.kimono === 'Tenues');
+check('ninja : 300 gemmes, épique, dessin ninja', ninja.price === 300 && ninja.rarity === 'epic' && ninja.draw === 'ninja');
+check('samouraï : 450 gemmes, légendaire, dessin samurai', samurai.price === 450 && samurai.rarity === 'legendary' && samurai.draw === 'samurai');
+check('le kimono garde son dessin (la ceinture en dépend)', kimonoItem.draw === 'kimono');
+check('les trois tenues partagent le même plan (Z.kimono)', outfits.every((i) => i.zIndex === Z.kimono));
+check('les tenues achetées sont revendables, pas le kimono offert', canSell(ninja) && canSell(samurai) && !canSell(kimonoItem));
+
+let t = buy({ ...DEFAULT_PLAYER, gems: 300 }, ninja);
+check('achat du ninja (300) → ok, solde 0', t.status === 'ok' && t.player.gems === 0 && t.player.ownedItems.includes('outfit_ninja'));
+let tp = equip(t.player, ninja);
+check('équiper le ninja occupe l’emplacement tenue', tp.equipped.kimono === 'outfit_ninja');
+const ts = sell(tp, ninja);
+check(
+  'revendre le ninja rend 300 et vide l’emplacement',
+  ts.status === 'ok' && ts.player.gems === 300 && ts.player.equipped.kimono === undefined && !ts.player.ownedItems.includes('outfit_ninja')
+);
+
+tp = equip({ ...DEFAULT_PLAYER, equipped: { head: 'cap_red', color: 'color_gold', background: 'bg_bamboo' } }, ninja);
+check(
+  'le ninja retire le chapeau mais garde pâte et décor de fond',
+  tp.equipped.head === undefined && tp.equipped.color === 'color_gold' && tp.equipped.background === 'bg_bamboo' && tp.equipped.kimono === 'outfit_ninja'
+);
+tp = equip(tp, item('kimono_judo'));
+check('le kimono remplace le ninja (une seule tenue portée)', tp.equipped.kimono === 'kimono_judo');
+tp = equip({ ...DEFAULT_PLAYER, equipped: { kimono: 'outfit_samurai' } }, cape);
+check('porter la cape retire la tenue samouraï', tp.equipped.kimono === undefined && tp.equipped.back === 'cape_hero');
+check('migration : la clé legacy « outfit » retrouve l’emplacement tenue', same(migrate({ outfit: 'outfit_ninja' }), { kimono: 'outfit_ninja' }));
+
+console.log('--- Animaux (compagnon unique) ---');
+const animals = FALLBACK_CATALOG.filter((i) => i.category === 'animal');
+const chat = item('animal_cat');
+const chien = item('animal_dog');
+check('5 compagnons au catalogue', animals.length === 5);
+check('la section s’appelle « Animaux »', CATEGORY_LABELS.animal === 'Animaux');
+check('chaque compagnon a un dessin `animal` unique', new Set(animals.map((i) => i.animal)).size === 5 && animals.every((i) => !!i.animal));
+check('chaque compagnon a sa place dans la scène (x et w)', animals.every((i) => typeof i.x === 'number' && typeof i.w === 'number'));
+check(
+  'prix et raretés : 80/80/150/200/300',
+  chat.price === 80 && chat.rarity === 'common' &&
+    chien.price === 80 && chien.rarity === 'common' &&
+    item('animal_monkey').price === 150 && item('animal_monkey').rarity === 'rare' &&
+    item('animal_panda').price === 200 && item('animal_panda').rarity === 'epic' &&
+    item('animal_tiger').price === 300 && item('animal_tiger').rarity === 'legendary'
+);
+check('verbes : Appeler / Retirer / Avec toi ✓', actionVerbs('animal').on === 'Appeler' && actionVerbs('animal').off === 'Retirer' && actionVerbs('animal').state === 'Avec toi ✓');
+
+let an = equip({ ...DEFAULT_PLAYER }, chat);
+check('appeler le chat occupe l’emplacement compagnon', an.equipped.animal === 'animal_cat');
+an = equip(an, chien);
+check('appeler le chien remplace le chat (un seul compagnon)', an.equipped.animal === 'animal_dog');
+
+an = equip({ ...DEFAULT_PLAYER, equipped: { kimono: 'kimono_judo', head: 'cap_red', color: 'color_gold', background: 'bg_bamboo' } }, chat);
+check(
+  'appeler un compagnon ne touche à rien d’autre (kimono, chapeau, pâte, fond)',
+  an.equipped.kimono === 'kimono_judo' && an.equipped.head === 'cap_red' && an.equipped.color === 'color_gold' && an.equipped.background === 'bg_bamboo' && an.equipped.animal === 'animal_cat'
+);
+an = equip({ ...DEFAULT_PLAYER, equipped: { animal: 'animal_cat' } }, kimonoItem);
+check('équiper le kimono garde le compagnon', an.equipped.animal === 'animal_cat' && an.equipped.kimono === 'kimono_judo');
+an = equip({ ...DEFAULT_PLAYER, equipped: { kimono: 'kimono_judo', animal: 'animal_cat' } }, cape);
+check('porter la cape retire le kimono mais garde le compagnon', an.equipped.kimono === undefined && an.equipped.animal === 'animal_cat');
+
+let ar = buy({ ...DEFAULT_PLAYER, gems: 100 }, chat);
+check('achat du chat (80) → ok, solde 20', ar.status === 'ok' && ar.player.gems === 20 && ar.player.ownedItems.includes('animal_cat'));
+const asold = sell(equip(ar.player, chat), chat);
+check(
+  'revendre le chat rend 80 et libère l’emplacement',
+  asold.status === 'ok' && asold.player.gems === 100 && asold.player.equipped.animal === undefined && !asold.player.ownedItems.includes('animal_cat')
+);
+check('migration : un id de compagnon retrouve son emplacement', same(migrate({ animal: 'animal_cat' }), { animal: 'animal_cat' }));
+check('compagnon disparu du catalogue → ignoré', same(migrate({ animal: 'animal_licorne' }), {}));
 
 console.log('--- Décors de fond ---');
 const backgrounds = FALLBACK_CATALOG.filter((i) => i.category === 'background');

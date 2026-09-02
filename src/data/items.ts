@@ -46,7 +46,7 @@ export type DrawKind =
 
 export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern';
 
-export type AnimalKind = 'cat' | 'dog' | 'monkey' | 'panda' | 'tiger';
+export type AnimalKind = 'cat' | 'dog' | 'monkey' | 'panda' | 'tiger' | 'unicorn';
 
 export type Item = {
   id: string;
@@ -143,6 +143,7 @@ export const FALLBACK_CATALOG: Item[] = [
   { id: 'animal_monkey', name: 'Singe', category: 'animal', price: 150, rarity: 'rare', zIndex: 0, color: '#A9744F', animal: 'monkey', x: 0.74, w: 60 },
   { id: 'animal_panda', name: 'Panda', category: 'animal', price: 200, rarity: 'epic', zIndex: 0, color: '#F4F1EA', animal: 'panda', x: 0.26, w: 68 },
   { id: 'animal_tiger', name: 'Tigre', category: 'animal', price: 300, rarity: 'legendary', zIndex: 0, color: '#F19A3E', animal: 'tiger', x: 0.72, w: 70 },
+  { id: 'animal_unicorn', name: 'Licorne', category: 'animal', price: 400, rarity: 'legendary', zIndex: 0, color: '#F7F2FA', animal: 'unicorn', x: 0.27, w: 66 },
 
   { id: 'color_pink', name: 'Pâte rose', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#F2A9C0' },
   { id: 'color_matcha', name: 'Pâte matcha', category: 'color', price: 40, rarity: 'common', zIndex: 0, color: '#A9C46C' },

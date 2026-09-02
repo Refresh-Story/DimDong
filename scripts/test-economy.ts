@@ -290,17 +290,18 @@ console.log('--- Animaux (compagnon unique) ---');
 const animals = FALLBACK_CATALOG.filter((i) => i.category === 'animal');
 const chat = item('animal_cat');
 const chien = item('animal_dog');
-check('5 compagnons au catalogue', animals.length === 5);
+check('6 compagnons au catalogue', animals.length === 6);
 check('la section s’appelle « Animaux »', CATEGORY_LABELS.animal === 'Animaux');
-check('chaque compagnon a un dessin `animal` unique', new Set(animals.map((i) => i.animal)).size === 5 && animals.every((i) => !!i.animal));
+check('chaque compagnon a un dessin `animal` unique', new Set(animals.map((i) => i.animal)).size === 6 && animals.every((i) => !!i.animal));
 check('chaque compagnon a sa place dans la scène (x et w)', animals.every((i) => typeof i.x === 'number' && typeof i.w === 'number'));
 check(
-  'prix et raretés : 80/80/150/200/300',
+  'prix et raretés : 80/80/150/200/300/400',
   chat.price === 80 && chat.rarity === 'common' &&
     chien.price === 80 && chien.rarity === 'common' &&
     item('animal_monkey').price === 150 && item('animal_monkey').rarity === 'rare' &&
     item('animal_panda').price === 200 && item('animal_panda').rarity === 'epic' &&
-    item('animal_tiger').price === 300 && item('animal_tiger').rarity === 'legendary'
+    item('animal_tiger').price === 300 && item('animal_tiger').rarity === 'legendary' &&
+    item('animal_unicorn').price === 400 && item('animal_unicorn').rarity === 'legendary'
 );
 check('verbes : Appeler / Retirer / Avec toi ✓', actionVerbs('animal').on === 'Appeler' && actionVerbs('animal').off === 'Retirer' && actionVerbs('animal').state === 'Avec toi ✓');
 

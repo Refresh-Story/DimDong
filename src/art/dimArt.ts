@@ -318,6 +318,147 @@ export function accessoryInner(draw: string, c: string): string {
         `<path d="M60 52 Q58 12 84 36 Q88 8 100 32 Q112 8 122 38 Q142 14 140 56 Q100 40 60 52 Z" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
         `</g>`
       );
+
+    // ---- Tête (Z.hat) : tout reste au-dessus de y≈112, les sourcils commencent à 114. ----
+    case 'kasa': {
+      // Chapeau conique de ronin posé bas : le bord avant descend jusqu'à y 112 au centre,
+      // les côtés à y 100 épousent la largeur du crâne.
+      const cone = 'M100 20 L180 100 Q100 112 20 100 Z';
+      const ribs = [36, 58, 80, 100, 120, 142, 164]
+        .map((x) => `<path d="M100 26 L${x} ${x === 100 ? 111 : 98 + 12 * (1 - Math.pow((x - 100) / 80, 2))}"/>`)
+        .join('');
+      return (
+        `<path d="${cone}" fill="${c}"/>` +
+        `<g stroke="${d}" stroke-width="2" opacity="0.5" fill="none">${ribs}</g>` +
+        `<ellipse cx="82" cy="52" rx="12" ry="5" fill="#FFFFFF" opacity="0.22" transform="rotate(-44 82 52)"/>` +
+        `<path d="${cone}" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
+        `<path d="M20 100 Q100 112 180 100 Q100 122 20 100 Z" fill="${d}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`
+      );
+    }
+    case 'hachimaki':
+      // Bandeau sur le front, noué à droite ; laisse le nœud de pâte visible.
+      return (
+        `<path d="M34 102 Q100 90 166 102 L166 114 Q100 102 34 114 Z" fill="${c}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+        `<circle cx="100" cy="102" r="6" fill="#E5322B" stroke="${INK}" stroke-width="2.5"/>` +
+        `<path d="M168 104 Q188 98 192 116 Q182 112 168 110 Z" fill="${c}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+        `<path d="M168 108 Q186 122 178 138 Q174 124 166 112 Z" fill="${c}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+        `<circle cx="166" cy="108" r="5" fill="${d}" stroke="${INK}" stroke-width="3"/>`
+      );
+    case 'steamerlid': {
+      // Couvercle de panier vapeur : dôme tressé, cerclage y 88-112, anse, volutes de vapeur.
+      const dome = 'M44 94 C46 38 154 38 156 94 Z';
+      const rim = darken(c, 0.18);
+      const weave = [50, 60, 70, 80]
+        .map((y) => {
+          const half = Math.sqrt(1 - Math.pow((y - 94) / 56, 2)) * 54;
+          return `<path d="M${100 - half} ${y} Q100 ${y + 4} ${100 + half} ${y}"/>`;
+        })
+        .join('');
+      const verts = [64, 82, 100, 118, 136].map((x) => `<path d="M${x} 46 Q${x} 70 ${x} 90"/>`).join('');
+      return (
+        `<g stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.85">` +
+        `<path d="M68 36 Q58 28 68 20 Q76 14 70 6"/><path d="M134 34 Q144 26 134 18 Q126 12 132 4"/></g>` +
+        `<path d="${dome}" fill="${c}"/>` +
+        `<g stroke="${rim}" stroke-width="2.2" opacity="0.7" fill="none">${weave}${verts}</g>` +
+        `<ellipse cx="78" cy="58" rx="14" ry="7" fill="#FFFFFF" opacity="0.18"/>` +
+        `<path d="${dome}" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
+        `<path d="M40 88 Q100 100 160 88 L160 100 Q100 112 40 100 Z" fill="${rim}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+        `<path d="M46 94 Q100 105 154 94" stroke="${lighten(c, 0.2)}" stroke-width="1.8" fill="none" opacity="0.6"/>` +
+        `<rect x="88" y="38" width="24" height="8" rx="4" fill="${rim}" stroke="${INK}" stroke-width="3"/>` +
+        `<path d="M92 38 Q100 22 108 38" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/>` +
+        `<path d="M92 38 Q100 24 108 38" stroke="${rim}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
+      );
+    }
+    case 'kabuto': {
+      // Casque de samouraï : bol, lamelles latérales (shikoro) y 88-108, croissant doré au front.
+      const gold = '#F4B740';
+      return (
+        `<path d="M36 88 Q60 96 74 100 L72 108 Q52 104 34 98 Z" fill="${d}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+        `<path d="M164 88 Q140 96 126 100 L128 108 Q148 104 166 98 Z" fill="${d}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+        `<path d="M40 94 L70 103 M160 94 L130 103" stroke="${gold}" stroke-width="2" opacity="0.8"/>` +
+        `<path d="M44 92 C46 34 154 34 156 92 Z" fill="${c}"/>` +
+        `<g stroke="${darken(c, 0.35)}" stroke-width="2.5" opacity="0.7" fill="none"><path d="M100 36 L100 92"/><path d="M76 40 Q78 62 72 92"/><path d="M124 40 Q122 62 128 92"/></g>` +
+        `<ellipse cx="80" cy="54" rx="16" ry="8" fill="#FFFFFF" opacity="0.14"/>` +
+        `<path d="M44 92 C46 34 154 34 156 92 Z" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
+        `<path d="M100 62 Q84 50 66 10 Q90 30 100 46 Q110 30 134 10 Q116 50 100 62 Z" fill="${gold}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+        `<circle cx="100" cy="64" r="6" fill="${gold}" stroke="${INK}" stroke-width="3"/>`
+      );
+    }
+
+    // ---- Lunettes (Z.glasses) : yeux en cx 76/124, cy 150. ----
+    case 'monocle':
+      return (
+        `<path d="M141 160 Q164 178 158 206" stroke="${c}" stroke-width="2.5" fill="none" stroke-dasharray="3 3"/>` +
+        `<circle cx="158" cy="208" r="3" fill="${c}" stroke="${INK}" stroke-width="1.5"/>` +
+        `<rect x="142" y="146" width="7" height="6" rx="1.5" fill="${c}" stroke="${INK}" stroke-width="1.5"/>` +
+        `<circle cx="124" cy="150" r="20" fill="#BFE9FF" fill-opacity="0.25"/>` +
+        `<circle cx="124" cy="150" r="20" fill="none" stroke="${INK}" stroke-width="8"/>` +
+        `<circle cx="124" cy="150" r="20" fill="none" stroke="${c}" stroke-width="4.5"/>` +
+        `<path d="M113 141 L119 136" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`
+      );
+    case 'eyepatch':
+      // Coque sur l'œil gauche ; la sangle passe au-dessus de l'œil droit (haut à y 133).
+      return (
+        `<path d="M60 140 L30 126" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/>` +
+        `<path d="M92 138 L170 110" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/>` +
+        `<path d="M58 136 Q76 130 94 136 Q97 164 76 172 Q55 164 58 136 Z" fill="${c}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+        `<circle cx="76" cy="152" r="5" fill="#FFFFFF"/><circle cx="74" cy="151" r="1.4" fill="${INK}"/><circle cx="78" cy="151" r="1.4" fill="${INK}"/>` +
+        `<path d="M74 155 L78 155" stroke="${INK}" stroke-width="1.2"/>` +
+        `<path d="M64 141 L70 138" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>`
+      );
+
+    // ---- Cou (Z.neck) : les cordons partent du contour du corps (x≈28/172 à y 184). ----
+    case 'suzu':
+      return (
+        `<path d="M28 184 Q100 232 172 184" stroke="#D6453F" stroke-width="6" fill="none" stroke-linecap="round"/>` +
+        `<path d="M34 187 Q100 228 166 187" stroke="#F08080" stroke-width="1.6" fill="none" opacity="0.7"/>` +
+        `<circle cx="100" cy="205" r="5" fill="#D6453F" stroke="${INK}" stroke-width="3"/>` +
+        `<circle cx="100" cy="216" r="12" fill="${c}" stroke="${INK}" stroke-width="4"/>` +
+        `<path d="M93 218 L107 218" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>` +
+        `<circle cx="100" cy="223" r="2.4" fill="${INK}"/>` +
+        `<circle cx="95" cy="211" r="3" fill="#FFFFFF" opacity="0.7"/>`
+      );
+    case 'magatama':
+      return (
+        `<path d="M30 184 Q100 222 170 184" stroke="#5A3B2B" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+        `<path d="M100 201 C113 199 118 214 107 225 C99 232 89 226 91 217 C93 209 100 208 100 201 Z" fill="${c}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>` +
+        `<circle cx="101" cy="206" r="2.5" fill="#FFFFFF" opacity="0.85" stroke="${INK}" stroke-width="1.5"/>` +
+        `<path d="M95 214 Q96 221 102 223" stroke="${lighten(c, 0.3)}" stroke-width="2" fill="none" stroke-linecap="round"/>`
+      );
+
+    // ---- Dos (Z.back, derrière le corps) ----
+    case 'wagasa': {
+      // Ombrelle en papier inclinée : seuls le halo autour de la tête et le manche dépassent.
+      const ribs: string[] = [];
+      for (let a = 10; a < 180; a += 20) {
+        const r = (a * Math.PI) / 180;
+        ribs.push(`<path d="M100 120 L${(100 - 94 * Math.cos(r)).toFixed(1)} ${(120 - 94 * Math.sin(r)).toFixed(1)}"/>`);
+      }
+      return (
+        `<g transform="rotate(-16 100 120)">` +
+        `<path d="M100 120 L100 250" stroke="#8A6A3C" stroke-width="6" stroke-linecap="round"/>` +
+        `<path d="M100 250 Q96 260 86 256" stroke="#8A6A3C" stroke-width="6" fill="none" stroke-linecap="round"/>` +
+        `<path d="M6 120 A94 94 0 0 1 194 120 Z" fill="${c}"/>` +
+        `<g stroke="${d}" stroke-width="2" opacity="0.55">${ribs.join('')}</g>` +
+        `<path d="M30 120 A70 70 0 0 1 170 120" stroke="#FFFFFF" stroke-width="5" fill="none" opacity="0.85"/>` +
+        `<path d="M6 120 A94 94 0 0 1 194 120 Z" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>` +
+        `<path d="M6 120 Q100 132 194 120" stroke="#FFFFFF" stroke-width="5" fill="none" opacity="0.9"/>` +
+        `<circle cx="100" cy="120" r="6" fill="#8A6A3C" stroke="${INK}" stroke-width="3"/>` +
+        `</g>`
+      );
+    }
+
+    // ---- Chaussures (Z.shoes) : pieds en (78,232) et (122,232), semelle à hauteur des baskets. ----
+    case 'geta': {
+      const shoe = (fc: number) =>
+        `<rect x="${fc - 17}" y="243" width="8" height="7" rx="1" fill="${d}" stroke="${INK}" stroke-width="2.5"/>` +
+        `<rect x="${fc + 9}" y="243" width="8" height="7" rx="1" fill="${d}" stroke="${INK}" stroke-width="2.5"/>` +
+        `<rect x="${fc - 24}" y="234" width="48" height="9" rx="2" fill="${c}" stroke="${INK}" stroke-width="3"/>` +
+        `<path d="M${fc - 18} 238 L${fc - 4} 238 M${fc + 4} 239 L${fc + 18} 239" stroke="${d}" stroke-width="1.5" opacity="0.6" stroke-linecap="round"/>` +
+        `<path d="M${fc} 226 L${fc - 11} 236 M${fc} 226 L${fc + 11} 236" stroke="#D6453F" stroke-width="3.5" fill="none" stroke-linecap="round"/>` +
+        `<circle cx="${fc}" cy="226" r="2.5" fill="${INK}"/>`;
+      return shoe(78) + shoe(122);
+    }
     default:
       return '';
   }

@@ -4,6 +4,7 @@ const assert = {
   },
 };
 
+import { accessoryInner } from '@/art/dimArt';
 import { CATEGORY_LABELS, CATEGORY_ORDER, FALLBACK_CATALOG, Z, actionVerbs, getItemById } from '@/data/items';
 import {
   DEFAULT_PLAYER,
@@ -207,6 +208,12 @@ check(
 check(
   'chaque objet a un emplacement affichable',
   FALLBACK_CATALOG.every((i) => CATEGORY_ORDER.includes(i.category) && !!CATEGORY_LABELS[i.category])
+);
+check('les identifiants du catalogue sont uniques', new Set(FALLBACK_CATALOG.map((i) => i.id)).size === FALLBACK_CATALOG.length);
+const OUTFIT_DRAWS = ['kimono', 'ninja', 'samurai'];
+check(
+  'chaque accessoire dessiné a un rendu (pas de `draw` sans dessin)',
+  FALLBACK_CATALOG.filter((i) => i.draw && !OUTFIT_DRAWS.includes(i.draw)).every((i) => accessoryInner(i.draw!, i.color).length > 0)
 );
 
 console.log('--- Migration des anciennes sauvegardes ---');

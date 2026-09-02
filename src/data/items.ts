@@ -32,7 +32,17 @@ export type DrawKind =
   | 'tuft'
   | 'kimono'
   | 'ninja'
-  | 'samurai';
+  | 'samurai'
+  | 'kasa'
+  | 'hachimaki'
+  | 'steamerlid'
+  | 'kabuto'
+  | 'monocle'
+  | 'eyepatch'
+  | 'suzu'
+  | 'magatama'
+  | 'wagasa'
+  | 'geta';
 
 export type DecorKind = 'bonsai' | 'sakura' | 'bamboo' | 'lantern';
 
@@ -148,17 +158,27 @@ export const FALLBACK_CATALOG: Item[] = [
   { id: 'crown_gold', name: 'Couronne dorée', category: 'head', price: 120, rarity: 'epic', zIndex: Z.hat, color: '#F4B740', draw: 'crown' },
   { id: 'hair_purple', name: 'Mèche violette', category: 'head', price: 20, rarity: 'common', zIndex: Z.hair, color: '#B07BE0', draw: 'tuft' },
   { id: 'hair_orange', name: 'Mèche orange', category: 'head', price: 20, rarity: 'common', zIndex: Z.hair, color: '#F19A3E', draw: 'tuft' },
+  { id: 'hachimaki_white', name: 'Bandeau hachimaki', category: 'head', price: 30, rarity: 'common', zIndex: Z.hat, color: '#F4F1EA', draw: 'hachimaki' },
+  { id: 'hat_kasa', name: 'Chapeau de ronin', category: 'head', price: 80, rarity: 'rare', zIndex: Z.hat, color: '#D9B25F', draw: 'kasa' },
+  { id: 'hat_steamer', name: 'Couvercle vapeur', category: 'head', price: 120, rarity: 'epic', zIndex: Z.hat, color: '#E8B85A', draw: 'steamerlid' },
+  { id: 'helmet_kabuto', name: 'Casque kabuto', category: 'head', price: 220, rarity: 'legendary', zIndex: Z.hat, color: '#3A3F55', draw: 'kabuto' },
 
   { id: 'glasses_nerd', name: 'Lunettes rondes', category: 'glasses', price: 20, rarity: 'common', zIndex: Z.glasses, color: '#2E3A1F', draw: 'glasses' },
+  { id: 'eyepatch_pirate', name: 'Cache-œil de pirate', category: 'glasses', price: 30, rarity: 'common', zIndex: Z.glasses, color: '#2A2A32', draw: 'eyepatch' },
+  { id: 'monocle_gold', name: 'Monocle', category: 'glasses', price: 50, rarity: 'rare', zIndex: Z.glasses, color: '#E0B44C', draw: 'monocle' },
   { id: 'sunglasses_cool', name: 'Lunettes de soleil', category: 'glasses', price: 60, rarity: 'rare', zIndex: Z.glasses, color: '#222222', draw: 'sunglasses' },
 
   { id: 'bowtie_pink', name: 'Nœud papillon', category: 'neck', price: 20, rarity: 'common', zIndex: Z.neck, color: '#ED93B1', draw: 'bowtie' },
+  { id: 'bell_suzu', name: 'Grelot suzu', category: 'neck', price: 30, rarity: 'common', zIndex: Z.neck, color: '#F4B740', draw: 'suzu' },
   { id: 'scarf_teal', name: 'Écharpe', category: 'neck', price: 60, rarity: 'rare', zIndex: Z.neck, color: '#1D9E75', draw: 'scarf' },
+  { id: 'pendant_magatama', name: 'Pendentif magatama', category: 'neck', price: 60, rarity: 'rare', zIndex: Z.neck, color: '#3FA37A', draw: 'magatama' },
 
   { id: 'cape_hero', name: 'Cape de héros', category: 'back', price: 100, rarity: 'epic', zIndex: Z.back, color: '#E24B4A', draw: 'cape' },
+  { id: 'umbrella_wagasa', name: 'Ombrelle wagasa', category: 'back', price: 140, rarity: 'epic', zIndex: Z.back, color: '#E24B4A', draw: 'wagasa' },
   { id: 'katana_duo', name: 'Katanas croisés', category: 'back', price: 160, rarity: 'epic', zIndex: Z.back, color: '#8A2E3C', draw: 'katanas' },
 
   { id: 'sneakers_white', name: 'Baskets', category: 'shoes', price: 20, rarity: 'common', zIndex: Z.shoes, color: '#3a4660', draw: 'sneakers' },
+  { id: 'sandals_geta', name: 'Geta en bois', category: 'shoes', price: 30, rarity: 'common', zIndex: Z.shoes, color: '#B98A55', draw: 'geta' },
 
   { id: 'bg_bamboo', name: 'Forêt de bambous', category: 'background', price: 80, rarity: 'common', zIndex: 0, color: '#6FB23E', background: 'bamboo' },
   { id: 'bg_dojo', name: 'Dojo', category: 'background', price: 100, rarity: 'common', zIndex: 0, color: '#B7C68B', background: 'dojo' },

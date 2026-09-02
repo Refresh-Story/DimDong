@@ -22,6 +22,7 @@ const ANIMALS = [
   ['monkey', '#A9744F'],
   ['panda', '#F4F1EA'],
   ['tiger', '#F19A3E'],
+  ['unicorn', '#F7F2FA'],
 ];
 
 const PAPER = '#F5F1E8';

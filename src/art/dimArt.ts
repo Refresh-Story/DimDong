@@ -57,9 +57,10 @@ function svg(w: number, h: number, defs: string, body: string): string {
   );
 }
 
-function sparkle(cx: number, cy: number, s: number, fill = '#FFE066'): string {
+// `strokeWidth` : 2.5 sur le dim (cadre 200×260), plus fin sur les compagnons (cadre 100×100).
+function sparkle(cx: number, cy: number, s: number, fill = '#FFE066', strokeWidth = 2.5): string {
   const d = `M${cx} ${cy - s} C${cx + s * 0.12} ${cy - s * 0.28} ${cx + s * 0.28} ${cy - s * 0.12} ${cx + s} ${cy} C${cx + s * 0.28} ${cy + s * 0.12} ${cx + s * 0.12} ${cy + s * 0.28} ${cx} ${cy + s} C${cx - s * 0.12} ${cy + s * 0.28} ${cx - s * 0.28} ${cy + s * 0.12} ${cx - s} ${cy} C${cx - s * 0.28} ${cy - s * 0.12} ${cx - s * 0.12} ${cy - s * 0.28} ${cx} ${cy - s} Z`;
-  return `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  return `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
 }
 
 const eye = (cx: number) =>
@@ -928,6 +929,64 @@ export function animalInner(kind: string, c: string, opts: { blink?: boolean } =
         `<path d="M43.5 54.5 Q50 60.5 56.5 54.5 Q50 57.5 43.5 54.5 Z" fill="${INK}"/>` +
         `<path d="M44.5 55.5 L46 59.5 L47.7 56.3 Z" fill="#FFFFFF" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>` +
         `<path d="M52.3 56.3 L54 59.5 L55.5 55.5 Z" fill="#FFFFFF" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>`
+      );
+    }
+    case 'unicorn': {
+      // Pelage blanc nacré (c), sabots et ombre lilas, crinière et queue pastel arc-en-ciel,
+      // corne dorée en spirale. Même tête, corps, yeux et sourire que les autres compagnons.
+      const lilac = '#C9B6E8';
+      const pink = '#F7A8C9';
+      const lav = '#B9A7F0';
+      const mint = '#9FE0C8';
+      const gold = '#F4C15A';
+      // Trois mèches de queue sur une seule encre dessous : un contour commun.
+      const tailInk = `<path d="M66 84 Q90 80 88 60 M66 84 Q92 74 86 56 M66 84 Q86 86 90 66" stroke="${INK}" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+      const tailHair =
+        `<path d="M66 84 Q90 80 88 60" stroke="${pink}" stroke-width="5.5" fill="none" stroke-linecap="round"/>` +
+        `<path d="M66 84 Q92 74 86 56" stroke="${lav}" stroke-width="5.5" fill="none" stroke-linecap="round"/>` +
+        `<path d="M66 84 Q86 86 90 66" stroke="${mint}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`;
+      // Crinière derrière la tête, côté gauche : trois mèches qui tombent sur l'épaule.
+      const maneBack =
+        `<path d="M30 22 Q14 30 18 50 Q22 62 30 58 Q24 46 32 34 Z" fill="${lav}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M27 30 Q12 42 20 60 Q26 68 32 62 Q24 52 30 40 Z" fill="${mint}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M32 18 Q18 22 20 40 Q24 48 30 44 Q26 32 36 26 Z" fill="${pink}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+      // Frange sur le front, sous la corne : trois gouttes pastel.
+      const fringe =
+        `<path d="M44 17 Q36 16 34 26 Q40 24 44 28 Z" fill="${pink}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+        `<path d="M50 16 Q43 22 46 31 Q50 26 55 30 Q56 22 50 16 Z" fill="${lav}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+        `<path d="M56 17 Q64 16 66 26 Q60 24 56 28 Z" fill="${mint}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      const horn =
+        `<path d="M43.5 23 L50 1 L56.5 23 Z" fill="${gold}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+        `<path d="M45.5 17.5 L55 15.5 M46.8 12.5 L53.6 10.8 M48.2 7.8 L52 6.8" stroke="${darken(gold, 0.35)}" stroke-width="1.7" stroke-linecap="round"/>`;
+      const ears =
+        `<path d="M28 27 Q27 12 34 9 Q41 14 43 22 Z" fill="${c}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M72 27 Q73 12 66 9 Q59 14 57 22 Z" fill="${c}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` +
+        `<path d="M32 23 Q32 15 35 13 Q39 17 40 22 Z" fill="#F0B7C3"/><path d="M68 23 Q68 15 65 13 Q61 17 60 22 Z" fill="#F0B7C3"/>`;
+      const cheeks =
+        `<ellipse cx="31" cy="49" rx="4.5" ry="2.8" fill="#F6B3C6" opacity="0.85"/>` +
+        `<ellipse cx="69" cy="49" rx="4.5" ry="2.8" fill="#F6B3C6" opacity="0.85"/>`;
+      return (
+        shadow +
+        tailInk +
+        tailHair +
+        maneBack +
+        body() +
+        `<ellipse cx="50" cy="78" rx="10" ry="8" fill="${pale}"/>` +
+        bodyShade(lilac) +
+        arms() +
+        foot(40, lilac) +
+        foot(60, lilac) +
+        ears +
+        horn +
+        head() +
+        shine +
+        fringe +
+        cheeks +
+        eyes() +
+        `<circle cx="47" cy="50" r="1.1" fill="${INK}" opacity="0.6"/><circle cx="53" cy="50" r="1.1" fill="${INK}" opacity="0.6"/>` +
+        smile(50, 53) +
+        sparkle(85, 19, 5.5, '#FFE066', 1.4) +
+        sparkle(13, 70, 4, '#FFB3DE', 1.4)
       );
     }
     default:

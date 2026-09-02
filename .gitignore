@@ -44,8 +44,6 @@ example
 
 # PNG rendus localement par scripts/render-items.mjs (régénérables)
 scripts/catalog-png/
-# PNG rendus localement par scripts/render-scenes.mjs (régénérables)
-scripts/scene-png/
 # clé de compte de service Firebase Admin (ne JAMAIS committer, quel que soit le nom)
 serviceAccountKey.json
 *serviceAccount*.json

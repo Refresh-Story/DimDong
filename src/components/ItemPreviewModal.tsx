@@ -22,7 +22,7 @@ const STAGE_W = CARD_W - Spacing.lg * 2;
 // Hauteur du titre, de la rareté, de la légende, des boutons et des marges de la carte.
 // L'inventaire empile une rangée de boutons de plus : sans ça la carte déborde sur petit écran.
 // La fiche du kimono ajoute encore le sélecteur de ceintures, d'où sa propre clé.
-const CARD_CHROME = { shop: 215, inventory: 275, inventoryBelt: 360 } as const;
+const CARD_CHROME = { shop: 215, inventory: 300, inventoryBelt: 385 } as const;
 
 /** Le plus grand cadre que laisse le reste de la carte, en gardant un format lisible. */
 function stageHeight(insetV: number, chrome: keyof typeof CARD_CHROME) {
@@ -259,7 +259,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                 <View style={styles.actions}>
                   <Pressable
                     onPress={onCancel}
-                    style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
+                    style={({ pressed }) => [styles.action, styles.actionFill, styles.actionGhost, pressed && styles.actionPressed]}>
                     <Text style={styles.actionGhostText}>Annuler</Text>
                   </Pressable>
                   <Pressable
@@ -269,6 +269,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                     accessibilityLabel={`Acheter ${item.name} pour ${item.price} gemmes`}
                     style={({ pressed }) => [
                       styles.action,
+                      styles.actionFill,
                       { backgroundColor: canAfford ? Palette.primary : Palette.locked },
                       pressed && canAfford && styles.actionPressed,
                     ]}>
@@ -288,7 +289,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                 <Pressable
                   onPress={() => setConfirmingSale(false)}
                   accessibilityRole="button"
-                  style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
+                  style={({ pressed }) => [styles.action, styles.actionFill, styles.actionGhost, pressed && styles.actionPressed]}>
                   <Text style={styles.actionGhostText}>Non, je garde</Text>
                 </Pressable>
                 <Pressable
@@ -298,6 +299,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                   accessibilityLabel={`Confirmer la revente de ${item.name} pour ${item.price} gemmes`}
                   style={({ pressed }) => [
                     styles.action,
+                    styles.actionFill,
                     { backgroundColor: Palette.danger },
                     pressed && styles.actionPressed,
                   ]}>
@@ -330,7 +332,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
               <View style={styles.actions}>
                 <Pressable
                   onPress={onCancel}
-                  style={({ pressed }) => [styles.action, styles.actionGhost, pressed && styles.actionPressed]}>
+                  style={({ pressed }) => [styles.action, styles.actionFill, styles.actionGhost, pressed && styles.actionPressed]}>
                   <Text style={styles.actionGhostText}>Fermer</Text>
                 </Pressable>
                 {props.sellable && (
@@ -340,6 +342,7 @@ export function ItemPreviewModal(props: ItemPreviewModalProps) {
                     accessibilityLabel={`Revendre ${item.name} pour ${item.price} gemmes`}
                     style={({ pressed }) => [
                       styles.action,
+                      styles.actionFill,
                       // Le rouge est réservé à la confirmation : ici l'action rapporte des gemmes.
                       { backgroundColor: Palette.gemDark },
                       pressed && styles.actionPressed,
@@ -385,16 +388,21 @@ const styles = StyleSheet.create({
   missing: { fontSize: 14, fontFamily: Fonts.bodyBold, color: Palette.primaryDark, textAlign: 'center' },
   actions: { flexDirection: 'row', gap: Spacing.md },
   action: {
-    flex: 1,
+    // Pas de `flex` ici : seul dans la carte (une colonne à hauteur automatique), un bouton
+    // en flex:1 se rabat sur son padding et écrase son label. Les rangées ajoutent `actionFill`.
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    minHeight: 52,
     paddingVertical: Spacing.md,
     borderRadius: Radius.pill,
     borderWidth: 2.5,
     borderColor: Palette.outline,
   },
+  /** Partage à parts égales la largeur d'une rangée `actions`. */
+  actionFill: { flex: 1 },
   actionPressed: { transform: [{ scale: 0.96 }] },
   actionGhost: { backgroundColor: Palette.cardSoft },
   actionGhostText: { color: Palette.ink, fontFamily: Fonts.bodyBold, fontSize: 16 },
